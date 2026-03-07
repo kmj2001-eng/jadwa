@@ -2591,7 +2591,7 @@ function hidePDFLoader(overlay){
   }, 400);
 }
 
-function openPDFTemplate(){
+async function openPDFTemplate(){
   const title   = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
   const bodyHTML= document.getElementById('output-body').innerHTML;
   const name    = document.getElementById('f-name')?.value || 'مشروع';
@@ -2610,7 +2610,7 @@ function openPDFTemplate(){
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<style>@import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap");</style>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Tajawal',sans-serif;background:#fff;color:#1E293B;direction:rtl;font-size:11px;}
@@ -2768,16 +2768,29 @@ function openPDFTemplate(){
   // إنشاء عنصر مؤقت وتنزيل PDF
   const container = document.createElement('div');
   container.innerHTML = templateHTML;
-  container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:210mm;';
+  container.style.cssText = 'position:absolute;top:0;left:-9999px;width:210mm;visibility:hidden;';
   document.body.appendChild(container);
 
   const opt = {
     margin: 0,
     filename: title + '.pdf',
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      allowTaint: true,
+      letterRendering: true,
+      logging: false,
+      onclone: function(doc) {
+        // انتظار تحميل الخطوط
+        return document.fonts.ready;
+      }
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
+
+  // انتظار تحميل الخطوط والصور
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
   // رسم الـ chart قبل التنزيل
   setTimeout(() => {
