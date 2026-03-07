@@ -1019,6 +1019,7 @@ footer {
   background:linear-gradient(180deg,#0a1628 0%,#0d1f3c 50%,#0f2347 100%);
   border-top:1px solid rgba(59,130,246,0.2);
   padding:72px 48px 36px;
+  display:none;
 }
 .footer-inner {
   max-width:1200px; margin:0 auto;
@@ -1866,12 +1867,43 @@ if(canvas){
 }
 
 // ─── PAGE SYSTEM ───
-function showPage(id){
+function showPage(id, pushState){
+  // إخفاء وإظهار الصفحات
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const target = document.getElementById('page-'+id);
+  if(target) target.classList.add('active');
+
+  // تفعيل رابط التنقل
+  document.querySelectorAll('.nav-link').forEach(l=>{
+    l.classList.toggle('active', l.getAttribute('onclick') && l.getAttribute('onclick').includes("'"+id+"'"));
+  });
+
+  // إظهار/إخفاء الـ footer — يظهر فقط في الصفحة الرئيسية
+  const footer = document.querySelector('footer');
+  if(footer) footer.style.display = (id === 'home') ? '' : 'none';
+
+  // دعم زر الرجوع في المتصفح
+  if(pushState !== false){
+    const url = id === 'home' ? window.location.pathname : '#' + id;
+    history.pushState({page: id}, '', url);
+  }
+
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+// الاستماع لزر الرجوع/التقدم في المتصفح
+window.addEventListener('popstate', function(e){
+  const id = (e.state && e.state.page) ? e.state.page : 'home';
+  showPage(id, false);
+});
+
+// تهيئة الصفحة عند التحميل
+window.addEventListener('DOMContentLoaded', function(){
+  const hash = window.location.hash.replace('#','');
+  const startPage = hash || 'home';
+  showPage(startPage, false);
+  history.replaceState({page: startPage}, '', window.location.href);
+});
 // ─── LOCATION DATA ───
 const locationData = {
   SA: {
