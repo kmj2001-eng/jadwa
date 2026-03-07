@@ -1019,7 +1019,6 @@ footer {
   background:linear-gradient(180deg,#0a1628 0%,#0d1f3c 50%,#0f2347 100%);
   border-top:1px solid rgba(59,130,246,0.2);
   padding:72px 48px 36px;
-  display:none;
 }
 .footer-inner {
   max-width:1200px; margin:0 auto;
@@ -1447,35 +1446,6 @@ footer {
 
 </div><!-- end page-home -->
 
-<footer>
-  <div class="footer-inner">
-
-    <!-- صف علوي: صورة الدفع وحدها -->
-   <div style="width:100%;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;grid-column:1/-1;">
-  <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-flex;align-items:center;">
-    <img src="payment.png" alt="طرق الدفع" style="height:26px;width:auto;display:block;">
-  </div>
-</div>
-
-    <!-- الأعمدة الأربعة -->
-    <div class="footer-brand">
-      <div class="logo-row">
-        <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
-      </div>
-      <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
-    </div>
-    <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
-    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
-    <div class="footer-col"><h4>الشركة</h4><a>من نحن</a><a>تواصل معنا</a><a>سياسة الخصوصية</a><a>شروط الاستخدام</a></div>
-
-  </div>
-
-  <div class="footer-bottom">
-    <span id="footer-year"></span>
-<script>document.getElementById('footer-year').textContent = 'ذكاء الأعمال ' + new Date().getFullYear() + ' © جميع الحقوق محفوظة';</script>  
-     <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
-  </div>
-</footer>
 
 <!-- ══════════════════════════════════════
      TOOL PAGE
@@ -1812,6 +1782,35 @@ footer {
   </div>
 </div>
 
+<footer>
+  <div class="footer-inner">
+
+    <!-- صف علوي: صورة الدفع وحدها -->
+   <div style="width:100%;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;grid-column:1/-1;">
+  <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-flex;align-items:center;">
+    <img src="payment.png" alt="طرق الدفع" style="height:26px;width:auto;display:block;">
+  </div>
+</div>
+
+    <!-- الأعمدة الأربعة -->
+    <div class="footer-brand">
+      <div class="logo-row">
+        <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
+      </div>
+      <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
+    </div>
+    <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
+    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
+    <div class="footer-col"><h4>الشركة</h4><a>من نحن</a><a>تواصل معنا</a><a>سياسة الخصوصية</a><a>شروط الاستخدام</a></div>
+
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-year-text"></span>
+     <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
+  </div>
+</footer>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1878,14 +1877,16 @@ function showPage(id, pushState){
     l.classList.toggle('active', l.getAttribute('onclick') && l.getAttribute('onclick').includes("'"+id+"'"));
   });
 
-  // إظهار/إخفاء الـ footer — يظهر فقط في الصفحة الرئيسية
+  // الـ footer يظهر دائماً في جميع الصفحات
   const footer = document.querySelector('footer');
-  if(footer) footer.style.display = (id === 'home') ? '' : 'none';
+  if(footer) footer.style.display = '';
 
   // دعم زر الرجوع في المتصفح
   if(pushState !== false){
-    const url = id === 'home' ? window.location.pathname : '#' + id;
-    history.pushState({page: id}, '', url);
+    try {
+      const url = id === 'home' ? window.location.pathname : '#' + id;
+      history.pushState({page: id}, '', url);
+    } catch(e) { /* بيئة محدودة */ }
   }
 
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1899,6 +1900,10 @@ window.addEventListener('popstate', function(e){
 
 // تهيئة الصفحة عند التحميل
 window.addEventListener('DOMContentLoaded', function(){
+  // تعبئة نص حقوق النشر
+  document.querySelectorAll('.footer-year-text').forEach(el => {
+    el.textContent = 'ذكاء الأعمال ' + new Date().getFullYear() + ' © جميع الحقوق محفوظة';
+  });
   const hash = window.location.hash.replace('#','');
   const startPage = hash || 'home';
   showPage(startPage, false);
