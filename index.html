@@ -2365,105 +2365,36 @@ const currency = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
 
   const studyLoader = showStudyLoader();
 
-  const prompt = `أنت خبير متخصص في إعداد دراسات الجدوى الاقتصادية للسوق العربي.
-أنشئ دراسة جدوى احترافية شاملة باللغة العربية للمشروع التالي:
-المشروع: ${name}
+  const prompt = `اسم النشاط: ${name}
 القطاع: ${selSector || 'تجارة عامة'}
-الموقع: ${location}
-حجم المشروع: ${size}
-عدد الموظفين: ${workers}
-رأس المال: ${capital}
+الدولة والمدينة: ${location}
+رأس المال المتاح: ${capital} (${currency})
 مصدر التمويل: ${funding}
+حجم المشروع: ${size}
+عدد الموظفين المتوقع: ${workers}
 مدة الدراسة: ${period}
 الجمهور المستهدف: ${target}
 الميزة التنافسية: ${advantage}
 ${details ? 'تفاصيل إضافية: ' + details : ''}
-العملة المستخدمة في الدراسة: ${currency}
-اكتب دراسة جدوى متكاملة تشمل الأقسام التالية مع جداول HTML حيث يناسب:
-## 1. الملخص التنفيذي
-## 2. وصف المشروع والفرصة السوقية
-## 3. تحليل السوق والمنافسة
-مع جدول HTML للمنافسين الرئيسيين وتحليل SWOT مفصل.
-## 4. الخطة التشغيلية والموارد البشرية
-## 5. التحليل المالي
-مع جداول HTML للتكاليف الاستثمارية، الإيرادات والمصروفات لكل سنة، ومؤشرات: IRR، NPV، نقطة التعادل، فترة الاسترداد.
-## 6. تقييم المخاطر والتوصية النهائية
-استخدم أرقاماً واقعية مناسبة للسوق العربي. اجعل الدراسة عملية ومفيدة لصاحب المشروع.`;
+
+أنشئ دراسة الجدوى الكاملة الآن بجميع أقسامها مع جداول HTML دقيقة للأرقام المالية.`;
 
   try{
-    // ── استدعاء Anthropic API مباشرة مع streaming لضمان اكتمال الدراسة ──
-    const CLAUDE_API_KEY = window.CLAUDE_API_KEY || '';
-    if(!CLAUDE_API_KEY){
-      throw new Error('NO_KEY');
-    }
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 8000,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
-
     if(!res.ok){
-      const errData = await res.json().catch(()=>({}));
-      throw new Error(errData?.error?.message || 'خطأ في الاتصال بـ Claude API');
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err?.error || 'خطأ في الخادم');
     }
-
-    // ── قراءة الـ stream تدريجياً ──
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-
-    // إخفاء loader وإظهار النتيجة تدريجياً
+    const data = await res.json();
     hideStudyLoader(studyLoader);
-    document.getElementById('typing-state').style.display = 'none';
-    document.getElementById('output-result').style.display = 'block';
-    document.getElementById('output-body').innerHTML = '<p style="color:var(--text3);font-size:0.85rem;">⏳ جاري كتابة الدراسة...</p>';
-
-    while(true){
-      const { done, value } = await reader.read();
-      if(done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-      for(const line of lines){
-        const jsonStr = line.slice(6).trim();
-        if(jsonStr === '[DONE]') continue;
-        try{
-          const parsed = JSON.parse(jsonStr);
-          if(parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta'){
-            fullText += parsed.delta.text;
-            document.getElementById('output-body').innerHTML = mdToHtml(fullText);
-          }
-        }catch{}
-      }
-    }
-
-    if(!fullText.trim()){
-      throw new Error('الرد جاء فارغاً');
-    }
-    showToast('✅ تمت دراسة الجدوى بنجاح!');
-
+    showResult(data.text || getDemoStudy(name, selSector, location, capital));
   }catch(e){
     hideStudyLoader(studyLoader);
     console.error('API Error:', e);
-
-    if(e.message === 'NO_KEY'){
-      // عرض نافذة إدخال المفتاح
-      showApiKeyModal();
-      return;
-    }
-
     showToast('⚠️ ' + (e.message || 'حدث خطأ — جاري عرض نموذج تجريبي'));
     showResult(getDemoStudy(name, selSector, location, capital));
   }
@@ -3021,65 +2952,6 @@ function getDemoStudy(name,sector,loc,capital){
   return`## الملخص التنفيذي\n\nيستعرض هذا التقرير دراسة جدوى شاملة لمشروع **${name}** في قطاع ${sector||'التجارة'} بمنطقة ${loc||'السعودية'}، برأس مال مبدئي قدره **${capital}**.\n\nتشير نتائج التحليل إلى أن المشروع **قابل للتطبيق اقتصادياً** بمعدل عائد داخلي (IRR) يبلغ **22.4%**، وفترة استرداد لرأس المال تُقدّر بـ **28 شهراً**.\n\n## وصف المشروع والفرصة السوقية\n\nيستهدف المشروع فجوة واضحة في السوق المحلي، حيث يُشير تحليل الطلب إلى نمو سنوي بنسبة **8.5%** في هذا القطاع خلال الفترة 2024-2028.\n\n## تحليل السوق والمنافسة\n\n### جدول المنافسين الرئيسيين\n\n<table>\n<tr><th>المنافس</th><th>الحصة السوقية</th><th>نقطة القوة</th><th>نقطة الضعف</th></tr>\n<tr><td>المنافس الأول</td><td>35%</td><td>العلامة التجارية</td><td>الأسعار المرتفعة</td></tr>\n<tr><td>المنافس الثاني</td><td>25%</td><td>الموقع الجغرافي</td><td>جودة الخدمة</td></tr>\n<tr><td>مشروعنا (مستهدف)</td><td>15%</td><td>الجودة + التقنية</td><td>العلامة الناشئة</td></tr>\n</table>\n\n**نقاط القوة:** موقع استراتيجي، فريق متخصص، ميزة تنافسية واضحة.\n**الفرص:** نمو القطاع، دعم حكومي، تحول رقمي متسارع.\n\n## الخطة التشغيلية\n\nيستلزم المشروع فريقاً من **8-12 موظفاً** في المرحلة الأولى، مع خطة توسعية لرفع الطاقة بنسبة 40% في السنة الثالثة.\n\n## التحليل المالي\n\n### التكاليف الاستثمارية\n\n<table>\n<tr><th>البند</th><th>التكلفة</th><th>النسبة</th></tr>\n<tr><td>الأصول الثابتة والتجهيزات</td><td>145,000 ر.س</td><td>42%</td></tr>\n<tr><td>الترخيص والتأسيس</td><td>35,000 ر.س</td><td>10%</td></tr>\n<tr><td>رأس المال التشغيلي</td><td>120,000 ر.س</td><td>35%</td></tr>\n<tr><td>التسويق والانطلاق</td><td>45,000 ر.س</td><td>13%</td></tr>\n</table>\n\n### الإسقاطات المالية (5 سنوات)\n\n<table>\n<tr><th>السنة</th><th>الإيرادات</th><th>التكاليف</th><th>صافي الربح</th><th>الهامش</th></tr>\n<tr><td>الأولى</td><td>480,000</td><td>420,000</td><td>60,000</td><td>12.5%</td></tr>\n<tr><td>الثانية</td><td>680,000</td><td>540,000</td><td>140,000</td><td>20.6%</td></tr>\n<tr><td>الثالثة</td><td>890,000</td><td>650,000</td><td>240,000</td><td>27.0%</td></tr>\n<tr><td>الرابعة</td><td>1,100,000</td><td>760,000</td><td>340,000</td><td>30.9%</td></tr>\n<tr><td>الخامسة</td><td>1,350,000</td><td>870,000</td><td>480,000</td><td>35.6%</td></tr>\n</table>\n\n**IRR:** 22.4% | **NPV:** 285,000 ر.س | **نقطة التعادل:** الشهر السادس | **استرداد رأس المال:** 28 شهراً\n\n## التوصية النهائية\n\n**مستوى المخاطرة: متوسط ✅** — يُوصى بالمضي قدماً في المشروع مع التدرج في التوسع والتركيز على بناء قاعدة عملاء وفاء في السنة الأولى.`;
 }
 
-// ─── Claude API Key ───
-window.CLAUDE_API_KEY = '';
-
-// حفظ المفتاح إذا تم إدخاله سابقاً في نفس الجلسة
-(function(){
-  try { const s = sessionStorage.getItem('_cak'); if(s) window.CLAUDE_API_KEY = s; } catch(e){}
-})();
-
-function showApiKeyModal(){
-  const existing = document.getElementById('api-key-modal');
-  if(existing) existing.remove();
-  const modal = document.createElement('div');
-  modal.id = 'api-key-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(11,17,32,0.95);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML = `
-    <div style="background:linear-gradient(145deg,#101828,#162035);border:1px solid rgba(59,130,246,0.4);border-radius:24px;padding:44px 48px;max-width:480px;width:90%;font-family:'Cairo',sans-serif;box-shadow:0 40px 80px rgba(0,0,0,0.7);position:relative;">
-      <button onclick="document.getElementById('api-key-modal').remove()" style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.08);border:none;color:#aaa;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;">✕</button>
-      <div style="text-align:center;margin-bottom:28px;">
-        <div style="font-size:2.2rem;margin-bottom:12px;">🔑</div>
-        <h3 style="font-size:1.2rem;font-weight:700;color:#E8EEFF;margin-bottom:8px;">مفتاح Claude API</h3>
-        <p style="font-size:0.8rem;color:rgba(220,230,255,0.55);line-height:1.7;">أدخل مفتاح Anthropic API الخاص بك لتوليد الدراسة.<br>المفتاح يُحفظ في الجلسة الحالية فقط ولا يُرسل لأي خادم.</p>
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:0.75rem;color:rgba(220,230,255,0.5);display:block;margin-bottom:8px;">مفتاح API (يبدأ بـ sk-ant-)</label>
-        <div style="position:relative;">
-          <input id="modal-api-key" type="password" placeholder="sk-ant-api03-..." style="width:100%;padding:13px 44px 13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:12px;color:#E8EEFF;font-family:'Cairo',sans-serif;font-size:0.85rem;outline:none;direction:ltr;text-align:left;">
-          <button onclick="toggleKeyVisibility()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(220,230,255,0.5);cursor:pointer;font-size:1rem;" id="eye-btn">👁</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:12px;background:rgba(59,130,246,0.08);border-radius:10px;border:1px solid rgba(59,130,246,0.2);">
-        <span style="font-size:1rem;">💡</span>
-        <p style="font-size:0.72rem;color:rgba(220,230,255,0.5);line-height:1.6;">احصل على مفتاحك من <a href="https://console.anthropic.com" target="_blank" style="color:#60A5FA;text-decoration:none;">console.anthropic.com</a></p>
-      </div>
-      <button onclick="submitApiKey()" style="width:100%;padding:14px;background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">🤖  توليد الدراسة</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  setTimeout(()=> document.getElementById('modal-api-key')?.focus(), 100);
-}
-
-function toggleKeyVisibility(){
-  const inp = document.getElementById('modal-api-key');
-  const btn = document.getElementById('eye-btn');
-  if(!inp) return;
-  if(inp.type === 'password'){ inp.type='text'; btn.textContent='🙈'; }
-  else { inp.type='password'; btn.textContent='👁'; }
-}
-
-async function submitApiKey(){
-  const key = document.getElementById('modal-api-key')?.value?.trim();
-  if(!key || !key.startsWith('sk-ant-')){
-    showToast('⚠️ المفتاح غير صحيح — يجب أن يبدأ بـ sk-ant-');
-    return;
-  }
-  window.CLAUDE_API_KEY = key;
-  try { sessionStorage.setItem('_cak', key); } catch(e){}
-  document.getElementById('api-key-modal')?.remove();
-  generateStudy();
-}
 // ─── PAYMOB / PAYMENT REMOVED ───
 </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
