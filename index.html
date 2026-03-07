@@ -1517,18 +1517,55 @@ footer {
           </div>
         </div>
         <div class="fgroup"><label class="flabel">اسم أو وصف المشروع *</label><input class="finput" id="f-name" placeholder="مثال: مطعم مأكولات بحرية في الرياض"></div>
-        <div class="fgroup"><label class="flabel">الموقع الجغرافي</label>
-          <select class="fselect" id="f-location">
-            <option value="">اختر الدولة / المنطقة</option>
-            <option>المملكة العربية السعودية - الرياض</option>
-            <option>المملكة العربية السعودية - جدة</option>
-            <option>المملكة العربية السعودية - الدمام</option>
-            <option>الإمارات - دبي</option><option>الإمارات - أبوظبي</option>
-            <option>الكويت</option><option>قطر - الدوحة</option>
-            <option>البحرين</option><option>عُمان - مسقط</option>
-            <option>مصر - القاهرة</option><option>الأردن - عمّان</option>
-          </select>
-        </div>
+     <div class="fgroup">
+  <label class="flabel">الموقع الجغرافي</label>
+  <div style="border:1px solid var(--border);border-radius:var(--r);padding:16px;background:var(--ink2);display:flex;flex-direction:column;gap:12px;">
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label class="flabel" style="margin:0;">الدولة</label>
+      <select class="fselect" id="f-country" onchange="updateRegions()" style="margin:0;">
+        <option value="">اختر الدولة</option>
+        <option value="SA">المملكة العربية السعودية</option>
+        <option value="AE">الإمارات العربية المتحدة</option>
+        <option value="KW">الكويت</option>
+        <option value="QA">قطر</option>
+        <option value="BH">البحرين</option>
+        <option value="OM">عُمان</option>
+        <option value="EG">مصر</option>
+        <option value="JO">الأردن</option>
+        <option value="IQ">العراق</option>
+        <option value="SY">سوريا</option>
+        <option value="LB">لبنان</option>
+        <option value="YE">اليمن</option>
+        <option value="LY">ليبيا</option>
+        <option value="TN">تونس</option>
+        <option value="DZ">الجزائر</option>
+        <option value="MA">المغرب</option>
+        <option value="SD">السودان</option>
+        <option value="SO">الصومال</option>
+        <option value="MR">موريتانيا</option>
+        <option value="PS">فلسطين</option>
+        <option value="KM">جزر القمر</option>
+        <option value="DJ">جيبوتي</option>
+      </select>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label class="flabel" style="margin:0;">المنطقة</label>
+      <select class="fselect" id="f-region" onchange="updateProvinces()" style="margin:0;" disabled>
+        <option value="">اختر المنطقة أولاً</option>
+      </select>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label class="flabel" style="margin:0;">المحافظة</label>
+      <select class="fselect" id="f-province" style="margin:0;" disabled>
+        <option value="">اختر المنطقة أولاً</option>
+      </select>
+    </div>
+
+  </div>
+</div>
         <div class="fgroup"><label class="flabel">حجم المشروع</label>
           <select class="fselect" id="f-size">
             <option value="">اختر حجم المشروع</option>
@@ -1835,7 +1872,279 @@ function showPage(id){
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   window.scrollTo({top:0,behavior:'smooth'});
 }
+// ─── LOCATION DATA ───
+const locationData = {
+  SA: {
+    regions: {
+      'منطقة الرياض':['الرياض','الخرج','الدوادمي','المجمعة','القويعية','وادي الدواسر','الأفلاج','حوطة بني تميم','الزلفي','شقراء','ضرما','عفيف','الغاط','المزاحمية','رماح'],
+      'منطقة مكة المكرمة':['جدة','مكة المكرمة','الطائف','القنفذة','رابغ','الليث','خليص','الجموم','تربة','الخرمة','رنية','الكامل'],
+      'منطقة المدينة المنورة':['المدينة المنورة','ينبع','العلا','المهد','بدر','الحناكية','خيبر','وادي الفرع'],
+      'منطقة القصيم':['بريدة','عنيزة','الرس','المذنب','البكيرية','البدائع','الخبراء','عيون الجواء','النبهانية'],
+      'المنطقة الشرقية':['الدمام','الخبر','الظهران','الأحساء','الجبيل','حفر الباطن','القطيف','الخفجي','رأس تنورة','قلوة'],
+      'منطقة عسير':['أبها','خميس مشيط','بيشة','النماص','محايل عسير','سراة عبيدة','رجال ألمع','تنومة','البرك'],
+      'منطقة تبوك':['تبوك','العقبة','الوجه','ضباء','أملج','قيال','حالة عمار'],
+      'منطقة حائل':['حائل','بقعاء','الغزالة','الشنان','السليمي','موقق'],
+      'منطقة الحدود الشمالية':['عرعر','رفحاء','طريف','العويقيلة'],
+      'منطقة جازان':['جازان','صبيا','أبو عريش','الدرب','العارضة','فرسان','العيدابي','الريث'],
+      'منطقة نجران':['نجران','شرورة','حبونا','بدر الجنوب','يدمة'],
+      'منطقة الباحة':['الباحة','بلجرشي','المخواة','القرى','العقيق'],
+      'منطقة الجوف':['سكاكا','القريات','دومة الجندل','طبرجل'],
+    }
+  },
+  AE: {
+    regions: {
+      'إمارة أبوظبي':['أبوظبي','العين','الظفرة','ليوا','مدينة زايد'],
+      'إمارة دبي':['دبي','جبل علي','حصة','مرسى دبي'],
+      'إمارة الشارقة':['الشارقة','خورفكان','كلباء','الذيد','دبا الحصن'],
+      'إمارة عجمان':['عجمان','مصفوت','منامة'],
+      'إمارة أم القيوين':['أم القيوين','فلج المعلا'],
+      'إمارة رأس الخيمة':['رأس الخيمة','شعم','الجزيرة الحمراء','خت'],
+      'إمارة الفجيرة':['الفجيرة','دبا الفجيرة','مسافي','قدفع'],
+    }
+  },
+  KW: {
+    regions: {
+      'محافظة العاصمة':['مدينة الكويت','الشويخ','الصليبخات','الروضة'],
+      'محافظة حولي':['حولي','السالمية','الرميثية','بيان','مشرف'],
+      'محافظة الفروانية':['الفروانية','خيطان','العارضية','الرقعي','أبوحليفة'],
+      'محافظة الجهراء':['الجهراء','العبدلي','الصليبية','القصر'],
+      'محافظة مبارك الكبير':['مبارك الكبير','صباح السالم','أبوفطيرة','العقيلة'],
+      'محافظة الأحمدي':['الأحمدي','الفحيحيل','المنقف','الصباحية','الزور'],
+    }
+  },
+  QA: {
+    regions: {
+      'بلدية الدوحة':['الدوحة','لسيل','ريان','المرقاب'],
+      'بلدية الريان':['الريان','مشيرب','لقطيفية'],
+      'بلدية الشمال':['الشمال','الغويرية','الذخيرة'],
+      'بلدية الوكرة':['الوكرة','الوكير','أبو نخلة'],
+      'بلدية أم صلال':['أم صلال علي','أم صلال محمد'],
+      'بلدية الخور':['الخور','الذخيرة'],
+      'بلدية الشيحانية':['الشيحانية'],
+      'بلدية المضيفر':['المضيفر الشمالي','المضيفر الجنوبي'],
+    }
+  },
+  BH: {
+    regions: {
+      'محافظة العاصمة':['المنامة','المحرق','الحد','الجفير'],
+      'محافظة المحرق':['المحرق','عراد','أمواج','دار كليب'],
+      'محافظة الشمالية':['الشاخورة','البديع','قلالي','الدراز'],
+      'محافظة الجنوبية':['الرفاع','عيسى','الحجر','المأذن','عوالي'],
+    }
+  },
+  OM: {
+    regions: {
+      'محافظة مسقط':['مسقط','مطرح','بوشر','السيب','قريات','العامرات'],
+      'محافظة ظفار':['صلالة','طاقة','سدح','مرباط','شليم'],
+      'محافظة مسندم':['خصب','بخاء','دبا','مدحاء'],
+      'محافظة البريمي':['البريمي','محضة','عبري'],
+      'محافظة الداخلية':['نزوى','بهلاء','منح','إزكي','سمائل'],
+      'محافظة الشرقية':['صور','إبراء','المضيبي','جعلان بني بوحسن'],
+      'محافظة الظاهرة':['عبري','ضنك','ينقل'],
+      'محافظة الوسطى':['هيماء','الجازر','محوت'],
+      'محافظة شمال الباطنة':['صحار','شناص','لوى','الخابورة','المصنعة'],
+      'محافظة جنوب الباطنة':['الرستاق','بركاء','العوابي','نخل'],
+    }
+  },
+  EG: {
+    regions: {
+      'القاهرة الكبرى':['القاهرة','الجيزة','القليوبية','حلوان','العبور'],
+      'الإسكندرية':['الإسكندرية','العجمي','برج العرب','أبو قير'],
+      'الدلتا':['المنوفية','الغربية','الدقهلية','كفر الشيخ','البحيرة','الشرقية'],
+      'الصعيد':['أسيوط','سوهاج','قنا','الأقصر','أسوان','المنيا','بني سويف','الفيوم'],
+      'القناة وسيناء':['بورسعيد','السويس','الإسماعيلية','شمال سيناء','جنوب سيناء'],
+      'الساحل الشمالي':['مطروح','الإسكندرية الغربية'],
+    }
+  },
+  JO: {
+    regions: {
+      'محافظة عمّان':['عمّان','الزرقاء','الرصيفة','سحاب','ماركا'],
+      'محافظة الزرقاء':['الزرقاء','الرصيفة','الهاشمية','الأزرق'],
+      'محافظة إربد':['إربد','الرمثا','الكورة','بني كنانة'],
+      'محافظة البلقاء':['السلط','ماحص','عين الباشا','دير علا'],
+      'محافظة الكرك':['الكرك','مؤتة','القصر'],
+      'محافظة معان':['معان','الشوبك','القويرة','وادي موسى'],
+      'محافظة العقبة':['العقبة','القويرة','رم'],
+      'محافظة المفرق':['المفرق','الرويشد','الباديه الشمالية'],
+    }
+  },
+  IQ: {
+    regions: {
+      'بغداد':['الكرخ','الرصافة','المدائن','أبو غريب'],
+      'البصرة':['البصرة','الزبير','أبو الخصيب','الفاو'],
+      'نينوى':['الموصل','تلعفر','الحمدانية','سنجار'],
+      'أربيل':['أربيل','كويسنجق','مخمور','شقلاوة'],
+      'النجف':['النجف','الكوفة','المناذرة'],
+      'كربلاء':['كربلاء','عين التمر','الهندية'],
+      'السليمانية':['السليمانية','حلبجة','رانية','دوكان'],
+      'ذي قار':['الناصرية','سوق الشيوخ','الرفاعي'],
+    }
+  },
+  SY: {
+    regions: {
+      'محافظة دمشق':['دمشق','جرمانا','داريا','معضمية الشام'],
+      'محافظة ريف دمشق':['دوما','التل','قطنا','يبرود','الزبداني'],
+      'محافظة حلب':['حلب','إعزاز','منبج','الباب','جرابلس'],
+      'محافظة حمص':['حمص','تدمر','القصير','تلكلخ'],
+      'محافظة حماة':['حماة','السلمية','مصياف','سوران'],
+      'محافظة اللاذقية':['اللاذقية','جبلة','القرداحة','الحفة'],
+      'محافظة طرطوس':['طرطوس','بانياس','صافيتا','الشيخ بدر'],
+      'محافظة درعا':['درعا','الصنمين','إزرع','نوى'],
+    }
+  },
+  LB: {
+    regions: {
+      'محافظة بيروت':['بيروت'],
+      'محافظة جبل لبنان':['جونية','بعبدا','عاليه','الشوف','المتن','كسروان'],
+      'محافظة الشمال':['طرابلس','زغرتا','البترون','الكورة','بشري','عكار'],
+      'محافظة الجنوب':['صيدا','صور','النبطية','مرجعيون','بنت جبيل','حاصبيا'],
+      'محافظة البقاع':['زحلة','بعلبك','الهرمل','راشيا','غرب البقاع'],
+    }
+  },
+  YE: {
+    regions: {
+      'أمانة العاصمة':['صنعاء'],
+      'محافظة عدن':['عدن','المنصورة','التواهي','الشيخ عثمان'],
+      'محافظة حضرموت':['المكلا','الشحر','سيئون','تريم'],
+      'محافظة تعز':['تعز','المواسط','الحوبان'],
+      'محافظة الحديدة':['الحديدة','الزيدية','باجل'],
+      'محافظة إب':['إب','يريم','جبلة','ذمار'],
+      'محافظة مأرب':['مأرب','مدغل','رغوان'],
+    }
+  },
+  LY: {
+    regions: {
+      'منطقة طرابلس':['طرابلس','جنزور','تاجوراء','الزاوية'],
+      'منطقة بنغازي':['بنغازي','البيضاء','درنة','طبرق'],
+      'منطقة الجنوب':['سبها','أوباري','مرزق','غات'],
+      'منطقة الوسط':['مصراتة','سرت','الجفرة','بني وليد'],
+    }
+  },
+  TN: {
+    regions: {
+      'ولاية تونس':['تونس','أريانة','بن عروس','منوبة'],
+      'ولاية صفاقس':['صفاقس','جبنيانة','المحرس','قرقنة'],
+      'ولاية سوسة':['سوسة','مساكن','القيروان','المنستير'],
+      'ولاية بنزرت':['بنزرت','ماطر','رأس الجبل','منزل بورقيبة'],
+      'ولاية نابل':['نابل','الحمامات','قربة','دار شعبان'],
+      'ولاية قابس':['قابس','مطماطة','مارث'],
+      'ولاية قفصة':['قفصة','المتلوي','الرديف','أم العرائس'],
+    }
+  },
+  DZ: {
+    regions: {
+      'ولاية الجزائر':['الجزائر','باب الوادي','الحراش','المحمدية','بولوغين'],
+      'ولاية وهران':['وهران','سيدي بلعباس','مستغانم','عين تيموشنت'],
+      'ولاية قسنطينة':['قسنطينة','عنابة','سكيكدة','الطارف','قالمة'],
+      'ولاية سطيف':['سطيف','برج بوعريريج','بجاية','جيجل','البويرة'],
+      'ولاية بسكرة':['بسكرة','الوادي','ورقلة','الأغواط','المسيلة'],
+      'ولاية تيزي وزو':['تيزي وزو','البليدة','بومرداس','مدية','تيبازة'],
+    }
+  },
+  MA: {
+    regions: {
+      'جهة الدار البيضاء سطات':['الدار البيضاء','المحمدية','برشيد','بن سليمان'],
+      'جهة الرباط سلا القنيطرة':['الرباط','سلا','القنيطرة','تمارة'],
+      'جهة مراكش آسفي':['مراكش','آسفي','الصويرة','قلعة السراغنة'],
+      'جهة فاس مكناس':['فاس','مكناس','صفرو','الحاجب'],
+      'جهة طنجة تطوان الحسيمة':['طنجة','تطوان','الحسيمة','العرائش'],
+      'جهة سوس ماسة':['أكادير','تيزنيت','طاطا','تارودانت'],
+      'جهة الشرق':['وجدة','الناظور','بركان','تاوريرت'],
+    }
+  },
+  SD: {
+    regions: {
+      'ولاية الخرطوم':['الخرطوم','أم درمان','بحري','جبرة'],
+      'ولاية الجزيرة':['ود مدني','الحصاحيصا','الكاملين','رفاعة'],
+      'ولاية نهر النيل':['عطبرة','شندي','الدامر','بربر'],
+      'ولاية البحر الأحمر':['بورتسودان','سواكن','حلايب','طوكر'],
+      'ولاية كسلا':['كسلا','القضارف','الحوية','أروما'],
+      'ولاية شمال دارفور':['الفاشر','مليط','كبكابية','الضعين'],
+    }
+  },
+  SO: {
+    regions: {
+      'إقليم بنادر':['مقديشو','افغوي','دافيد'],
+      'إقليم شبيلي الوسطى':['جوهر','مهداي'],
+      'إقليم شبيلي السفلى':['مركه','قوريوله','برواقو'],
+      'إقليم هيران':['بيدوا','دينسور','باردهيري'],
+      'إقليم بونتلاند':['بوصاصو','غروي','قاردو'],
+    }
+  },
+  MR: {
+    regions: {
+      'ولاية نواكشوط':['نواكشوط الشمالية','نواكشوط الغربية','نواكشوط الجنوبية'],
+      'ولاية نواذيبو':['نواذيبو','أرگين','بئر أم اكرين'],
+      'ولاية تيرس زمور':['العيون','بئر أنذر','فديرك'],
+      'ولاية الحوض الشرقي':['نيمه','طمبدغه','باسكنو'],
+      'ولاية آدرار':['أطار','أوجفت','أوداغست'],
+    }
+  },
+  PS: {
+    regions: {
+      'الضفة الغربية':['رام الله','نابلس','الخليل','جنين','طولكرم','قلقيلية','أريحا','طوباس','سلفيت','بيت لحم'],
+      'قطاع غزة':['غزة','خان يونس','رفح','دير البلح','بيت لاهيا','جباليا'],
+      'القدس':['القدس','بيت حنينا','شعفاط','سلوان'],
+    }
+  },
+  KM: {
+    regions: {
+      'جزيرة نجازيجا':['موروني','ميتساميولي','دومبيني'],
+      'جزيرة موالي':['فومبوني','واني','دومبيني'],
+      'جزيرة أنجوان':['موتسامودو','دومبيني','سيما'],
+    }
+  },
+  DJ: {
+    regions: {
+      'منطقة جيبوتي':['جيبوتي'],
+      'منطقة علي صبيح':['علي صبيح'],
+      'منطقة ديخيل':['ديخيل'],
+      'منطقة عرتا':['عرتا'],
+      'منطقة تاجورة':['تاجورة','أوبوك'],
+      'منطقة أوبوك':['أوبوك'],
+    }
+  },
+};
 
+function updateRegions() {
+  const country = document.getElementById('f-country').value;
+  const regionSel = document.getElementById('f-region');
+  const provinceSel = document.getElementById('f-province');
+
+  regionSel.innerHTML = '<option value="">اختر المنطقة</option>';
+  provinceSel.innerHTML = '<option value="">اختر المنطقة أولاً</option>';
+  provinceSel.disabled = true;
+
+  if (!country || !locationData[country]) {
+    regionSel.disabled = true;
+    return;
+  }
+
+  const regions = Object.keys(locationData[country].regions);
+  regions.forEach(r => {
+    regionSel.innerHTML += `<option value="${r}">${r}</option>`;
+  });
+  regionSel.disabled = false;
+}
+
+function updateProvinces() {
+  const country = document.getElementById('f-country').value;
+  const region = document.getElementById('f-region').value;
+  const provinceSel = document.getElementById('f-province');
+
+  provinceSel.innerHTML = '<option value="">اختر المحافظة</option>';
+
+  if (!country || !region || !locationData[country]) {
+    provinceSel.disabled = true;
+    return;
+  }
+
+  const provinces = locationData[country].regions[region] || [];
+  provinces.forEach(p => {
+    provinceSel.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+  provinceSel.disabled = false;
+}
 // ─── TOAST ───
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -1888,8 +2197,11 @@ document.getElementById('f-workers').dispatchEvent(new Event('input'));
 // ─── AI STUDY GENERATION ───
 async function generateStudy(){
   goStep(4);
-  const name      = document.getElementById('f-name').value     || 'مشروع تجاري';
-  const location  = document.getElementById('f-location').value  || 'السعودية';
+  const name = document.getElementById('f-name').value || 'مشروع تجاري';
+  const country = document.getElementById('f-country').options[document.getElementById('f-country').selectedIndex]?.text || '';
+  const region = document.getElementById('f-region').value || '';
+  const province = document.getElementById('f-province').value || '';
+  const location = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
   const size      = document.getElementById('f-size').value      || 'مشروع صغير';
   const workers   = document.getElementById('workers-val').textContent;
   const capital   = document.getElementById('capital-val').textContent;
@@ -1898,15 +2210,15 @@ async function generateStudy(){
   const target    = document.getElementById('f-target').value;
   const advantage = document.getElementById('f-advantage').value || 'الجودة والخدمة';
   const details   = document.getElementById('f-details').value;
-
   document.getElementById('output-title').textContent     = 'دراسة جدوى: ' + name;
   document.getElementById('study-subtitle').textContent   = 'جاري إنشاء دراسة الجدوى لـ: ' + name;
   document.getElementById('typing-state').style.display  = 'flex';
   document.getElementById('output-result').style.display = 'none';
 
+  const studyLoader = showStudyLoader();
+
   const prompt = `أنت خبير متخصص في إعداد دراسات الجدوى الاقتصادية للسوق العربي.
 أنشئ دراسة جدوى احترافية شاملة باللغة العربية للمشروع التالي:
-
 المشروع: ${name}
 القطاع: ${selSector || 'تجارة عامة'}
 الموقع: ${location}
@@ -1918,9 +2230,7 @@ async function generateStudy(){
 الجمهور المستهدف: ${target}
 الميزة التنافسية: ${advantage}
 ${details ? 'تفاصيل إضافية: ' + details : ''}
-
 اكتب دراسة جدوى متكاملة تشمل الأقسام التالية مع جداول HTML حيث يناسب:
-
 ## 1. الملخص التنفيذي
 ## 2. وصف المشروع والفرصة السوقية
 ## 3. تحليل السوق والمنافسة
@@ -1929,28 +2239,23 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 ## 5. التحليل المالي
 مع جداول HTML للتكاليف الاستثمارية، الإيرادات والمصروفات لكل سنة، ومؤشرات: IRR، NPV، نقطة التعادل، فترة الاسترداد.
 ## 6. تقييم المخاطر والتوصية النهائية
-
 استخدم أرقاماً واقعية مناسبة للسوق العربي. اجعل الدراسة عملية ومفيدة لصاحب المشروع.`;
 
-  // ── استدعاء الخادم (api/claude) بدلاً من Claude مباشرة ──
   try{
     const res = await fetch('/api/claude', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
-
     if(!res.ok){
       const err = await res.json();
       throw new Error(err?.error || 'خطأ في الخادم');
     }
-
     const data = await res.json();
+    hideStudyLoader(studyLoader);
     showResult(data.text || getDemoStudy(name, selSector, location, capital));
-
   }catch(e){
+    hideStudyLoader(studyLoader);
     console.error('API Error:', e);
     showToast('⚠️ ' + (e.message || 'حدث خطأ — جاري عرض نموذج تجريبي'));
     showResult(getDemoStudy(name, selSector, location, capital));
@@ -1960,6 +2265,73 @@ function showResult(text){
   document.getElementById('typing-state').style.display='none';
   document.getElementById('output-result').style.display='block';
   document.getElementById('output-body').innerHTML=mdToHtml(text);
+}
+  function showStudyLoader() {
+  const overlay = document.createElement('div');
+  overlay.id = 'study-loader';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(11,17,32,0.92);
+    backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:center;
+  `;
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(145deg,#101828,#162035);border:1px solid rgba(59,130,246,0.3);border-radius:24px;padding:48px 52px;text-align:center;max-width:420px;width:90%;box-shadow:0 40px 80px rgba(0,0,0,0.6);font-family:'Cairo',sans-serif;">
+      <div style="width:72px;height:72px;margin:0 auto 24px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));border:2px solid rgba(59,130,246,0.4);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:studyPulse 1.5s ease-in-out infinite;">🤖</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#E8EEFF;margin-bottom:8px;">جاري إعداد دراسة الجدوى</div>
+      <div id="study-status-msg" style="font-size:0.82rem;color:rgba(220,230,255,0.6);margin-bottom:28px;line-height:1.8;min-height:48px;">يحلل الذكاء الاصطناعي بيانات مشروعك...</div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:20px;height:6px;margin-bottom:16px;overflow:hidden;">
+        <div id="study-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8);border-radius:20px;transition:width 0.6s ease;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:rgba(220,230,255,0.4);display:flex;align-items:center;justify-content:center;gap:6px;">
+        <span>⏱</span>
+        <span>الوقت المتبقي تقريباً:</span>
+        <span id="study-countdown" style="color:#60A5FA;font-weight:700;">30 ثانية</span>
+      </div>
+    </div>
+    <style>@keyframes studyPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(59,130,246,0);}50%{transform:scale(1.05);box-shadow:0 0 20px rgba(59,130,246,0.3);}}</style>
+  `;
+  document.body.appendChild(overlay);
+
+  const messages = [
+    'يحلل الذكاء الاصطناعي بيانات مشروعك...',
+    'يدرس حجم السوق والمنافسين في منطقتك...',
+    'يحسب التكاليف الاستثمارية والتشغيلية...',
+    'يبني الإسقاطات المالية لـ 5 سنوات...',
+    'يحسب IRR و NPV ونقطة التعادل...',
+    'يُعد تحليل SWOT والمخاطر...',
+    'يكتب التوصية النهائية والخلاصة...',
+    'مراجعة الدراسة وضبط الأرقام...',
+    'اللمسات الأخيرة على دراستك...',
+  ];
+
+  let seconds = 30, msgIndex = 0;
+  const interval = setInterval(() => {
+    seconds--;
+    const progress = ((30 - seconds) / 30) * 100;
+    const bar = document.getElementById('study-progress-bar');
+    const countdown = document.getElementById('study-countdown');
+    const statusMsg = document.getElementById('study-status-msg');
+    if (bar) bar.style.width = progress + '%';
+    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'لحظات...';
+    if (statusMsg) {
+      const idx = Math.floor(((30 - seconds) / 30) * messages.length);
+      statusMsg.textContent = messages[Math.min(idx, messages.length - 1)];
+    }
+    if (seconds <= 0) clearInterval(interval);
+  }, 1000);
+
+  overlay._interval = interval;
+  return overlay;
+}
+
+function hideStudyLoader(overlay) {
+  if (overlay && overlay._interval) clearInterval(overlay._interval);
+  const bar = document.getElementById('study-progress-bar');
+  if (bar) bar.style.width = '100%';
+  setTimeout(() => {
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }, 400);
 }
 function mdToHtml(md){
   return md.replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\- (.+)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/\n{2,}/g,'</p><p>');
