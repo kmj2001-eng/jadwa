@@ -2193,15 +2193,40 @@ function updateWorkers(el){
 }
 document.getElementById('f-capital').dispatchEvent(new Event('input'));
 document.getElementById('f-workers').dispatchEvent(new Event('input'));
-
+const currencyMap = {
+  SA: 'ريال سعودي (ر.س)',
+  AE: 'درهم إماراتي (د.إ)',
+  KW: 'دينار كويتي (د.ك)',
+  QA: 'ريال قطري (ر.ق)',
+  BH: 'دينار بحريني (د.ب)',
+  OM: 'ريال عُماني (ر.ع)',
+  EG: 'جنيه مصري (ج.م)',
+  JO: 'دينار أردني (د.أ)',
+  IQ: 'دينار عراقي (د.ع)',
+  SY: 'ليرة سورية (ل.س)',
+  LB: 'ليرة لبنانية (ل.ل)',
+  YE: 'ريال يمني (ر.ي)',
+  LY: 'دينار ليبي (د.ل)',
+  TN: 'دينار تونسي (د.ت)',
+  DZ: 'دينار جزائري (د.ج)',
+  MA: 'درهم مغربي (د.م)',
+  SD: 'جنيه سوداني (ج.س)',
+  SO: 'شلن صومالي (ش.ص)',
+  MR: 'أوقية موريتانية (أ.م)',
+  PS: 'شيكل إسرائيلي (₪)',
+  KM: 'فرنك جزر القمر (ف.ق)',
+  DJ: 'فرنك جيبوتي (ف.ج)',
+};
 // ─── AI STUDY GENERATION ───
 async function generateStudy(){
   goStep(4);
   const name = document.getElementById('f-name').value || 'مشروع تجاري';
   const country = document.getElementById('f-country').options[document.getElementById('f-country').selectedIndex]?.text || '';
   const region = document.getElementById('f-region').value || '';
-  const province = document.getElementById('f-province').value || '';
-  const location = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
+ const province = document.getElementById('f-province').value || '';
+const location = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
+const countryCode = document.getElementById('f-country').value || 'SA';
+const currency = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
   const size      = document.getElementById('f-size').value      || 'مشروع صغير';
   const workers   = document.getElementById('workers-val').textContent;
   const capital   = document.getElementById('capital-val').textContent;
