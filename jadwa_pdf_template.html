@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قالب دراسة الجدوى — ذكاء الأعمال</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #2563EB;
+    --primary-light: #3B82F6;
+    --primary-dark: #1D4ED8;
+    --accent: #0EA5E9;
+    --gold: #F59E0B;
+    --green: #10B981;
+    --red: #EF4444;
+    --dark: #0F172A;
+    --dark2: #1E293B;
+    --text: #1E293B;
+    --text2: #475569;
+    --text3: #94A3B8;
+    --border: #E2E8F0;
+    --bg: #F8FAFC;
+    --white: #FFFFFF;
+    --r: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: #E5E7EB;
+    color: var(--text);
+    direction: rtl;
+  }
+
+  /* ── PAGE ── */
+  .pdf-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 20px;
+    background: var(--white);
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  }
+
+  /* ── HEADER ── */
+  .page-header {
+    background: var(--dark);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--primary);
+  }
+  .page-header .logo-text {
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .page-header .logo-bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  .page-header .logo-bars span {
+    background: var(--primary-light);
+    border-radius: 2px;
+    width: 4px;
+  }
+  .page-header .logo-bars span:nth-child(1) { height: 10px; }
+  .page-header .logo-bars span:nth-child(2) { height: 16px; }
+  .page-header .logo-bars span:nth-child(3) { height: 12px; }
+  .page-header .doc-num {
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 400;
+    direction: ltr;
+  }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    background: var(--dark);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  .page-footer .footer-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .page-footer .footer-info span {
+    color: var(--text3);
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .page-footer .page-num {
+    color: var(--text3);
+    font-size: 9px;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover-page {
+    background: var(--dark);
+    min-height: 297mm;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: -80px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37,99,235,0.25) 0%, transparent 70%);
+  }
+  .cover-page::after {
+    content: '';
+    position: absolute;
+    bottom: 60px; right: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+  }
+
+  .cover-top-bar {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+  }
+  .cover-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .cover-logo .bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  .cover-logo .bars span {
+    background: var(--primary-light);
+    border-radius: 2px;
+    width: 5px;
+  }
+  .cover-logo .bars span:nth-child(1) { height: 12px; }
+  .cover-logo .bars span:nth-child(2) { height: 20px; }
+  .cover-logo .bars span:nth-child(3) { height: 14px; }
+  .cover-logo sup {
+    font-size: 9px;
+    color: var(--primary-light);
+    font-weight: 400;
+    vertical-align: super;
+    margin-right: 2px;
+  }
+  .cover-tag {
+    background: rgba(37,99,235,0.2);
+    border: 1px solid rgba(59,130,246,0.4);
+    border-radius: 20px;
+    padding: 4px 14px;
+    color: var(--primary-light);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .cover-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 48px;
+    z-index: 1;
+    text-align: center;
+  }
+  .cover-badge {
+    background: linear-gradient(135deg, rgba(37,99,235,0.3), rgba(14,165,233,0.2));
+    border: 1px solid rgba(59,130,246,0.5);
+    border-radius: 30px;
+    padding: 6px 20px;
+    color: var(--primary-light);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+  }
+  .cover-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: white;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+  .cover-subtitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary-light);
+    margin-bottom: 32px;
+  }
+  .cover-divider {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 2px;
+    margin: 0 auto 32px;
+  }
+  .cover-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 40px;
+  }
+  .cover-meta-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: right;
+  }
+  .cover-meta-item .label {
+    color: var(--text3);
+    font-size: 9px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .cover-meta-item .value {
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .cover-prepared {
+    color: var(--text3);
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+  .cover-platform {
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .cover-platform span {
+    color: var(--primary-light);
+  }
+
+  .cover-bottom {
+    background: rgba(0,0,0,0.3);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+  }
+  .cover-bottom .tagline {
+    color: var(--text3);
+    font-size: 10px;
+  }
+  .cover-bottom .tagline span {
+    color: var(--primary-light);
+    font-weight: 600;
+  }
+  .cover-bottom .date {
+    color: var(--text3);
+    font-size: 10px;
+    direction: ltr;
+  }
+
+  /* ── TOC PAGE ── */
+  .toc-header-block {
+    background: linear-gradient(135deg, var(--dark) 0%, #162035 100%);
+    padding: 32px;
+    border-bottom: 3px solid var(--primary);
+  }
+  .section-label {
+    color: var(--primary-light);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px; height: 2px;
+    background: var(--primary-light);
+    border-radius: 2px;
+  }
+  .section-title {
+    color: white;
+    font-size: 26px;
+    font-weight: 900;
+  }
+
+  .toc-body {
+    padding: 28px 32px;
+  }
+  .toc-group {
+    margin-bottom: 28px;
+  }
+  .toc-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.2s;
+  }
+  .toc-item:hover { background: var(--bg); }
+  .toc-item .toc-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toc-item .toc-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .toc-item .toc-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .toc-item .toc-dots {
+    flex: 1;
+    border-bottom: 1px dashed var(--border);
+    margin: 0 12px;
+    min-width: 40px;
+  }
+  .toc-item .toc-page {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(37,99,235,0.08);
+    border-radius: 6px;
+    padding: 3px 8px;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  /* ── CONTENT PAGE ── */
+  .content-area {
+    padding: 28px 32px;
+    padding-bottom: 64px;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-heading .icon-box {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .section-heading h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--dark);
+  }
+  .section-heading .section-num {
+    font-size: 10px;
+    color: var(--primary);
+    font-weight: 600;
+    background: rgba(37,99,235,0.08);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+
+  /* ── EXECUTIVE SUMMARY ── */
+  .exec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .exec-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .exec-card .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .exec-card .card-body .card-label {
+    font-size: 9px;
+    color: var(--text3);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .exec-card .card-body .card-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ── TABLES ── */
+  .pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 11px;
+  }
+  .pdf-table thead tr {
+    background: linear-gradient(135deg, var(--dark) 0%, #1e3a5f 100%);
+  }
+  .pdf-table thead th {
+    color: white;
+    padding: 10px 12px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+  .pdf-table thead th:first-child { border-radius: 0 8px 0 0; }
+  .pdf-table thead th:last-child { border-radius: 8px 0 0 0; }
+  .pdf-table tbody tr:nth-child(even) { background: #F8FAFC; }
+  .pdf-table tbody tr:hover { background: #EFF6FF; }
+  .pdf-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .pdf-table tfoot tr {
+    background: #EFF6FF;
+    border-top: 2px solid var(--primary);
+  }
+  .pdf-table tfoot td {
+    padding: 10px 12px;
+    font-weight: 800;
+    color: var(--primary-dark);
+    font-size: 11px;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+  }
+  .kpi-card .kpi-value {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .kpi-card .kpi-label {
+    font-size: 9px;
+    color: var(--text3);
+    font-weight: 500;
+  }
+  .kpi-card.green .kpi-value { color: var(--green); }
+  .kpi-card.green::before { background: linear-gradient(90deg, var(--green), #34D399); }
+  .kpi-card.gold .kpi-value { color: var(--gold); }
+  .kpi-card.gold::before { background: linear-gradient(90deg, var(--gold), #FCD34D); }
+
+  /* ── SWOT ── */
+  .swot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .swot-box {
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid;
+  }
+  .swot-box.strength {
+    background: rgba(16,185,129,0.05);
+    border-color: rgba(16,185,129,0.3);
+  }
+  .swot-box.weakness {
+    background: rgba(239,68,68,0.05);
+    border-color: rgba(239,68,68,0.3);
+  }
+  .swot-box.opportunity {
+    background: rgba(37,99,235,0.05);
+    border-color: rgba(37,99,235,0.3);
+  }
+  .swot-box.threat {
+    background: rgba(245,158,11,0.05);
+    border-color: rgba(245,158,11,0.3);
+  }
+  .swot-box .swot-title {
+    font-size: 11px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .swot-box.strength .swot-title { color: var(--green); }
+  .swot-box.weakness .swot-title { color: var(--red); }
+  .swot-box.opportunity .swot-title { color: var(--primary); }
+  .swot-box.threat .swot-title { color: var(--gold); }
+  .swot-box ul {
+    list-style: none;
+    padding: 0;
+  }
+  .swot-box ul li {
+    font-size: 10px;
+    color: var(--text2);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    line-height: 1.5;
+  }
+  .swot-box ul li::before {
+    content: '•';
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .swot-box.strength ul li::before { color: var(--green); }
+  .swot-box.weakness ul li::before { color: var(--red); }
+  .swot-box.opportunity ul li::before { color: var(--primary); }
+  .swot-box.threat ul li::before { color: var(--gold); }
+
+  /* ── TEXT ── */
+  .pdf-text {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 2;
+    margin-bottom: 16px;
+  }
+  .pdf-h3 {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pdf-h3::before {
+    content: '';
+    width: 4px; height: 16px;
+    background: var(--primary);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── DECISION BOX ── */
+  .decision-box {
+    background: linear-gradient(135deg, #0F172A 0%, #1e3a5f 100%);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(59,130,246,0.3);
+    text-align: center;
+  }
+  .decision-box .decision-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  .decision-box .decision-title {
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .decision-box .decision-sub {
+    color: #94A3B8;
+    font-size: 10px;
+    line-height: 1.8;
+  }
+  .decision-box .verdict {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--green), #34D399);
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 8px 24px;
+    margin-top: 14px;
+  }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer-box {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .disclaimer-box .disc-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .disclaimer-box p {
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.8;
+  }
+
+  /* ── CONTACT ── */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .contact-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .contact-item .c-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .contact-item .c-label {
+    font-size: 9px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .contact-item .c-value {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  /* ── SIGNATURE ── */
+  .signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 20px;
+  }
+  .signature-box {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .signature-box .sig-role {
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 40px;
+  }
+  .signature-box .sig-line {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    font-size: 10px;
+    color: var(--text2);
+    font-weight: 600;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; }
+    .pdf-page {
+      margin: 0;
+      box-shadow: none;
+      page-break-after: always;
+    }
+    .print-btn { display: none !important; }
+  }
+
+  .print-btn {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(37,99,235,0.4);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .print-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(37,99,235,0.5);
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ PAGE 1 — COVER ══════════════════════════════════ -->
+<div class="pdf-page">
+  <div class="cover-page">
+
+    <div class="cover-top-bar">
+      <div class="cover-logo">
+        <div class="bars">
+          <span></span><span></span><span></span>
+        </div>
+        ذكاء الأعمال<sup>®</sup>
+      </div>
+      <div class="cover-tag">دراسة جدوى احترافية</div>
+    </div>
+
+    <div class="cover-body">
+      <div class="cover-badge">✦ تقرير متكامل بالذكاء الاصطناعي ✦</div>
+      <div class="cover-title">اسم المشروع هنا</div>
+      <div class="cover-subtitle">دراسة الجدوى AI</div>
+      <div class="cover-divider"></div>
+
+      <div class="cover-meta-grid">
+        <div class="cover-meta-item">
+          <div class="label">فكرة المشروع</div>
+          <div class="value">وصف المشروع</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">الموقع</div>
+          <div class="value">المملكة العربية السعودية | الرياض</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">بداية المشروع</div>
+          <div class="value">2025-01-01</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">فترة الدراسة</div>
+          <div class="value">5 سنوات</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">عملة المشروع</div>
+          <div class="value">ريال سعودي 🇸🇦</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">رقم الدراسة</div>
+          <div class="value">AI 0001</div>
+        </div>
+      </div>
+
+      <div class="cover-prepared">تم اعداد التقرير بواسطة</div>
+      <div class="cover-platform">
+        منصة <span>ذكاء الأعمال</span> — المنصة الأولى لدراسات الجدوى والتحليل المالي
+      </div>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="tagline"><span>جدوى في الوقت</span>.....<span>جدوى في السعر</span></div>
+      <div class="date">تاريخ الإصدار: 01 يناير 2025</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PAGE 2 — TOC ══════════════════════════════════ -->
+<div class="pdf-page">
+  <div class="page-header">
+    <div class="logo-text">
+      <div class="logo-bars"><span></span><span></span><span></span></div>
+      ذكاء الأعمال
+    </div>
+    <div class="doc-num">AI 0001 | اسم المشروع</div>
+  </div>
+
+  <div class="toc-header-block">
+    <div class="section-label">محتويات التقرير</div>
+    <div class="section-title">جدول المحتويات</div>
+  </div>
+
+  <div class="toc-body">
+
+    <div class="toc-group">
+      <div class="toc-group-title">🗂 الإطار العام</div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(37,99,235,0.1);">📋</div>
+          <span class="toc-name">مقدمة وأهداف الدراسة</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">3</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(245,158,11,0.1);">⚠️</div>
+          <span class="toc-name">افتراضات الدراسة</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">4</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(239,68,68,0.1);">📄</div>
+          <span class="toc-name">خطاب إخلاء المسؤولية</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">5</div>
+      </div>
+    </div>
+
+    <div class="toc-group">
+      <div class="toc-group-title">📊 الدراسات الأساسية</div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(37,99,235,0.1);">🎯</div>
+          <span class="toc-name">الدراسة الاستراتيجية والملخص التنفيذي</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">6</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(16,185,129,0.1);">📈</div>
+          <span class="toc-name">الدراسة التسويقية وتحليل السوق</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">8</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(245,158,11,0.1);">👥</div>
+          <span class="toc-name">الدراسة الإدارية وفريق العمل</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">10</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(14,165,233,0.1);">⚙️</div>
+          <span class="toc-name">الدراسة الفنية والتشغيلية</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">12</div>
+      </div>
+    </div>
+
+    <div class="toc-group">
+      <div class="toc-group-title">💰 التحليل المالي</div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(37,99,235,0.1);">💹</div>
+          <span class="toc-name">قائمة الدخل المتوقعة لخمس سنوات</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">14</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(16,185,129,0.1);">📊</div>
+          <span class="toc-name">المؤشرات المالية — IRR, NPV, ROI</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">16</div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-left">
+          <div class="toc-icon" style="background:rgba(239,68,68,0.1);">⚡</div>
+          <span class="toc-name">دراسة المخاطر والقرار الاستثماري</span>
+        </div>
+        <div class="toc-dots"></div>
+        <div class="toc-page">18</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <div class="footer-info">
+      <span>🌐 www.example.com</span>
+      <span>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="761f18101936130e171b061a135815191b">[email&#160;protected]</a></span>
+      <span>📞 +966 5X XXX XXXX</span>
+    </div>
+    <div class="page-num">2</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PAGE 3 — EXEC SUMMARY ══════════════════════════════════ -->
+<div class="pdf-page">
+  <div class="page-header">
+    <div class="logo-text">
+      <div class="logo-bars"><span></span><span></span><span></span></div>
+      ذكاء الأعمال
+    </div>
+    <div class="doc-num">AI 0001 | اسم المشروع</div>
+  </div>
+
+  <div class="content-area">
+    <div class="section-heading">
+      <div class="icon-box">🎯</div>
+      <div>
+        <div class="section-num">القسم الأول</div>
+        <h2>الملخص التنفيذي</h2>
+      </div>
+    </div>
+
+    <div class="exec-grid">
+      <div class="exec-card">
+        <div class="card-icon">💡</div>
+        <div class="card-body">
+          <div class="card-label">فكرة المشروع</div>
+          <div class="card-value">اسم المشروع</div>
+        </div>
+      </div>
+      <div class="exec-card">
+        <div class="card-icon">📍</div>
+        <div class="card-body">
+          <div class="card-label">الموقع الجغرافي</div>
+          <div class="card-value">السعودية | الرياض</div>
+        </div>
+      </div>
+      <div class="exec-card">
+        <div class="card-icon">💰</div>
+        <div class="card-body">
+          <div class="card-label">رأس المال المطلوب</div>
+          <div class="card-value">500,000 ريال سعودي</div>
+        </div>
+      </div>
+      <div class="exec-card">
+        <div class="card-icon">📅</div>
+        <div class="card-body">
+          <div class="card-label">فترة الاسترداد</div>
+          <div class="card-value">2.5 سنة</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value">32%</div>
+        <div class="kpi-label">العائد على الاستثمار ROI</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-value">28%</div>
+        <div class="kpi-label">معدل العائد الداخلي IRR</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-value">185K</div>
+        <div class="kpi-label">صافي القيمة الحالية NPV</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">42%</div>
+        <div class="kpi-label">هامش الربح الإجمالي</div>
+      </div>
+    </div>
+
+    <div class="pdf-h3">نظرة عامة على المشروع</div>
+    <p class="pdf-text">
+      يهدف هذا المشروع إلى تقديم خدمات متميزة في السوق المحلية، مع التركيز على تلبية احتياجات الجمهور المستهدف بجودة عالية وسعر منافس. يعتمد المشروع على نموذج عمل مرن يمكّنه من التكيف مع متطلبات السوق المتغيرة وتحقيق نمو مستدام على المدى الطويل.
+    </p>
+
+    <div class="pdf-h3">تحليل SWOT</div>
+    <div class="swot-grid">
+      <div class="swot-box strength">
+        <div class="swot-title">✅ نقاط القوة</div>
+        <ul>
+          <li>خبرة متخصصة في المجال</li>
+          <li>تكاليف تشغيل منخفضة</li>
+          <li>جودة خدمة عالية</li>
+          <li>مرونة في الأسعار</li>
+        </ul>
+      </div>
+      <div class="swot-box weakness">
+        <div class="swot-title">⚠️ نقاط الضعف</div>
+        <ul>
+          <li>حداثة المشروع في السوق</li>
+          <li>محدودية الكوادر البشرية</li>
+          <li>الاعتماد على عدد محدود من العملاء</li>
+        </ul>
+      </div>
+      <div class="swot-box opportunity">
+        <div class="swot-title">🚀 الفرص</div>
+        <ul>
+          <li>نمو الطلب في السوق المحلي</li>
+          <li>دعم حكومي لقطاع ريادة الأعمال</li>
+          <li>إمكانية التوسع الجغرافي</li>
+          <li>التحول الرقمي المتسارع</li>
+        </ul>
+      </div>
+      <div class="swot-box threat">
+        <div class="swot-title">🔴 التهديدات</div>
+        <ul>
+          <li>المنافسة الحادة في القطاع</li>
+          <li>التغيرات التنظيمية</li>
+          <li>التقلبات الاقتصادية</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="footer-info">
+      <span>🌐 www.example.com</span>
+      <span>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="026b6c646d42677a636f726e672c616d6f">[email&#160;protected]</a></span>
+      <span>📞 +966 5X XXX XXXX</span>
+    </div>
+    <div class="page-num">3</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PAGE 4 — FINANCIAL ══════════════════════════════════ -->
+<div class="pdf-page">
+  <div class="page-header">
+    <div class="logo-text">
+      <div class="logo-bars"><span></span><span></span><span></span></div>
+      ذكاء الأعمال
+    </div>
+    <div class="doc-num">AI 0001 | اسم المشروع</div>
+  </div>
+
+  <div class="content-area">
+    <div class="section-heading">
+      <div class="icon-box">💹</div>
+      <div>
+        <div class="section-num">القسم الخامس</div>
+        <h2>التحليل المالي</h2>
+      </div>
+    </div>
+
+    <div class="pdf-h3">قائمة الدخل المتوقعة (5 سنوات)</div>
+    <table class="pdf-table">
+      <thead>
+        <tr>
+          <th>البند</th>
+          <th>السنة 1</th>
+          <th>السنة 2</th>
+          <th>السنة 3</th>
+          <th>السنة 4</th>
+          <th>السنة 5</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>إجمالي الإيرادات</strong></td>
+          <td>320,000</td>
+          <td>400,000</td>
+          <td>490,000</td>
+          <td>580,000</td>
+          <td>680,000</td>
+        </tr>
+        <tr>
+          <td>تكاليف الإيرادات</td>
+          <td>144,000</td>
+          <td>176,000</td>
+          <td>210,000</td>
+          <td>244,000</td>
+          <td>282,000</td>
+        </tr>
+        <tr>
+          <td><strong>مجمل الربح</strong></td>
+          <td>176,000</td>
+          <td>224,000</td>
+          <td>280,000</td>
+          <td>336,000</td>
+          <td>398,000</td>
+        </tr>
+        <tr>
+          <td>المصاريف التشغيلية</td>
+          <td>98,000</td>
+          <td>112,000</td>
+          <td>128,000</td>
+          <td>142,000</td>
+          <td>158,000</td>
+        </tr>
+        <tr>
+          <td>الإهلاكات</td>
+          <td>18,000</td>
+          <td>18,000</td>
+          <td>18,000</td>
+          <td>14,000</td>
+          <td>14,000</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>💰 صافي الربح</td>
+          <td>60,000</td>
+          <td>94,000</td>
+          <td>134,000</td>
+          <td>180,000</td>
+          <td>226,000</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="pdf-h3">التكلفة الرأسمالية للمشروع</div>
+    <table class="pdf-table">
+      <thead>
+        <tr>
+          <th>البند</th>
+          <th>التكلفة (ريال)</th>
+          <th>نسبة الإهلاك</th>
+          <th>العمر الافتراضي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>التجهيزات والمعدات</td>
+          <td>150,000</td>
+          <td>20%</td>
+          <td>5 سنوات</td>
+        </tr>
+        <tr>
+          <td>الأثاث والديكور</td>
+          <td>40,000</td>
+          <td>25%</td>
+          <td>4 سنوات</td>
+        </tr>
+        <tr>
+          <td>وسائل النقل</td>
+          <td>80,000</td>
+          <td>20%</td>
+          <td>5 سنوات</td>
+        </tr>
+        <tr>
+          <td>الأصول غير الملموسة</td>
+          <td>30,000</td>
+          <td>33%</td>
+          <td>3 سنوات</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>الإجمالي</td>
+          <td>300,000</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <div class="footer-info">
+      <span>🌐 www.example.com</span>
+      <span>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3e575058517e5b465f534e525b105d5153">[email&#160;protected]</a></span>
+      <span>📞 +966 5X XXX XXXX</span>
+    </div>
+    <div class="page-num">4</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PAGE 5 — DECISION ══════════════════════════════════ -->
+<div class="pdf-page">
+  <div class="page-header">
+    <div class="logo-text">
+      <div class="logo-bars"><span></span><span></span><span></span></div>
+      ذكاء الأعمال
+    </div>
+    <div class="doc-num">AI 0001 | اسم المشروع</div>
+  </div>
+
+  <div class="content-area">
+    <div class="section-heading">
+      <div class="icon-box">⚡</div>
+      <div>
+        <div class="section-num">القسم السادس</div>
+        <h2>القرار الاستثماري</h2>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <div class="decision-icon">🏆</div>
+      <div class="decision-title">التوصية النهائية للمشروع</div>
+      <div class="decision-sub">
+        بناءً على التحليل الشامل للمشروع من النواحي الاستراتيجية والتسويقية والمالية،<br>
+        يُوصى باتخاذ القرار التالي:
+      </div>
+      <div class="verdict">✅ المشروع جدير بالاستثمار</div>
+    </div>
+
+    <div class="pdf-h3">ملخص المؤشرات المالية</div>
+    <table class="pdf-table">
+      <thead>
+        <tr>
+          <th>المؤشر</th>
+          <th>القيمة</th>
+          <th>المعيار المقبول</th>
+          <th>التقييم</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>العائد على الاستثمار (ROI)</td>
+          <td><strong>32%</strong></td>
+          <td>أكثر من 15%</td>
+          <td style="color:var(--green);font-weight:700;">✅ ممتاز</td>
+        </tr>
+        <tr>
+          <td>معدل العائد الداخلي (IRR)</td>
+          <td><strong>28%</strong></td>
+          <td>أكثر من تكلفة رأس المال</td>
+          <td style="color:var(--green);font-weight:700;">✅ ممتاز</td>
+        </tr>
+        <tr>
+          <td>صافي القيمة الحالية (NPV)</td>
+          <td><strong>185,000 ر.س</strong></td>
+          <td>قيمة موجبة</td>
+          <td style="color:var(--green);font-weight:700;">✅ موجب</td>
+        </tr>
+        <tr>
+          <td>فترة الاسترداد (PBP)</td>
+          <td><strong>2.5 سنة</strong></td>
+          <td>أقل من 5 سنوات</td>
+          <td style="color:var(--green);font-weight:700;">✅ جيد</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="disclaimer-box">
+      <div class="disc-title">⚠️ تنبيه مهم</div>
+      <p>تم إعداد هذه الدراسة باستخدام أدوات الذكاء الاصطناعي، وهي مبنية على بيانات متاحة وتحليلات نموذجية قد لا تعكس بدقة واقع السوق أو الخصوصيات المالية الفعلية لكل مشروع. نؤكد على ضرورة أن يقوم العميل بمراجعة الأرقام والتحقق منها من مصادر مستقلة والحصول على الاستشارات اللازمة قبل اتخاذ أي قرارات مالية.</p>
+    </div>
+
+    <div class="pdf-h3">معلومات التواصل</div>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <div class="c-icon">🌐</div>
+        <div class="c-label">الموقع الإلكتروني</div>
+        <div class="c-value">www.example.com</div>
+      </div>
+      <div class="contact-item">
+        <div class="c-icon">✉️</div>
+        <div class="c-label">البريد الإلكتروني</div>
+        <div class="c-value"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="99f0f7fff6d9fce1f8f4e9f5fcb7faf6f4">[email&#160;protected]</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="c-icon">📞</div>
+        <div class="c-label">رقم التواصل</div>
+        <div class="c-value">+966 5X XXX XXXX</div>
+      </div>
+    </div>
+
+    <div class="signature-grid">
+      <div class="signature-box">
+        <div class="sig-role">الطرف الأول — مالك المشروع</div>
+        <div class="sig-line">الاسم والتوقيع</div>
+      </div>
+      <div class="signature-box">
+        <div class="sig-role">الطرف الثاني — المتلقي</div>
+ 
