@@ -2563,6 +2563,25 @@ function copyStudy(){
   return overlay;
 }
 
+function showPDFLoader(){
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-loader';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(11,17,32,0.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(145deg,#101828,#162035);border:1px solid rgba(59,130,246,0.3);border-radius:24px;padding:40px 48px;text-align:center;max-width:380px;width:90%;font-family:'Cairo',sans-serif;">
+      <div style="font-size:2rem;margin-bottom:16px;">📄</div>
+      <div style="font-size:1rem;font-weight:700;color:#E8EEFF;margin-bottom:8px;">جاري إعداد ملف PDF</div>
+      <div style="font-size:0.8rem;color:rgba(220,230,255,0.6);margin-bottom:20px;">يرجى الانتظار...</div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:20px;height:5px;overflow:hidden;">
+        <div id="pdf-progress-bar" style="height:100%;width:30%;background:linear-gradient(90deg,#3B82F6,#38BDF8);border-radius:20px;transition:width 0.4s ease;"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  let w = 30;
+  overlay._interval = setInterval(()=>{ w = Math.min(w+5, 90); const b=document.getElementById('pdf-progress-bar'); if(b) b.style.width=w+'%'; }, 400);
+  return overlay;
+}
+
 function hidePDFLoader(overlay){
   if (overlay && overlay._interval) clearInterval(overlay._interval);
   const bar = document.getElementById('pdf-progress-bar');
