@@ -2267,6 +2267,7 @@ function goStep(n){
     if(i+1===n) ws.classList.add('active');
   });
   document.getElementById('step-tip').textContent=stepTips[n-1];
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function pickSector(btn,name){
   document.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('selected'));
@@ -2734,55 +2735,7 @@ function openPDFTemplate(){
       </div>
     </div>
     <div class="study-content">${bodyHTML}</div>
-    <script>
-    (function(){
-      const canvas = document.getElementById('marketChart');
-      if(!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const segments = [
-        { label: 'مشروعك', pct: 18, color: '#2563EB' },
-        { label: 'المنافس الأول', pct: 32, color: '#60A5FA' },
-        { label: 'المنافس الثاني', pct: 24, color: '#93C5FD' },
-        { label: 'المنافس الثالث', pct: 15, color: '#BFDBFE' },
-        { label: 'آخرون', pct: 11, color: '#DBEAFE' },
-      ];
-      const cx = 80, cy = 80, r = 70, ir = 38;
-      let angle = -Math.PI / 2;
-      segments.forEach(seg => {
-        const slice = (seg.pct / 100) * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, r, angle, angle + slice);
-        ctx.closePath();
-        ctx.fillStyle = seg.color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        angle += slice;
-      });
-      // ثقب الدونات
-      ctx.beginPath();
-      ctx.arc(cx, cy, ir, 0, 2 * Math.PI);
-      ctx.fillStyle = '#F8FAFC';
-      ctx.fill();
-      // نص في المنتصف
-      ctx.fillStyle = '#1D4ED8';
-      ctx.font = 'bold 13px Tajawal, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('18%', cx, cy - 4);
-      ctx.fillStyle = '#64748B';
-      ctx.font = '9px Tajawal, sans-serif';
-      ctx.fillText('حصتك', cx, cy + 10);
-      // Legend
-      const legend = document.getElementById('chartLegend');
-      if(legend) {
-        legend.innerHTML = segments.map(s =>
-          '<div class="legend-item"><div class="legend-dot" style="background:'+s.color+'"></div><span><span class="legend-pct">'+s.pct+'%</span>'+s.label+'</span></div>'
-        ).join('');
-      }
-    })();
-    </script>
+
   </div>
   <div class="page-footer">
     <div class="footer-info"><span>🌐 ذكاء الأعمال</span><span>دراسات جدوى بالذكاء الاصطناعي</span></div>
@@ -2805,6 +2758,41 @@ function openPDFTemplate(){
     html2canvas: { scale: 2, useCORS: true, letterRendering: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
+
+  // رسم الـ chart قبل التنزيل
+  setTimeout(() => {
+    try {
+      const canvas = container.querySelector('#marketChart');
+      if(canvas) {
+        const ctx = canvas.getContext('2d');
+        const segments = [
+          { label: 'مشروعك', pct: 18, color: '#2563EB' },
+          { label: 'المنافس الأول', pct: 32, color: '#60A5FA' },
+          { label: 'المنافس الثاني', pct: 24, color: '#93C5FD' },
+          { label: 'المنافس الثالث', pct: 15, color: '#BFDBFE' },
+          { label: 'آخرون', pct: 11, color: '#DBEAFE' },
+        ];
+        const cx=80,cy=80,r=70,ir=38;
+        let angle=-Math.PI/2;
+        segments.forEach(seg=>{
+          const slice=(seg.pct/100)*2*Math.PI;
+          ctx.beginPath(); ctx.moveTo(cx,cy);
+          ctx.arc(cx,cy,r,angle,angle+slice);
+          ctx.closePath(); ctx.fillStyle=seg.color; ctx.fill();
+          ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+          angle+=slice;
+        });
+        ctx.beginPath(); ctx.arc(cx,cy,ir,0,2*Math.PI);
+        ctx.fillStyle='#F8FAFC'; ctx.fill();
+        ctx.fillStyle='#1D4ED8'; ctx.font='bold 13px sans-serif';
+        ctx.textAlign='center'; ctx.fillText('18%',cx,cy-4);
+        ctx.fillStyle='#64748B'; ctx.font='9px sans-serif';
+        ctx.fillText('حصتك',cx,cy+10);
+        const legend=container.querySelector('#chartLegend');
+        if(legend) legend.innerHTML=segments.map(s=>'<div class="legend-item"><div class="legend-dot" style="background:'+s.color+'"></div><span><span class="legend-pct">'+s.pct+'%</span>'+s.label+'</span></div>').join('');
+      }
+    } catch(e){}
+  }, 300);
 
   html2pdf().set(opt).from(container).save().then(() => {
     document.body.removeChild(container);
