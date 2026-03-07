@@ -1446,33 +1446,34 @@ footer {
     </div>
   </div>
 
- <footer>
-  <div class="footer-inner">
+<footer>
+  <div class="footer-inner" style="flex-direction:column;align-items:center;">
 
-    <!-- صورة وسائل الدفع في الوسط أعلى -->
-    <div style="text-align:center;width:100%;margin-bottom:32px;">
-      <div style="border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px 28px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-block;">
-        <img src="payment.png" alt="طرق الدفع" style="height:40px;width:auto;">
+    <!-- صورة الدفع وحدها في الأعلى -->
+    <div style="width:100%;text-align:center;margin-bottom:40px;">
+      <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 20px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-block;">
+        <img src="payment.png" alt="طرق الدفع" style="height:28px;width:auto;">
       </div>
     </div>
 
-    <!-- أعمدة الفوتر -->
-    <div class="footer-brand">
-      <div class="logo-row">
-        <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
+    <!-- أربعة أعمدة -->
+    <div style="display:flex;width:100%;justify-content:space-between;gap:20px;">
+      <div class="footer-brand">
+        <div class="logo-row">
+          <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
+        </div>
+        <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
       </div>
-      <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
+      <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
+      <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
+      <div class="footer-col"><h4>الشركة</h4><a>من نحن</a><a>تواصل معنا</a><a>سياسة الخصوصية</a><a>شروط الاستخدام</a></div>
     </div>
-
-    <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
-    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
-    <div class="footer-col"><h4>الشركة</h4><a>من نحن</a><a>تواصل معنا</a><a>سياسة الخصوصية</a><a>شروط الاستخدام</a></div>
 
   </div>
 
   <div class="footer-bottom">
     <span id="footer-year"></span>
-    <script>document.getElementById('footer-year').textContent = '© ذكاء الأعمال ' + new Date().getFullYear() + ' · جميع الحقوق محفوظة';</script>
+    <script>document.getElementById('footer-year').textContent = '© ' + new Date().getFullYear() + ' ذكاء الأعمال · جميع الحقوق محفوظة';</script>
     <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
   </div>
 </footer>
