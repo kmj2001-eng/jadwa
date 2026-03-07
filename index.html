@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ذكاء الأعمال · منصة لدراسات الجدوى بالذكاء الاصطناعي</title>
@@ -1392,7 +1394,7 @@ footer {
         <h2 class="section-title">كل ما تحتاجه<br>في <span class="accent">دراسة واحدة</span></h2>
         <p class="section-sub">منصة ذكاء الأعمال لا تكتفي بالأرقام — تبني تحليلاً استراتيجياً شاملاً يساعدك على اتخاذ قرار مدروس.</p>
         <button class="btn-hero" style="margin-top:32px;" onclick="showPage('tool')">
-          <span>جرّب الآن مجاناً</span>
+          <span>جرّب الآن </span>
           <div class="btn-hero-icon">←</div>
         </button>
       </div>
@@ -1605,7 +1607,7 @@ footer {
                 <div class="output-actions">
                   <button class="oaction" onclick="copyStudy()">📋 نسخ</button>
                   <button class="oaction" onclick="showToast('💾 تم الحفظ في لوحة التحكم')">💾 حفظ</button>
-                  <button class="oaction" onclick="showToast('📄 جاري تصدير PDF...')">📄 PDF</button>
+                   <button class="oaction" onclick="exportPDF()">📄 PDF</button>
                 </div>
               </div>
               <div class="output-body" id="output-body"></div>
@@ -1988,7 +1990,227 @@ function mdToHtml(md){
   return md.replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\- (.+)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/\n{2,}/g,'</p><p>');
 }
 function copyStudy(){
-  navigator.clipboard.writeText(document.getElementById('output-body').innerText).then(()=>showToast('✅ تم نسخ الدراسة'));
+ // إنشاء overlay رسالة التحميل
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-loader';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(11,17,32,0.92);
+    backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:center;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:linear-gradient(145deg,#101828,#162035);
+      border:1px solid rgba(59,130,246,0.3);
+      border-radius:24px;
+      padding:48px 52px;
+      text-align:center;
+      max-width:400px;
+      width:90%;
+      box-shadow:0 40px 80px rgba(0,0,0,0.6);
+      font-family:'Cairo',sans-serif;
+    ">
+      <!-- أيقونة PDF متحركة -->
+      <div style="
+        width:72px; height:72px; margin:0 auto 24px;
+        background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));
+        border:2px solid rgba(59,130,246,0.4);
+        border-radius:18px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:2rem;
+        animation:pdfPulse 1.5s ease-in-out infinite;
+      ">📄</div>
+
+      <!-- العنوان -->
+      <div style="font-size:1.1rem; font-weight:700; color:#E8EEFF; margin-bottom:8px;">
+        جاري إعداد ملف PDF
+      </div>
+
+      <!-- الوصف -->
+      <div id="pdf-status-msg" style="font-size:0.8rem; color:rgba(220,230,255,0.6); margin-bottom:28px; line-height:1.7;">
+        نقوم بتنسيق دراستك وتجهيزها للتحميل...
+      </div>
+
+      <!-- شريط التقدم -->
+      <div style="
+        background:rgba(255,255,255,0.07);
+        border-radius:20px; height:6px;
+        margin-bottom:16px; overflow:hidden;
+      ">
+        <div id="pdf-progress-bar" style="
+          height:100%; width:0%;
+          background:linear-gradient(90deg,#3B82F6,#38BDF8);
+          border-radius:20px;
+          transition:width 0.4s ease;
+        "></div>
+      </div>
+
+      <!-- العداد التنازلي -->
+      <div style="font-size:0.75rem; color:rgba(220,230,255,0.4); display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span>⏱</span>
+        <span>الوقت المتبقي تقريباً:</span>
+        <span id="pdf-countdown" style="color:#60A5FA; font-weight:700;">15 ثانية</span>
+      </div>
+    </div>
+
+    <style>
+      @keyframes pdfPulse {
+        0%,100% { transform:scale(1); box-shadow:0 0 0 rgba(59,130,246,0); }
+        50%      { transform:scale(1.05); box-shadow:0 0 20px rgba(59,130,246,0.3); }
+      }
+    </style>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // رسائل تتغير أثناء التحميل
+  const messages = [
+    'نقوم بتنسيق دراستك وتجهيزها للتحميل...',
+    'جاري معالجة الجداول المالية...',
+    'جاري ضبط التخطيط وترتيب الصفحات...',
+    'تحميل خط Tajawal العربي...',
+    'اللمسات الأخيرة على ملف PDF...',
+  ];
+
+  let seconds = 15;
+  let msgIndex = 0;
+
+  const interval = setInterval(() => {
+    seconds--;
+    const progress = ((15 - seconds) / 15) * 100;
+    const bar = document.getElementById('pdf-progress-bar');
+    const countdown = document.getElementById('pdf-countdown');
+    const statusMsg = document.getElementById('pdf-status-msg');
+
+    if (bar) bar.style.width = progress + '%';
+    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'لحظات...';
+    if (statusMsg && seconds % 3 === 0) {
+      msgIndex = (msgIndex + 1) % messages.length;
+      statusMsg.textContent = messages[msgIndex];
+    }
+
+    if (seconds <= 0) clearInterval(interval);
+  }, 1000);
+
+  overlay._interval = interval;
+  return overlay;
+}
+
+function hidePDFLoader(overlay){
+  if (overlay && overlay._interval) clearInterval(overlay._interval);
+  const bar = document.getElementById('pdf-progress-bar');
+  if (bar) bar.style.width = '100%';
+  setTimeout(() => {
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }, 400);
+}
+
+function exportPDF(){
+  const title  = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
+  const bodyEl = document.getElementById('output-body');
+
+  const loader = showPDFLoader();
+
+  function parseNode(node, content) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent.trim();
+      if (text) content.push({ text, alignment: 'right' });
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const tag = node.tagName.toLowerCase();
+
+    if (tag === 'h2') {
+      content.push({ text: node.textContent.trim(), style: 'h2', alignment: 'right', margin: [0, 16, 0, 6] });
+    } else if (tag === 'h3') {
+      content.push({ text: node.textContent.trim(), style: 'h3', alignment: 'right', margin: [0, 10, 0, 4] });
+    } else if (tag === 'p') {
+      const text = node.textContent.trim();
+      if (text) content.push({ text, style: 'body', alignment: 'right', margin: [0, 2, 0, 4] });
+    } else if (tag === 'ul' || tag === 'ol') {
+      const items = [];
+      node.querySelectorAll('li').forEach(li => {
+        items.push({ text: '• ' + li.textContent.trim(), style: 'body', alignment: 'right' });
+      });
+      if (items.length) content.push({ stack: items, margin: [0, 4, 16, 8] });
+    } else if (tag === 'table') {
+      const rows = [];
+      node.querySelectorAll('tr').forEach((tr, i) => {
+        const cells = [];
+        tr.querySelectorAll('th, td').forEach(cell => {
+          cells.push({
+            text: cell.textContent.trim(),
+            style: i === 0 ? 'tableHeader' : 'tableCell',
+            alignment: 'right',
+            fillColor: i === 0 ? '#1D4ED8' : (i % 2 === 0 ? '#f0f5ff' : '#ffffff')
+          });
+        });
+        if (cells.length) rows.push(cells);
+      });
+      if (rows.length) {
+        content.push({
+          table: {
+            headerRows: 1,
+            widths: Array(rows[0].length).fill('*'),
+            body: rows
+          },
+          layout: {
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#d0d9f0',
+            vLineColor: () => '#d0d9f0',
+          },
+          margin: [0, 8, 0, 12]
+        });
+      }
+    } else {
+      node.childNodes.forEach(child => parseNode(child, content));
+    }
+  }
+
+  const content = [];
+  bodyEl.childNodes.forEach(node => parseNode(node, content));
+
+  pdfMake.fonts = {
+    Tajawal: {
+      normal:      'https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1rzaLCr5IlLA.woff2',
+      bold:        'https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1nzeLCr5IlLA.woff2',
+      italics:     'https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1rzaLCr5IlLA.woff2',
+      bolditalics: 'https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1nzeLCr5IlLA.woff2',
+    }
+  };
+
+  const docDefinition = {
+    pageSize: 'A4',
+    pageMargins: [40, 60, 40, 60],
+    defaultStyle: { font: 'Tajawal', fontSize: 11, lineHeight: 1.7, alignment: 'right' },
+    styles: {
+      header:      { fontSize: 20, bold: true, color: '#1D4ED8', alignment: 'center', margin: [0, 0, 0, 6] },
+      subheader:   { fontSize: 10, color: '#888888', alignment: 'center', margin: [0, 0, 0, 20] },
+      h2:          { fontSize: 14, bold: true, color: '#1D4ED8' },
+      h3:          { fontSize: 12, bold: true, color: '#1e40af' },
+      body:        { fontSize: 11, color: '#222222' },
+      tableHeader: { fontSize: 10, bold: true, color: '#ffffff' },
+      tableCell:   { fontSize: 10, color: '#1a1a2e' },
+      footer:      { fontSize: 9,  color: '#aaaaaa', alignment: 'center' },
+    },
+    content: [
+      { text: title, style: 'header' },
+      { text: 'أُعدَّت بواسطة منصة ذكاء الأعمال · ' + new Date().toLocaleDateString('ar-SA'), style: 'subheader' },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, lineColor: '#3B82F6' }], margin: [0, 0, 0, 20] },
+      ...content,
+      { text: '\nمنصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي', style: 'footer', margin: [0, 30, 0, 0] }
+    ]
+  };
+
+  pdfMake.createPdf(docDefinition).download(title + '.pdf');
+
+  setTimeout(() => {
+    hidePDFLoader(loader);
+    showToast('✅ تم تحميل دراسة الجدوى بنجاح في ملف (PDF)!');
+  }, 14000);
 }
 function getDemoStudy(name,sector,loc,capital){
   return`## الملخص التنفيذي\n\nيستعرض هذا التقرير دراسة جدوى شاملة لمشروع **${name}** في قطاع ${sector||'التجارة'} بمنطقة ${loc||'السعودية'}، برأس مال مبدئي قدره **${capital}**.\n\nتشير نتائج التحليل إلى أن المشروع **قابل للتطبيق اقتصادياً** بمعدل عائد داخلي (IRR) يبلغ **22.4%**، وفترة استرداد لرأس المال تُقدّر بـ **28 شهراً**.\n\n## وصف المشروع والفرصة السوقية\n\nيستهدف المشروع فجوة واضحة في السوق المحلي، حيث يُشير تحليل الطلب إلى نمو سنوي بنسبة **8.5%** في هذا القطاع خلال الفترة 2024-2028.\n\n## تحليل السوق والمنافسة\n\n### جدول المنافسين الرئيسيين\n\n<table>\n<tr><th>المنافس</th><th>الحصة السوقية</th><th>نقطة القوة</th><th>نقطة الضعف</th></tr>\n<tr><td>المنافس الأول</td><td>35%</td><td>العلامة التجارية</td><td>الأسعار المرتفعة</td></tr>\n<tr><td>المنافس الثاني</td><td>25%</td><td>الموقع الجغرافي</td><td>جودة الخدمة</td></tr>\n<tr><td>مشروعنا (مستهدف)</td><td>15%</td><td>الجودة + التقنية</td><td>العلامة الناشئة</td></tr>\n</table>\n\n**نقاط القوة:** موقع استراتيجي، فريق متخصص، ميزة تنافسية واضحة.\n**الفرص:** نمو القطاع، دعم حكومي، تحول رقمي متسارع.\n\n## الخطة التشغيلية\n\nيستلزم المشروع فريقاً من **8-12 موظفاً** في المرحلة الأولى، مع خطة توسعية لرفع الطاقة بنسبة 40% في السنة الثالثة.\n\n## التحليل المالي\n\n### التكاليف الاستثمارية\n\n<table>\n<tr><th>البند</th><th>التكلفة</th><th>النسبة</th></tr>\n<tr><td>الأصول الثابتة والتجهيزات</td><td>145,000 ر.س</td><td>42%</td></tr>\n<tr><td>الترخيص والتأسيس</td><td>35,000 ر.س</td><td>10%</td></tr>\n<tr><td>رأس المال التشغيلي</td><td>120,000 ر.س</td><td>35%</td></tr>\n<tr><td>التسويق والانطلاق</td><td>45,000 ر.س</td><td>13%</td></tr>\n</table>\n\n### الإسقاطات المالية (5 سنوات)\n\n<table>\n<tr><th>السنة</th><th>الإيرادات</th><th>التكاليف</th><th>صافي الربح</th><th>الهامش</th></tr>\n<tr><td>الأولى</td><td>480,000</td><td>420,000</td><td>60,000</td><td>12.5%</td></tr>\n<tr><td>الثانية</td><td>680,000</td><td>540,000</td><td>140,000</td><td>20.6%</td></tr>\n<tr><td>الثالثة</td><td>890,000</td><td>650,000</td><td>240,000</td><td>27.0%</td></tr>\n<tr><td>الرابعة</td><td>1,100,000</td><td>760,000</td><td>340,000</td><td>30.9%</td></tr>\n<tr><td>الخامسة</td><td>1,350,000</td><td>870,000</td><td>480,000</td><td>35.6%</td></tr>\n</table>\n\n**IRR:** 22.4% | **NPV:** 285,000 ر.س | **نقطة التعادل:** الشهر السادس | **استرداد رأس المال:** 28 شهراً\n\n## التوصية النهائية\n\n**مستوى المخاطرة: متوسط ✅** — يُوصى بالمضي قدماً في المشروع مع التدرج في التوسع والتركيز على بناء قاعدة عملاء وفاء في السنة الأولى.`;
