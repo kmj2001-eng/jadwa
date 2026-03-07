@@ -1602,6 +1602,27 @@ footer {
         <div class="fgroup"><label class="flabel">الطاقة الاستيعابية / الإنتاجية المتوقعة</label><textarea class="ftextarea" id="f-capacity" placeholder="مثال: 80 طاولة، 200 طلب يومي، 50 عميل شهري..."></textarea></div>
         <div class="step-nav"><button class="btn-next" onclick="generateStudy()">🤖 &nbsp;توليد الدراسة بالذكاء الاصطناعي</button><button class="btn-back" onclick="goStep(2)">→ السابق</button></div>
       </div>
+
+      <!-- ── STEP 4: النتيجة ── -->
+      <div class="form-step" id="step4">
+        <div class="typing-state" id="typing-state" style="display:none;">
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+          <p id="study-subtitle">جاري إنشاء دراسة الجدوى...</p>
+        </div>
+        <div class="output-wrap" id="output-result" style="display:none;">
+          <div class="output-card">
+            <div class="output-top">
+              <h3 id="output-title">دراسة الجدوى</h3>
+              <div class="output-actions">
+                <button class="btn-action" onclick="exportPDF()">📄 تحميل PDF</button>
+                <button class="btn-action" onclick="goStep(1)">🔄 دراسة جديدة</button>
+              </div>
+            </div>
+            <div class="output-body" id="output-body"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div><!-- end page-tool -->
