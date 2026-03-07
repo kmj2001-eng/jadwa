@@ -29,7 +29,7 @@
 
   body {
     font-family: 'Tajawal', sans-serif;
-    background: #E5E7EB;
+    background: #FFFFFF;
     color: var(--text);
     direction: rtl;
   }
@@ -1081,6 +1081,35 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════ PAGE — STUDY CONTENT ══════════════════════════════════ -->
+<div class="pdf-page" id="study-content-page">
+  <div class="page-header">
+    <div class="logo-text">
+      <div class="logo-bars"><span></span><span></span><span></span></div>
+      ذكاء الأعمال
+    </div>
+    <div class="doc-num">دراسة الجدوى الكاملة</div>
+  </div>
+  <div class="content-area" style="padding-bottom:80px;">
+    <div class="section-heading">
+      <div class="icon-box">📊</div>
+      <div>
+        <div class="section-num">الدراسة الكاملة</div>
+        <h2>نتائج الذكاء الاصطناعي</h2>
+      </div>
+    </div>
+    <div id="study-content-body" class="output-body" style="font-size:11px;line-height:1.9;color:#1E293B;"></div>
+  </div>
+  <div class="page-footer">
+    <div class="footer-info">
+      <span>🌐 ذكاء الأعمال</span>
+      <span>✉️ info@example.com</span>
+    </div>
+    <div class="page-num">—</div>
+  </div>
+</div>
+
+
 <!-- ══════════════════════════════════ PAGE 4 — FINANCIAL ══════════════════════════════════ -->
 <div class="pdf-page">
   <div class="page-header">
@@ -1321,4 +1350,45 @@
       </div>
       <div class="signature-box">
         <div class="sig-role">الطرف الثاني — المتلقي</div>
- 
+
+<script>
+// ── قراءة بيانات الدراسة من URL ──
+(function(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('data');
+    if(!raw) return;
+    const data = JSON.parse(decodeURIComponent(raw));
+
+    // عنوان المشروع
+    document.querySelectorAll('.cover-title').forEach(el => {
+      if(data.name) el.textContent = data.name;
+    });
+
+    // العنوان الكامل
+    document.querySelectorAll('#output-title').forEach(el => {
+      if(data.title) el.textContent = data.title;
+    });
+
+    // الموقع
+    document.querySelectorAll('.cover-meta-item .value').forEach((el,i) => {
+      if(i===0 && data.name) el.textContent = data.name;
+      if(i===1 && data.location) el.textContent = data.location;
+      if(i===4 && data.date) el.textContent = data.date;
+    });
+
+    // تاريخ الإصدار
+    document.querySelectorAll('.cover-bottom .date').forEach(el => {
+      if(data.date) el.textContent = 'تاريخ الإصدار: ' + data.date;
+    });
+
+    // محتوى الدراسة — يُضاف في صفحة المحتوى
+    const bodyTarget = document.getElementById('study-content-body');
+    if(bodyTarget && data.body) bodyTarget.innerHTML = data.body;
+
+    // عنوان الصفحة
+    document.title = data.title || 'دراسة الجدوى';
+  } catch(e){ console.warn('PDF template data error:', e); }
+})();
+</script>
+
