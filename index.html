@@ -804,7 +804,46 @@ input[type=range]::-webkit-slider-thumb {
   font-family:'Cairo',sans-serif; font-size:1rem; color:var(--gold);
   display:flex; align-items:center; gap:8px;
 }
-.output-actions { display:flex; gap:8px; }
+.output-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+/* زر PDF الاحترافي */
+.btn-pdf {
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,#1D4ED8,#2563EB);
+  border:1px solid rgba(99,155,255,0.4);
+  border-radius:12px; padding:10px 18px;
+  cursor:pointer; color:white; transition:all 0.2s;
+  box-shadow:0 4px 16px rgba(37,99,235,0.35);
+}
+.btn-pdf:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(37,99,235,0.5); }
+.btn-pdf-icon { font-size:1.4rem; line-height:1; }
+.btn-pdf-text { display:flex; flex-direction:column; text-align:right; }
+.btn-pdf-label { font-size:0.82rem; font-weight:800; letter-spacing:0.3px; }
+.btn-pdf-sub { font-size:0.68rem; color:rgba(255,255,255,0.65); margin-top:1px; }
+
+/* زر التحميل المباشر */
+.btn-dl {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:12px; padding:10px 16px;
+  cursor:pointer; color:var(--text2);
+  font-size:0.78rem; font-weight:600;
+  transition:all 0.2s;
+}
+.btn-dl:hover { background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3); }
+
+/* زر دراسة جديدة */
+.btn-new {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(16,185,129,0.1);
+  border:1px solid rgba(16,185,129,0.3);
+  border-radius:12px; padding:10px 16px;
+  cursor:pointer; color:#10B981;
+  font-size:0.78rem; font-weight:600;
+  transition:all 0.2s;
+}
+.btn-new:hover { background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.5); }
 .oaction {
   background:var(--border3); border:1px solid var(--border2);
   color:var(--text2); font-family:'Cairo',sans-serif;
@@ -1603,7 +1642,7 @@ footer {
         <div class="step-nav"><button class="btn-next" onclick="generateStudy()">🤖 &nbsp;توليد الدراسة بالذكاء الاصطناعي</button><button class="btn-back" onclick="goStep(2)">→ السابق</button></div>
       </div>
 
-      <!-- ── STEP 4: النتيجة ── -->
+      <!-- ── STEP 4 ── -->
       <div class="form-step" id="step4">
         <div class="typing-state" id="typing-state" style="display:none;">
           <div class="typing-dots"><span></span><span></span><span></span></div>
@@ -1614,8 +1653,21 @@ footer {
             <div class="output-top">
               <h3 id="output-title">دراسة الجدوى</h3>
               <div class="output-actions">
-                <button class="btn-action" onclick="exportPDF()">📄 تحميل PDF</button>
-                <button class="btn-action" onclick="goStep(1)">🔄 دراسة جديدة</button>
+                <button class="btn-pdf" onclick="openPDFTemplate()">
+                  <span class="btn-pdf-icon">📄</span>
+                  <span class="btn-pdf-text">
+                    <span class="btn-pdf-label">تصدير PDF</span>
+                    <span class="btn-pdf-sub">قالب احترافي</span>
+                  </span>
+                </button>
+                <button class="btn-dl" onclick="exportPDF()">
+                  <span>⬇️</span>
+                  <span>تحميل مباشر</span>
+                </button>
+                <button class="btn-new" onclick="goStep(1)">
+                  <span>🔄</span>
+                  <span>دراسة جديدة</span>
+                </button>
               </div>
             </div>
             <div class="output-body" id="output-body"></div>
@@ -1805,15 +1857,11 @@ footer {
 
 <footer>
   <div class="footer-inner">
-
-    <!-- صف علوي: صورة الدفع وحدها -->
    <div style="width:100%;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;grid-column:1/-1;">
   <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-flex;align-items:center;">
     <img src="payment.png" alt="طرق الدفع" style="height:26px;width:auto;display:block;">
   </div>
 </div>
-
-    <!-- الأعمدة الأربعة -->
     <div class="footer-brand">
       <div class="logo-row">
         <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
@@ -1823,12 +1871,10 @@ footer {
     <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
     <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
     <div class="footer-col"><h4>الشركة</h4><a>من نحن</a><a>تواصل معنا</a><a>سياسة الخصوصية</a><a>شروط الاستخدام</a></div>
-
   </div>
-
   <div class="footer-bottom">
     <span class="footer-year-text"></span>
-     <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
+    <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
   </div>
 </footer>
 
@@ -1888,40 +1934,27 @@ if(canvas){
 
 // ─── PAGE SYSTEM ───
 function showPage(id, pushState){
-  // إخفاء وإظهار الصفحات
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const target = document.getElementById('page-'+id);
   if(target) target.classList.add('active');
-
-  // تفعيل رابط التنقل
   document.querySelectorAll('.nav-link').forEach(l=>{
     l.classList.toggle('active', l.getAttribute('onclick') && l.getAttribute('onclick').includes("'"+id+"'"));
   });
-
-  // الـ footer يظهر دائماً في جميع الصفحات
   const footer = document.querySelector('footer');
   if(footer) footer.style.display = '';
-
-  // دعم زر الرجوع في المتصفح
   if(pushState !== false){
     try {
       const url = id === 'home' ? window.location.pathname : '#' + id;
       history.pushState({page: id}, '', url);
-    } catch(e) { /* بيئة محدودة */ }
+    } catch(e) {}
   }
-
   window.scrollTo({top:0,behavior:'smooth'});
 }
-
-// الاستماع لزر الرجوع/التقدم في المتصفح
 window.addEventListener('popstate', function(e){
   const id = (e.state && e.state.page) ? e.state.page : 'home';
   showPage(id, false);
 });
-
-// تهيئة الصفحة عند التحميل
 window.addEventListener('DOMContentLoaded', function(){
-  // تعبئة نص حقوق النشر
   document.querySelectorAll('.footer-year-text').forEach(el => {
     el.textContent = 'ذكاء الأعمال ' + new Date().getFullYear() + ' © جميع الحقوق محفوظة';
   });
@@ -2535,6 +2568,21 @@ function hidePDFLoader(overlay){
   setTimeout(() => {
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }, 400);
+}
+
+function openPDFTemplate(){
+  const title  = document.getElementById('output-title').textContent.trim();
+  const body   = document.getElementById('output-body').innerHTML;
+  const name   = document.getElementById('f-name')?.value || 'مشروع';
+  const country= document.getElementById('f-country')?.options[document.getElementById('f-country').selectedIndex]?.text || '';
+  const region = document.getElementById('f-region')?.value || '';
+  const province=document.getElementById('f-province')?.value || '';
+  const location=[country,region,province].filter(Boolean).join(' - ') || 'السعودية';
+  const capital= document.getElementById('capital-val')?.textContent || '';
+  const date   = new Date().toLocaleDateString('ar-SA');
+
+  const data = encodeURIComponent(JSON.stringify({ title, body, name, location, capital, date }));
+  window.open('jadwa_pdf_template.html?data=' + data, '_blank');
 }
 
 function exportPDF(){
