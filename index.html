@@ -1597,7 +1597,7 @@ footer {
       <div class="form-step" id="step2">
         <div class="step-title">رأس المال والتمويل</div>
         <div class="step-sub">حدد الميزانية المتاحة ومصادر التمويل — سيُبنى التحليل المالي كله على هذه الأرقام.</div>
-        <div class="fgroup"><label class="flabel">رأس المال المتاح (ريال سعودي)</label>
+        <div class="fgroup"><label class="flabel" id="capital-label">رأس المال المتاح (ريال سعودي)</label>
           <div class="range-wrap"><input type="range" id="f-capital" min="50000" max="5000000" step="50000" value="500000" oninput="updateCapital(this)"><div class="range-display" id="capital-val">500,000 ر.س</div></div>
         </div>
         <div class="fgroup"><label class="flabel">مصدر التمويل</label>
@@ -2207,6 +2207,10 @@ function updateRegions() {
   provinceSel.innerHTML = '<option value="">اختر المنطقة أولاً</option>';
   provinceSel.disabled = true;
 
+  // تحديث العملة فوراً عند تغيير الدولة
+  const capitalEl = document.getElementById('f-capital');
+  if(capitalEl) updateCapital(capitalEl);
+
   if (!country || !locationData[country]) {
     regionSel.disabled = true;
     return;
@@ -2274,9 +2278,34 @@ function pickSector(btn,name){
   document.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected'); selSector=name;
 }
+function getCurrencySymbol(){
+  const code = document.getElementById('f-country')?.value || 'SA';
+  const map = {
+    SA:'ر.س', AE:'د.إ', KW:'د.ك', QA:'ر.ق', BH:'د.ب', OM:'ر.ع',
+    EG:'ج.م', JO:'د.أ', IQ:'د.ع', SY:'ل.س', LB:'ل.ل', YE:'ر.ي',
+    LY:'د.ل', TN:'د.ت', DZ:'د.ج', MA:'د.م', SD:'ج.س', SO:'ش.ص',
+    MR:'أ.م', PS:'₪', KM:'ف.ق', DJ:'ف.ج'
+  };
+  return map[code] || 'ر.س';
+}
+function getCurrencyName(){
+  const code = document.getElementById('f-country')?.value || 'SA';
+  const map = {
+    SA:'ريال سعودي', AE:'درهم إماراتي', KW:'دينار كويتي', QA:'ريال قطري',
+    BH:'دينار بحريني', OM:'ريال عُماني', EG:'جنيه مصري', JO:'دينار أردني',
+    IQ:'دينار عراقي', SY:'ليرة سورية', LB:'ليرة لبنانية', YE:'ريال يمني',
+    LY:'دينار ليبي', TN:'دينار تونسي', DZ:'دينار جزائري', MA:'درهم مغربي',
+    SD:'جنيه سوداني', SO:'شلن صومالي', MR:'أوقية موريتانية', PS:'شيكل',
+    KM:'فرنك قمري', DJ:'فرنك جيبوتي'
+  };
+  return map[code] || 'ريال سعودي';
+}
 function updateCapital(el){
   const v=parseInt(el.value);
-  document.getElementById('capital-val').textContent=v.toLocaleString('ar-SA')+' ر.س';
+  const sym=getCurrencySymbol();
+  document.getElementById('capital-val').textContent=v.toLocaleString('ar-SA')+' '+sym;
+  const lbl=document.getElementById('capital-label');
+  if(lbl) lbl.textContent='رأس المال المتاح ('+getCurrencyName()+')';
   el.style.setProperty('--pct',((v-50000)/(5000000-50000)*100)+'%');
 }
 function updateWorkers(el){
@@ -2758,7 +2787,7 @@ function exportPDF(){
       node.querySelectorAll('li').forEach(li => {
         items.push({ text: '• ' + li.textContent.trim(), style: 'body', alignment: 'right' });
       });
-      if (items.length) content.push({ stack: items, margin: [0, 4, 16, 8] });
+      if (items.length) content.push({ stack: items, margin: [0, 4, 0, 8] });
     } else if (tag === 'table') {
       const rows = [];
       node.querySelectorAll('tr').forEach((tr, i) => {
@@ -2808,8 +2837,8 @@ function exportPDF(){
 
   const docDefinition = {
     pageSize: 'A4',
-    pageMargins: [40, 60, 40, 60],
-    defaultStyle: { font: 'Tajawal', fontSize: 11, lineHeight: 1.7, alignment: 'right' },
+    pageMargins: [60, 60, 60, 60],
+    defaultStyle: { font: 'Tajawal', fontSize: 11, lineHeight: 1.7, alignment: 'right', direction: 'rtl' },
     styles: {
       header:      { fontSize: 20, bold: true, color: '#1D4ED8', alignment: 'center', margin: [0, 0, 0, 6] },
       subheader:   { fontSize: 10, color: '#888888', alignment: 'center', margin: [0, 0, 0, 20] },
