@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ذكاء الأعمال · منصة لدراسات الجدوى بالذكاء الاصطناعي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<style>
+ <style>
 /* ════════════════════════════════════
    DESIGN SYSTEM
 ════════════════════════════════════ */
@@ -1294,7 +1292,7 @@ footer {
       <p class="hero-desc">أداة ذكاء اصطناعي متخصصة للسوق العربي — تُولّد دراسات جدوى شاملة بالتحليل المالي والسوقي والتشغيلي، بدلاً من أسابيع من العمل والآلاف من الاستشارات.</p>
       <div class="hero-actions">
         <button class="btn-hero" onclick="showPage('tool')">
-          <span>ابدأ دراستك مجاناً</span>
+          <span>ابدأ دراستك الآن</span>
           <div class="btn-hero-icon">←</div>
         </button>
         <button class="btn-ghost" onclick="showPage('samples')">▷ &nbsp;شاهد نماذج حقيقية</button>
@@ -1594,38 +1592,6 @@ footer {
         <div class="fgroup"><label class="flabel">الطاقة الاستيعابية / الإنتاجية المتوقعة</label><textarea class="ftextarea" id="f-capacity" placeholder="مثال: 80 طاولة، 200 طلب يومي، 50 عميل شهري..."></textarea></div>
         <div class="step-nav"><button class="btn-next" onclick="generateStudy()">🤖 &nbsp;توليد الدراسة بالذكاء الاصطناعي</button><button class="btn-back" onclick="goStep(2)">→ السابق</button></div>
       </div>
-
-      <!-- Step 4: Output -->
-      <div class="form-step" id="step4">
-        <div class="step-title">دراسة الجدوى الخاصة بك</div>
-        <div class="step-sub" id="study-subtitle">يحلل الذكاء الاصطناعي بياناتك ويبني دراستك المتكاملة...</div>
-        <div class="output-wrap visible" id="output-wrap">
-          <div class="output-card">
-            <div id="typing-state" class="typing-state">
-              <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-              <span>يحلل الذكاء الاصطناعي بياناتك...</span>
-            </div>
-            <div id="output-result" style="display:none;">
-              <div class="output-top">
-                <h3><span style="font-size:0.8rem;">✦</span> &nbsp;<span id="output-title">دراسة الجدوى</span></h3>
-                <div class="output-actions">
-                  <button class="oaction" onclick="copyStudy()">📋 نسخ</button>
-                  <button class="oaction" onclick="showToast('💾 تم الحفظ في لوحة التحكم')">💾 حفظ</button>
-                   <button class="oaction" onclick="exportPDF()">📄 PDF</button>
-                </div>
-              </div>
-              <div class="output-body" id="output-body"></div>
-            </div>
-          </div>
-        </div>
-        <div class="step-nav" style="margin-top:20px;">
-          <button class="btn-back" onclick="goStep(3)">→ تعديل البيانات</button>
-          <button class="btn-next" onclick="showPage('dashboard')">📊 حفظ في لوحتي</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════
      BLOG PAGE
@@ -2102,6 +2068,48 @@ function copyStudy(){
   return overlay;
 }
 
+function showPDFLoader(){
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-loader';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(11,17,32,0.92);
+    backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:center;
+  `;
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(145deg,#101828,#162035);border:1px solid rgba(59,130,246,0.3);border-radius:24px;padding:48px 52px;text-align:center;max-width:400px;width:90%;box-shadow:0 40px 80px rgba(0,0,0,0.6);font-family:'Cairo',sans-serif;">
+      <div style="width:72px;height:72px;margin:0 auto 24px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));border:2px solid rgba(59,130,246,0.4);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:pdfPulse 1.5s ease-in-out infinite;">📄</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#E8EEFF;margin-bottom:8px;">جاري إعداد ملف PDF</div>
+      <div id="pdf-status-msg" style="font-size:0.8rem;color:rgba(220,230,255,0.6);margin-bottom:28px;line-height:1.7;">نقوم بتنسيق دراستك وتجهيزها للتحميل...</div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:20px;height:6px;margin-bottom:16px;overflow:hidden;">
+        <div id="pdf-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8);border-radius:20px;transition:width 0.4s ease;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:rgba(220,230,255,0.4);display:flex;align-items:center;justify-content:center;gap:6px;">
+        <span>⏱</span><span>الوقت المتبقي تقريباً:</span>
+        <span id="pdf-countdown" style="color:#60A5FA;font-weight:700;">15 ثانية</span>
+      </div>
+    </div>
+    <style>@keyframes pdfPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(59,130,246,0);}50%{transform:scale(1.05);box-shadow:0 0 20px rgba(59,130,246,0.3);}}</style>
+  `;
+  document.body.appendChild(overlay);
+  const messages = ['نقوم بتنسيق دراستك وتجهيزها للتحميل...','جاري معالجة الجداول المالية...','جاري ضبط التخطيط وترتيب الصفحات...','تحميل خط Tajawal العربي...','اللمسات الأخيرة على ملف PDF...'];
+  let seconds = 15, msgIndex = 0;
+  const interval = setInterval(() => {
+    seconds--;
+    const progress = ((15 - seconds) / 15) * 100;
+    const bar = document.getElementById('pdf-progress-bar');
+    const countdown = document.getElementById('pdf-countdown');
+    const statusMsg = document.getElementById('pdf-status-msg');
+    if (bar) bar.style.width = progress + '%';
+    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'لحظات...';
+    if (statusMsg && seconds % 3 === 0) { msgIndex = (msgIndex + 1) % messages.length; statusMsg.textContent = messages[msgIndex]; }
+    if (seconds <= 0) clearInterval(interval);
+  }, 1000);
+  overlay._interval = interval;
+  return overlay;
+}
+
 function hidePDFLoader(overlay){
   if (overlay && overlay._interval) clearInterval(overlay._interval);
   const bar = document.getElementById('pdf-progress-bar');
@@ -2223,5 +2231,8 @@ function getDemoStudy(name,sector,loc,capital){
 // ─── Claude API Key ───
 // ─── PAYMOB / PAYMENT REMOVED ───
 </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+      
 </body>
 </html>
