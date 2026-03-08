@@ -1,0 +1,26 @@
+{
+  "functions": {
+    "api/claude.js": {
+      "maxDuration": 120
+    },
+    "api/generate-docx.js": {
+      "maxDuration": 60
+    },
+    "api/paymob.js": {
+      "maxDuration": 30
+    },
+    "api/webhook.js": {
+      "maxDuration": 30
+    },
+    "api/setup-db.js": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    { "src": "/api/webhook", "dest": "/api/webhook.js" },
+    { "src": "/api/generate-docx", "dest": "/api/generate-docx.js" },
+    { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
+    { "src": "/api/paymob", "dest": "/api/paymob.js" },
+    { "src": "/api/claude", "dest": "/api/claude.js" }
+  ]
+}

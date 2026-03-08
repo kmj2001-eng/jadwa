@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo list --limit 5)",
+      "Bash(git --version)"
+    ]
+  }
+}
