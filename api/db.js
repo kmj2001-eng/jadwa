@@ -67,6 +67,10 @@ export async function migrateUsersTable() {
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token   VARCHAR(255)`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP`;
+  // إزالة قيد NOT NULL من عمود password القديم إن وجد
+  try {
+    await sql`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`;
+  } catch (_) { /* العمود غير موجود أو لا يوجد قيد */ }
   return { success: true, message: 'تم تحديث جدول users بنجاح' };
 }
 
