@@ -121,7 +121,7 @@ async function sendResetEmail({ to, name, resetLink }) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      from: 'ذكاء الأعمال <onboarding@resend.dev>',
+      from: `ذكاء الأعمال <${process.env.SENDER_EMAIL || 'onboarding@resend.dev'}>`,
       to: [to],
       subject: '🔑 إعادة تعيين كلمة المرور — ذكاء الأعمال',
       html
