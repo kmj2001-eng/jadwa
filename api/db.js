@@ -62,8 +62,10 @@ export async function setupTables() {
 // إضافة أعمدة Auth لجدول users (migration آمن)
 export async function migrateUsersTable() {
   const sql = getSQL();
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS name          VARCHAR(255)`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone         VARCHAR(50)`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)`;
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token   VARCHAR(255)`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP`;
   return { success: true, message: 'تم تحديث جدول users بنجاح' };
 }
