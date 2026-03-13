@@ -3870,6 +3870,7 @@ async function doRegister() {
 // ── نسيت كلمة السر ─────────────────────────────────────────
 async function doForgot() {
   clearAuthError();
+  document.getElementById('forgot-success-msg').style.display = 'none';
   const email = document.getElementById('forgot-email').value.trim();
   if (!email) return showAuthError('أدخل البريد الإلكتروني');
   authBtnLoading('forgot-btn', true);
@@ -3877,17 +3878,13 @@ async function doForgot() {
     const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'forgot',email}) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'خطأ');
-    if (data.resetToken) {
-      _resetToken = data.resetToken;
-      document.getElementById('reset-token-display').textContent = data.resetToken;
-      document.getElementById('reset-token-box').classList.add('show');
-    } else {
-      showToast('إذا كان البريد مسجلاً ستصلك التعليمات');
-    }
+    // إظهار رسالة النجاح
+    document.getElementById('forgot-success-msg').style.display = 'block';
+    document.getElementById('forgot-email').value = '';
   } catch(e) {
     showAuthError(e.message);
   } finally {
-    authBtnLoading('forgot-btn', false, 'paper-plane', 'الحصول على رابط التعيين');
+    authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال رابط التعيين');
   }
 }
 
@@ -4329,7 +4326,7 @@ function startPaymentForStudy() {
       <!-- ── شاشة FORGOT PASSWORD ── -->
       <div class="auth-screen" id="screen-forgot">
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:20px;line-height:1.8;">
-          أدخل بريدك الإلكتروني وسنعرض لك رابط إعادة تعيين كلمة السر.
+          أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة السر.
         </p>
         <div class="fgroup">
           <label class="mlabel">البريد الإلكتروني</label>
@@ -4337,14 +4334,12 @@ function startPaymentForStudy() {
         </div>
         <button class="auth-submit" id="forgot-btn" onclick="doForgot()">
           <i class="fa-solid fa-paper-plane"></i>
-          <span>الحصول على رابط التعيين</span>
+          <span>إرسال رابط التعيين</span>
         </button>
-        <div class="reset-token-box" id="reset-token-box">
-          <div style="color:var(--green);font-weight:700;margin-bottom:8px;font-family:'Cairo',sans-serif;">✅ انسخ الرمز وانتقل لتعيين كلمة السر:</div>
-          <div id="reset-token-display" style="direction:ltr;background:var(--ink2);padding:8px;border-radius:6px;font-family:monospace;"></div>
-          <button class="auth-link" style="margin-top:12px;display:inline-block;" onclick="switchAuthScreen('reset')">
-            ← المتابعة لتعيين كلمة السر الجديدة
-          </button>
+        <div id="forgot-success-msg" style="display:none;margin-top:16px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:10px;padding:14px 16px;text-align:center;">
+          <div style="font-size:1.6rem;margin-bottom:6px;">📧</div>
+          <div style="color:var(--green);font-weight:700;font-size:0.95rem;margin-bottom:4px;">تم الإرسال بنجاح!</div>
+          <div style="color:var(--text2);font-size:0.82rem;line-height:1.7;">تحقق من بريدك الإلكتروني وانقر على الرابط لتعيين كلمة مرور جديدة.<br>الرابط صالح لمدة ساعة واحدة.</div>
         </div>
         <div class="auth-footer" style="margin-top:12px;">
           <button class="auth-link" onclick="switchAuthScreen('login')">← العودة لتسجيل الدخول</button>

@@ -64,6 +64,77 @@ function verifyPassword(password, stored) {
 }
 
 // ──────────────────────────────────────────────────────────
+//  Email Helper (Resend)
+// ──────────────────────────────────────────────────────────
+async function sendResetEmail({ to, name, resetLink }) {
+  const siteUrl = process.env.SITE_URL || 'https://jadwa-omega.vercel.app';
+  const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;}
+  .wrap{max-width:520px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;}
+  .header{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:32px 24px;text-align:center;}
+  .logo{color:#fff;font-size:1.5rem;font-weight:700;letter-spacing:1px;}
+  .logo span{color:#93c5fd;}
+  .body{padding:32px 28px;}
+  .greeting{color:#e2e8f0;font-size:1.05rem;margin-bottom:16px;}
+  .msg{color:#94a3b8;font-size:0.92rem;line-height:1.8;margin-bottom:24px;}
+  .btn{display:block;width:fit-content;margin:0 auto 24px;background:#2563eb;color:#fff!important;text-decoration:none;padding:14px 36px;border-radius:10px;font-size:1rem;font-weight:600;}
+  .link-box{background:#0f172a;border-radius:8px;padding:12px 16px;margin-bottom:24px;}
+  .link-box p{color:#64748b;font-size:0.78rem;margin:0 0 6px;}
+  .link-box a{color:#60a5fa;font-size:0.78rem;word-break:break-all;}
+  .note{color:#64748b;font-size:0.8rem;line-height:1.7;border-top:1px solid #334155;padding-top:20px;}
+  .footer{background:#0f172a;padding:16px;text-align:center;color:#475569;font-size:0.75rem;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">ذكاء <span>الأعمال</span></div>
+    <p style="color:#bfdbfe;font-size:0.85rem;margin:6px 0 0;">منصة دراسات الجدوى الذكية</p>
+  </div>
+  <div class="body">
+    <p class="greeting">مرحباً ${name || 'عزيزنا'} 👋</p>
+    <p class="msg">
+      تلقّينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في منصة <strong>ذكاء الأعمال</strong>.<br>
+      اضغط على الزر أدناه لتعيين كلمة مرور جديدة. الرابط صالح لمدة <strong>ساعة واحدة</strong> فقط.
+    </p>
+    <a href="${resetLink}" class="btn">🔑 إعادة تعيين كلمة المرور</a>
+    <div class="link-box">
+      <p>إذا لم يعمل الزر، انسخ الرابط التالي في متصفحك:</p>
+      <a href="${resetLink}">${resetLink}</a>
+    </div>
+    <p class="note">
+      ⚠️ إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا الإيميل بأمان — حسابك بخير.<br>
+      لأسباب أمنية لا تشارك هذا الرابط مع أحد.
+    </p>
+  </div>
+  <div class="footer">© ${new Date().getFullYear()} ذكاء الأعمال — جميع الحقوق محفوظة</div>
+</div>
+</body></html>`;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'ذكاء الأعمال <onboarding@resend.dev>',
+      to: [to],
+      subject: '🔑 إعادة تعيين كلمة المرور — ذكاء الأعمال',
+      html
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error('Resend error: ' + JSON.stringify(err));
+  }
+  return res.json();
+}
+
+// ──────────────────────────────────────────────────────────
 //  Main Handler
 // ──────────────────────────────────────────────────────────
 export default async function handler(req, res) {
@@ -135,8 +206,11 @@ export default async function handler(req, res) {
       const resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt  = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // ساعة
       await setResetToken(user.email, resetToken, expiresAt);
-      // نُعيد التوكن مباشرة (لا يوجد email service حالياً)
-      return res.status(200).json({ success: true, resetToken });
+      // إرسال الإيميل عبر Resend
+      const siteUrl   = process.env.SITE_URL || 'https://jadwa-omega.vercel.app';
+      const resetLink = `${siteUrl}/#reset?token=${resetToken}`;
+      await sendResetEmail({ to: user.email, name: user.name, resetLink });
+      return res.status(200).json({ success: true });
     }
 
     // ── RESET PASSWORD ───────────────────────────────────────
