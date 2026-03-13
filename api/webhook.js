@@ -55,9 +55,10 @@ export default async function handler(req, res) {
 
   if (success && !isPending) {
     try {
-      // محاولة تحديث DB (تعمل فقط إذا كانت Vercel Postgres مفعّلة)
+      // محاولة تحديث DB
       if (process.env.POSTGRES_URL) {
-        const { sql } = await import('@vercel/postgres');
+        const { neon } = await import('@neondatabase/serverless');
+        const sql = neon(process.env.POSTGRES_URL);
 
         // تحديث حالة الطلب
         await sql`

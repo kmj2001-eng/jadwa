@@ -1,7 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
+    "@neondatabase/serverless": "^0.10.4",
     "docx": "^9.0.0"
   }
 }

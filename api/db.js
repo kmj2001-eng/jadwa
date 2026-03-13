@@ -1,8 +1,16 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 
-export { sql };
+// إنشاء اتصال Neon من متغير البيئة
+function getSQL() {
+  if (!process.env.POSTGRES_URL) {
+    throw new Error('POSTGRES_URL environment variable is not set');
+  }
+  return neon(process.env.POSTGRES_URL);
+}
 
 export async function setupTables() {
+  const sql = getSQL();
+
   // جدول المستخدمين
   await sql`
     CREATE TABLE IF NOT EXISTS users (
@@ -11,7 +19,7 @@ export async function setupTables() {
       phone       VARCHAR(50),
       name        VARCHAR(255),
       created_at  TIMESTAMP DEFAULT NOW()
-    );
+    )
   `;
 
   // جدول الطلبات
@@ -26,10 +34,10 @@ export async function setupTables() {
       plan              VARCHAR(50) DEFAULT 'basic',
       created_at        TIMESTAMP DEFAULT NOW(),
       updated_at        TIMESTAMP DEFAULT NOW()
-    );
+    )
   `;
 
-  // جدول النقاط (نظام الاشتراك بالنقاط)
+  // جدول النقاط
   await sql`
     CREATE TABLE IF NOT EXISTS user_points (
       id            SERIAL PRIMARY KEY,
@@ -39,7 +47,7 @@ export async function setupTables() {
       used_points   INTEGER DEFAULT 0,
       expires_at    TIMESTAMP DEFAULT (NOW() + INTERVAL '6 months'),
       created_at    TIMESTAMP DEFAULT NOW()
-    );
+    )
   `;
 
   // جدول الدراسات المحفوظة
@@ -52,7 +60,7 @@ export async function setupTables() {
       content     TEXT,
       metadata    JSONB,
       created_at  TIMESTAMP DEFAULT NOW()
-    );
+    )
   `;
 
   // جدول الفواتير
@@ -66,15 +74,16 @@ export async function setupTables() {
       status          VARCHAR(50) DEFAULT 'pending',
       invoice_number  VARCHAR(100) UNIQUE,
       created_at      TIMESTAMP DEFAULT NOW()
-    );
+    )
   `;
 
-  return { success: true, message: 'All tables created successfully' };
+  return { success: true, message: 'تم إنشاء جميع الجداول بنجاح' };
 }
 
 // إنشاء مستخدم أو جلبه إذا كان موجوداً
 export async function upsertUser({ email, phone, name }) {
-  const { rows } = await sql`
+  const sql = getSQL();
+  const rows = await sql`
     INSERT INTO users (email, phone, name)
     VALUES (${email}, ${phone}, ${name})
     ON CONFLICT (email) DO UPDATE
@@ -87,7 +96,8 @@ export async function upsertUser({ email, phone, name }) {
 
 // إنشاء طلب
 export async function createOrder({ userId, paymobOrderId, amount, currency, plan }) {
-  const { rows } = await sql`
+  const sql = getSQL();
+  const rows = await sql`
     INSERT INTO orders (user_id, paymob_order_id, amount, currency, plan)
     VALUES (${userId}, ${paymobOrderId}, ${amount}, ${currency}, ${plan})
     RETURNING *
@@ -97,7 +107,8 @@ export async function createOrder({ userId, paymobOrderId, amount, currency, pla
 
 // جلب نقاط المستخدم المتاحة
 export async function getUserPoints(userId) {
-  const { rows } = await sql`
+  const sql = getSQL();
+  const rows = await sql`
     SELECT
       SUM(total_points) AS total,
       SUM(used_points)  AS used,
@@ -111,7 +122,8 @@ export async function getUserPoints(userId) {
 
 // استهلاك نقطة واحدة
 export async function consumePoint(userId) {
-  const { rows } = await sql`
+  const sql = getSQL();
+  const rows = await sql`
     UPDATE user_points
     SET used_points = used_points + 1
     WHERE id = (
