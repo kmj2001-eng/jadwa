@@ -3052,7 +3052,8 @@ async function downloadWord(){
     a.href = url; a.download = title + '.docx';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // فتح الملف بعد التحميل
+    setTimeout(() => { window.open(url, '_blank'); URL.revokeObjectURL(url); }, 1000);
     hidePDFLoader(loader);
     showToast('✅ تم تحميل الدراسة كملف Word بنجاح!');
   }catch(err){
@@ -3645,12 +3646,18 @@ function exportPDF(){
     ]
   };
 
-  pdfMake.createPdf(docDefinition).download(title + '.pdf');
-
-  setTimeout(() => {
+  pdfMake.createPdf(docDefinition).getBlob(function(blob) {
+    const url = URL.createObjectURL(blob);
+    // تحميل الملف
+    const dlLink = document.createElement('a');
+    dlLink.href = url; dlLink.download = title + '.pdf';
+    document.body.appendChild(dlLink); dlLink.click(); document.body.removeChild(dlLink);
+    // فتح الملف في تبويب جديد
+    setTimeout(() => { window.open(url, '_blank'); }, 400);
+    setTimeout(() => { URL.revokeObjectURL(url); }, 10000);
     hidePDFLoader(loader);
-    showToast('✅ تم تحميل دراسة الجدوى بنجاح في ملف (PDF)!');
-  }, 14000);
+    showToast('✅ تم إنشاء ملف PDF — سيُفتح في تبويب جديد!');
+  });
 }
 
 function getDemoStudy(name,sector,loc,capital){
