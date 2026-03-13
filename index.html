@@ -74,6 +74,8 @@ body {
   min-height:100vh;
   overflow-x:hidden;
   cursor:none;
+  display:flex;
+  flex-direction:column;
 }
 
 /* ─── CUSTOM CURSOR ─── */
@@ -100,8 +102,8 @@ body {
 ::-webkit-scrollbar-thumb { background:#3B82F6; border-radius:2px; }
 
 /* ─── PAGE SYSTEM ─── */
-.page { display:none; min-height:100vh; }
-.page.active { display:block; animation:pageIn 0.5s cubic-bezier(0.4,0,0.2,1); }
+.page { display:none; }
+.page.active { display:block; flex:1 0 auto; animation:pageIn 0.5s cubic-bezier(0.4,0,0.2,1); min-height:calc(100vh - 68px); }
 @keyframes pageIn {
   from { opacity:0; transform:translateY(20px); }
   to   { opacity:1; transform:none; }
@@ -1118,6 +1120,7 @@ footer {
   background:linear-gradient(180deg,#0a1628 0%,#0d1f3c 50%,#0f2347 100%);
   border-top:1px solid rgba(59,130,246,0.2);
   padding:72px 48px 36px;
+  flex-shrink:0;
 }
 .footer-inner {
   max-width:1200px; margin:0 auto;
@@ -2141,6 +2144,10 @@ footer {
                   <span>🔄</span>
                   <span>دراسة جديدة</span>
                 </button>
+                <button class="btn-back" onclick="goStep(3)" style="display:flex;align-items:center;gap:7px;padding:10px 16px;font-size:0.78rem;">
+                  <span>→</span>
+                  <span>تعديل البيانات</span>
+                </button>
               </div>
             </div>
             <div class="output-body" id="output-body"></div>
@@ -2315,28 +2322,6 @@ footer {
   </div>
 </div>
 
-<footer>
-  <div class="footer-inner">
-   <div style="width:100%;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;grid-column:1/-1;">
-  <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-flex;align-items:center;">
-    <img src="payment.png" alt="طرق الدفع" style="height:26px;width:auto;display:block;">
-  </div>
-</div>
-    <div class="footer-brand">
-      <div class="logo-row">
-        <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
-      </div>
-      <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
-    </div>
-    <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
-    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
-    <div class="footer-col"><h4>الشركة</h4><a style="cursor:pointer" onclick="showPage('about')">من نحن</a><a style="cursor:pointer" onclick="showPage('about')">تواصل معنا</a><a style="cursor:pointer" onclick="showPage('privacy')">سياسة الخصوصية</a><a style="cursor:pointer" onclick="showPage('terms')">شروط الاستخدام</a></div>
-  </div>
-  <div class="footer-bottom">
-    <span class="footer-year-text"></span>
-    <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
-  </div>
-</footer>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -2863,7 +2848,7 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 }
 function showResult(text){
   window._fullStudyText = text;
-  window._studyUnlocked = false;
+  window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
 
   const html = mdToHtml(text);
 
@@ -2891,36 +2876,13 @@ function showResult(text){
     }
   });
 
-  const FREE_SECTIONS = 5;
   const outputBody = document.getElementById('output-body');
   outputBody.innerHTML = '';
 
-  sections.forEach((sec, idx) => {
-    if(idx >= FREE_SECTIONS) sec.classList.add('section-locked');
+  // عرض جميع الأقسام بدون تقييد
+  sections.forEach(sec => {
     outputBody.appendChild(sec);
   });
-
-  // إضافة Paywall إذا كانت هناك أقسام مقفلة
-  if(sections.length > FREE_SECTIONS){
-    const pw = document.createElement('div');
-    pw.id = 'study-paywall';
-    pw.className = 'study-paywall';
-    pw.innerHTML = `
-      <div class="paywall-card">
-        <div class="paywall-icon">🔒</div>
-        <h3 class="paywall-title">دراستك الاستثمارية جاهزة!</h3>
-        <p class="paywall-desc">استمتعت بـ ${FREE_SECTIONS} أقسام من دراستك المفصّلة. لعرض الدراسة كاملة بجميع أقسامها الـ 7 وتحميلها كـ PDF أو Word، احصل على الباقة.</p>
-        <div class="paywall-features">
-          <span>📋 باقي أقسام الدراسة</span>
-          <span>📄 PDF احترافي بدون علامة مائية</span>
-          <span>📝 Word قابل للتعديل</span>
-          <span>🎯 4 دراسات إضافية</span>
-        </div>
-        <button class="paywall-btn" onclick="startPaymentForStudy()">💳 احصل على الباقة — 49.99 ر.س فقط</button>
-        <p class="paywall-note">🔒 دفع آمن عبر Paymob · ✅ ضمان استرداد 7 أيام · ⚡ وصول فوري بعد الدفع</p>
-      </div>`;
-    outputBody.appendChild(pw);
-  }
 
   document.getElementById('typing-state').style.display='none';
   document.getElementById('output-result').style.display='block';
@@ -3949,6 +3911,29 @@ window.addEventListener('message',function(e){
 
   </div><!-- /legal-layout -->
 </div><!-- /page-terms -->
+
+<footer>
+  <div class="footer-inner">
+   <div style="width:100%;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:24px;margin-bottom:24px;grid-column:1/-1;">
+  <div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);display:inline-flex;align-items:center;">
+    <img src="payment.png" alt="طرق الدفع" style="height:26px;width:auto;display:block;">
+  </div>
+</div>
+    <div class="footer-brand">
+      <div class="logo-row">
+        <img src="logo.svg" height="40" alt="ذكاء الأعمال" style="filter:brightness(0) invert(1);">
+      </div>
+      <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
+    </div>
+    <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('samples')">نماذج</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
+    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
+    <div class="footer-col"><h4>الشركة</h4><a style="cursor:pointer" onclick="showPage('about')">من نحن</a><a style="cursor:pointer" onclick="showPage('about')">تواصل معنا</a><a style="cursor:pointer" onclick="showPage('privacy')">سياسة الخصوصية</a><a style="cursor:pointer" onclick="showPage('terms')">شروط الاستخدام</a></div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-year-text"></span>
+    <span>ذكاء مدرب صُنع خصيصا للسوق العربي</span>
+  </div>
+</footer>
 
 </body>
 </html>
