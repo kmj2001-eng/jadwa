@@ -182,6 +182,105 @@ nav.scrolled {
 .nav-cta:hover { transform:translateY(-1px); box-shadow:0 6px 24px var(--gold-glow); }
 .nav-cta span { position:relative; z-index:1; }
 
+/* ─── AUTH NAV ─── */
+.nav-login-btn {
+  font-size:0.8rem; font-weight:600; color:var(--text2);
+  padding:7px 16px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border2); background:transparent;
+  font-family:'Cairo',sans-serif; transition:var(--transition);
+}
+.nav-login-btn:hover { color:var(--text); border-color:var(--border); background:var(--border3); }
+.nav-avatar {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),#1D4ED8);
+  color:#fff; font-family:'Cairo',sans-serif;
+  font-size:0.95rem; font-weight:700; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  position:relative; transition:var(--transition);
+  box-shadow:0 0 0 2px var(--border);
+}
+.nav-avatar:hover { box-shadow:0 0 0 3px var(--gold); }
+.nav-dropdown {
+  position:absolute; top:calc(100% + 10px); left:0;
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:var(--r2); min-width:190px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.5);
+  padding:8px; display:none; z-index:500;
+  animation:fadeIn 0.2s ease;
+}
+.nav-avatar.open .nav-dropdown { display:block; }
+.nav-dropdown-user { padding:10px 12px 12px; border-bottom:1px solid var(--border2); margin-bottom:6px; }
+.nd-name  { font-size:0.82rem; font-weight:700; color:var(--text); }
+.nd-email { font-size:0.68rem; color:var(--text3); margin-top:2px; }
+.nd-item  {
+  padding:9px 12px; border-radius:8px; cursor:pointer;
+  font-size:0.78rem; color:var(--text2);
+  display:flex; align-items:center; gap:8px;
+  transition:var(--transition);
+}
+.nd-item:hover { background:var(--border3); color:var(--text); }
+.nd-item.danger { color:var(--rose); }
+.nd-item.danger:hover { background:rgba(248,113,113,0.08); }
+
+/* ─── AUTH MODAL ─── */
+#auth-modal .mbox { max-width:440px; }
+.auth-tabs {
+  display:flex; background:var(--ink3);
+  border-radius:10px; padding:4px; margin-bottom:24px; gap:4px;
+}
+.auth-tab {
+  flex:1; padding:9px; border-radius:8px; cursor:pointer;
+  font-family:'Cairo',sans-serif; font-size:0.82rem; font-weight:600;
+  text-align:center; color:var(--text3); border:none;
+  background:transparent; transition:var(--transition);
+}
+.auth-tab.active { background:var(--panel); color:var(--text); box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.auth-screen { display:none; }
+.auth-screen.active { display:block; animation:fadeIn 0.2s ease; }
+.auth-link {
+  font-size:0.75rem; color:var(--gold2); cursor:pointer;
+  text-decoration:underline; background:none; border:none;
+  font-family:'Cairo',sans-serif; padding:0;
+}
+.auth-link:hover { color:var(--gold3); }
+.auth-error {
+  background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3);
+  border-radius:8px; padding:10px 14px;
+  color:var(--rose); font-size:0.78rem; margin-bottom:16px;
+  display:none;
+}
+.auth-error.show { display:block; }
+.auth-footer { text-align:center; margin-top:16px; font-size:0.75rem; color:var(--text3); }
+.mlabel {
+  display:block; font-size:0.7rem; font-weight:700; color:var(--text3);
+  margin-bottom:7px; letter-spacing:1px; text-transform:uppercase;
+}
+.minput {
+  width:100%; background:var(--ink2); border:1px solid var(--border2);
+  border-radius:var(--r); padding:12px 14px; color:var(--text);
+  font-family:'Cairo',sans-serif; font-size:0.85rem;
+  transition:var(--transition);
+}
+.minput:focus { border-color:var(--gold); outline:none; box-shadow:0 0 0 3px var(--gold-dim); }
+.auth-submit {
+  width:100%; background:linear-gradient(135deg,var(--gold),#1D4ED8);
+  color:#fff; border:none; padding:14px;
+  border-radius:12px; font-size:0.92rem; font-weight:700;
+  cursor:pointer; font-family:'Cairo',sans-serif;
+  transition:var(--transition); margin-top:4px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.auth-submit:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(37,99,235,0.4); }
+.auth-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.auth-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.reset-token-box {
+  background:var(--ink3); border:1px solid var(--border);
+  border-radius:10px; padding:14px 16px; margin-top:16px;
+  font-size:0.72rem; color:var(--text2); display:none;
+  word-break:break-all; line-height:1.8;
+}
+.reset-token-box.show { display:block; }
+
 /* ─── CANVAS BACKGROUND ─── */
 #hero-canvas {
   position:absolute; inset:0; z-index:0;
@@ -328,6 +427,7 @@ nav.scrolled {
 .hc-bar-label { display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text3); }
 
 @keyframes fadeUp { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:none;} }
+@keyframes spin { to { transform:rotate(360deg); } }
 @keyframes fadeLeft { from{opacity:0;transform:translate(40px,-50%);} to{opacity:0.9;transform:translate(0,-50%);} }
 
 /* HERO STATS */
@@ -1747,8 +1847,30 @@ footer {
     <div class="nav-link" onclick="showPage('blog')"><i class="fa-solid fa-newspaper"></i> المقالات</div>
     <div class="nav-link" onclick="showPage('samples')"><i class="fa-solid fa-file-lines"></i> نماذج</div>
     <div class="nav-link" onclick="showPage('pricing')"><i class="fa-solid fa-tag"></i> الأسعار</div>
-    <div class="nav-link" onclick="showPage('dashboard')"><i class="fa-solid fa-chart-pie"></i> لوحتي</div>
-    <button class="nav-cta" onclick="showPage('tool')"><span>✦ ابدأ دراستك</span></button>
+    <div class="nav-link" id="nav-dashboard-link" onclick="showPage('dashboard')" style="display:none"><i class="fa-solid fa-chart-pie"></i> لوحتي</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <!-- زر الدخول — يظهر للزوار غير المسجلين -->
+      <button class="nav-login-btn" id="nav-login-btn" onclick="openAuthModal('login')">
+        <i class="fa-solid fa-right-to-bracket"></i> دخول
+      </button>
+      <!-- أفاتار المستخدم — يظهر بعد تسجيل الدخول -->
+      <div class="nav-avatar" id="nav-avatar" onclick="toggleNavDropdown(event)">
+        <span id="nav-avatar-letter">م</span>
+        <div class="nav-dropdown" id="nav-dropdown">
+          <div class="nav-dropdown-user">
+            <div class="nd-name"  id="nd-user-name">المستخدم</div>
+            <div class="nd-email" id="nd-user-email">—</div>
+          </div>
+          <div class="nd-item" onclick="showPage('dashboard');document.getElementById('nav-avatar').classList.remove('open')">
+            <i class="fa-solid fa-chart-pie"></i> لوحتي
+          </div>
+          <div class="nd-item danger" onclick="authLogout()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج
+          </div>
+        </div>
+      </div>
+      <button class="nav-cta" onclick="showPage('tool')"><span>✦ ابدأ دراستك</span></button>
+    </div>
   </div>
 </nav>
 
@@ -3597,6 +3719,227 @@ window.addEventListener('message',function(e){
 });
 </script>
 
+<!-- ════════════════════════════════════════
+     AUTH SYSTEM
+════════════════════════════════════════ -->
+<script>
+// ── State ──────────────────────────────────────────────────
+let _resetToken = null;
+
+// ── Init: يعمل عند تحميل الصفحة ────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  const stored = localStorage.getItem('user_data');
+  if (stored) {
+    try { setAuthUI(JSON.parse(stored)); } catch(e) { authClear(); }
+  }
+  // التحقق من توكن reset في الـ URL
+  const hash = window.location.hash;
+  if (hash.includes('reset?token=')) {
+    const token = hash.split('token=')[1]?.split('&')[0];
+    if (token) { _resetToken = token; openAuthModal('reset'); }
+  }
+  // إغلاق الـ modal بـ Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAuthModal();
+  });
+  // إغلاق dropdown عند الضغط خارجه
+  document.addEventListener('click', function(e) {
+    const av = document.getElementById('nav-avatar');
+    if (av && !av.contains(e.target)) av.classList.remove('open');
+  });
+});
+
+// ── UI State ────────────────────────────────────────────────
+function setAuthUI(user) {
+  document.getElementById('nav-login-btn').style.display = 'none';
+  const av = document.getElementById('nav-avatar');
+  av.style.display = 'flex';
+  document.getElementById('nav-avatar-letter').textContent =
+    (user.name || user.email || 'م').charAt(0);
+  document.getElementById('nd-user-name').textContent  = user.name  || '—';
+  document.getElementById('nd-user-email').textContent = user.email || '—';
+  const dl = document.getElementById('nav-dashboard-link');
+  if (dl) dl.style.display = '';
+}
+
+function authClear() {
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('user_data');
+  document.getElementById('nav-login-btn').style.display = '';
+  document.getElementById('nav-avatar').style.display    = 'none';
+  const dl = document.getElementById('nav-dashboard-link');
+  if (dl) dl.style.display = 'none';
+}
+
+// ── Modal Controls ──────────────────────────────────────────
+function openAuthModal(screen) {
+  document.getElementById('auth-modal').classList.add('open');
+  switchAuthScreen(screen || 'login');
+  clearAuthError();
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').classList.remove('open');
+  clearAuthError();
+}
+function switchAuthScreen(screen) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
+  const t = document.getElementById('screen-' + screen);
+  if (t) t.classList.add('active');
+  ['login','register'].forEach(id => {
+    const el = document.getElementById('tab-' + id);
+    if (el) el.classList.toggle('active', id === screen);
+  });
+  document.getElementById('auth-tabs-bar').style.display =
+    (screen === 'forgot' || screen === 'reset') ? 'none' : '';
+  const titles = { login:'الدخول إلى حسابك', register:'إنشاء حساب جديد', forgot:'استعادة كلمة السر', reset:'تعيين كلمة السر الجديدة' };
+  document.getElementById('auth-modal-title').textContent = titles[screen] || '';
+  clearAuthError();
+}
+function toggleNavDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('nav-avatar').classList.toggle('open');
+}
+
+// ── Error Helpers ───────────────────────────────────────────
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+}
+function clearAuthError() {
+  const el = document.getElementById('auth-error');
+  if (el) el.classList.remove('show');
+}
+function authBtnLoading(id, on, icon, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = on;
+  if (on) {
+    btn.innerHTML = '<div style="width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto"></div>';
+  } else {
+    btn.innerHTML = `<i class="fa-solid fa-${icon}"></i><span>${label}</span>`;
+  }
+}
+
+// ── تسجيل الدخول ───────────────────────────────────────────
+async function doLogin() {
+  clearAuthError();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) return showAuthError('أدخل البريد وكلمة السر');
+  authBtnLoading('login-btn', true);
+  try {
+    const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'login',email,password}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'خطأ في تسجيل الدخول');
+    localStorage.setItem('jwt_token', data.token);
+    localStorage.setItem('user_data', JSON.stringify(data.user));
+    setAuthUI(data.user);
+    closeAuthModal();
+    showToast('مرحباً بعودتك ' + (data.user.name || '') + ' 👋');
+  } catch(e) {
+    showAuthError(e.message);
+    authBtnLoading('login-btn', false, 'right-to-bracket', 'دخول');
+  }
+}
+
+// ── إنشاء حساب ─────────────────────────────────────────────
+async function doRegister() {
+  clearAuthError();
+  const name     = document.getElementById('reg-name').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const phone    = document.getElementById('reg-phone').value.trim();
+  if (!name || !email || !password) return showAuthError('الاسم والبريد وكلمة السر مطلوبة');
+  if (password.length < 8) return showAuthError('كلمة السر يجب أن تكون 8 أحرف على الأقل');
+  authBtnLoading('register-btn', true);
+  try {
+    const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'register',name,email,password,phone}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'خطأ في إنشاء الحساب');
+    localStorage.setItem('jwt_token', data.token);
+    localStorage.setItem('user_data', JSON.stringify(data.user));
+    setAuthUI(data.user);
+    closeAuthModal();
+    showToast('تم إنشاء حسابك بنجاح! مرحباً ' + data.user.name + ' ✨');
+  } catch(e) {
+    showAuthError(e.message);
+    authBtnLoading('register-btn', false, 'user-plus', 'إنشاء الحساب');
+  }
+}
+
+// ── نسيت كلمة السر ─────────────────────────────────────────
+async function doForgot() {
+  clearAuthError();
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return showAuthError('أدخل البريد الإلكتروني');
+  authBtnLoading('forgot-btn', true);
+  try {
+    const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'forgot',email}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'خطأ');
+    if (data.resetToken) {
+      _resetToken = data.resetToken;
+      document.getElementById('reset-token-display').textContent = data.resetToken;
+      document.getElementById('reset-token-box').classList.add('show');
+    } else {
+      showToast('إذا كان البريد مسجلاً ستصلك التعليمات');
+    }
+  } catch(e) {
+    showAuthError(e.message);
+  } finally {
+    authBtnLoading('forgot-btn', false, 'paper-plane', 'الحصول على رابط التعيين');
+  }
+}
+
+// ── تعيين كلمة السر الجديدة ─────────────────────────────────
+async function doReset() {
+  clearAuthError();
+  const newPw  = document.getElementById('reset-new-pw').value;
+  const confPw = document.getElementById('reset-confirm-pw').value;
+  if (!newPw) return showAuthError('أدخل كلمة السر الجديدة');
+  if (newPw !== confPw) return showAuthError('كلمتا السر غير متطابقتين');
+  if (newPw.length < 8) return showAuthError('كلمة السر يجب أن تكون 8 أحرف على الأقل');
+  if (!_resetToken) return showAuthError('الرمز غير متوفر — أعد طلب التعيين');
+  authBtnLoading('reset-btn', true);
+  try {
+    const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'reset',resetToken:_resetToken,newPassword:newPw}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'خطأ');
+    localStorage.setItem('jwt_token', data.token);
+    localStorage.setItem('user_data', JSON.stringify(data.user));
+    setAuthUI(data.user);
+    _resetToken = null;
+    closeAuthModal();
+    showToast('تم تعيين كلمة السر الجديدة بنجاح ✅');
+  } catch(e) {
+    showAuthError(e.message);
+    authBtnLoading('reset-btn', false, 'key', 'تعيين كلمة السر');
+  }
+}
+
+// ── تسجيل الخروج ───────────────────────────────────────────
+function authLogout() {
+  authClear();
+  document.getElementById('nav-avatar').classList.remove('open');
+  showPage('home');
+  showToast('تم تسجيل الخروج بنجاح 👋');
+}
+
+// ── تحديث startPaymentForStudy لاستخدام بيانات المستخدم ────
+function startPaymentForStudy() {
+  let customer = { firstName:'عميل', lastName:'جديد', email:'user@example.com', phone:'+966500000000' };
+  const stored = localStorage.getItem('user_data');
+  if (stored) {
+    try {
+      const u = JSON.parse(stored);
+      const parts = (u.name || 'عميل جديد').split(' ');
+      customer = { firstName: parts[0]||'عميل', lastName: parts[1]||'جديد', email: u.email||'user@example.com', phone: u.phone||'+966500000000' };
+    } catch(e) {}
+  }
+  startPayment(4999, 'SAR', 'study_' + Date.now(), customer);
+}
+</script>
+
 
 <!-- ============================================================
      PAGE: من نحن  |  id="page-about"
@@ -3911,6 +4254,122 @@ window.addEventListener('message',function(e){
 
   </div><!-- /legal-layout -->
 </div><!-- /page-terms -->
+
+<!-- ════════════════════════════════════
+     AUTH MODAL
+════════════════════════════════════ -->
+<div class="moverlay" id="auth-modal">
+  <div class="mbox" id="auth-modal-box">
+    <div class="mbox-head">
+      <h3 id="auth-modal-title">الدخول إلى حسابك</h3>
+      <div class="mclose" onclick="closeAuthModal()">✕</div>
+    </div>
+    <div class="mbox-body">
+
+      <!-- تابات: تسجيل الدخول | حساب جديد -->
+      <div class="auth-tabs" id="auth-tabs-bar">
+        <button class="auth-tab active" id="tab-login"    onclick="switchAuthScreen('login')">تسجيل الدخول</button>
+        <button class="auth-tab"        id="tab-register" onclick="switchAuthScreen('register')">حساب جديد</button>
+      </div>
+
+      <!-- رسالة الخطأ المشتركة -->
+      <div class="auth-error" id="auth-error"></div>
+
+      <!-- ── شاشة LOGIN ── -->
+      <div class="auth-screen active" id="screen-login">
+        <div class="fgroup">
+          <label class="mlabel">البريد الإلكتروني</label>
+          <input class="minput" id="login-email" type="email" placeholder="example@email.com" dir="ltr" autocomplete="email">
+        </div>
+        <div class="fgroup">
+          <label class="mlabel">كلمة السر</label>
+          <input class="minput" id="login-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="current-password">
+        </div>
+        <button class="auth-submit" id="login-btn" onclick="doLogin()">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>دخول</span>
+        </button>
+        <div class="auth-footer">
+          <button class="auth-link" onclick="switchAuthScreen('forgot')">نسيت كلمة السر؟</button>
+        </div>
+      </div>
+
+      <!-- ── شاشة REGISTER ── -->
+      <div class="auth-screen" id="screen-register">
+        <div class="auth-row">
+          <div class="fgroup" style="margin-bottom:0">
+            <label class="mlabel">الاسم الكامل</label>
+            <input class="minput" id="reg-name" type="text" placeholder="محمد العمري" autocomplete="name">
+          </div>
+          <div class="fgroup" style="margin-bottom:0">
+            <label class="mlabel">الجوال (اختياري)</label>
+            <input class="minput" id="reg-phone" type="tel" placeholder="+966 5X XXX XXXX" dir="ltr">
+          </div>
+        </div>
+        <div class="fgroup" style="margin-top:16px">
+          <label class="mlabel">البريد الإلكتروني</label>
+          <input class="minput" id="reg-email" type="email" placeholder="example@email.com" dir="ltr" autocomplete="email">
+        </div>
+        <div class="fgroup">
+          <label class="mlabel">كلمة السر (8 أحرف على الأقل)</label>
+          <input class="minput" id="reg-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password">
+        </div>
+        <button class="auth-submit" id="register-btn" onclick="doRegister()">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>إنشاء الحساب</span>
+        </button>
+        <p style="font-size:0.68rem;color:var(--text3);text-align:center;margin-top:12px;line-height:1.7;">
+          بالتسجيل تقبل
+          <button class="auth-link" onclick="showPage('terms');closeAuthModal()">شروط الاستخدام</button>
+          و
+          <button class="auth-link" onclick="showPage('privacy');closeAuthModal()">سياسة الخصوصية</button>
+        </p>
+      </div>
+
+      <!-- ── شاشة FORGOT PASSWORD ── -->
+      <div class="auth-screen" id="screen-forgot">
+        <p style="font-size:0.82rem;color:var(--text2);margin-bottom:20px;line-height:1.8;">
+          أدخل بريدك الإلكتروني وسنعرض لك رابط إعادة تعيين كلمة السر.
+        </p>
+        <div class="fgroup">
+          <label class="mlabel">البريد الإلكتروني</label>
+          <input class="minput" id="forgot-email" type="email" placeholder="example@email.com" dir="ltr">
+        </div>
+        <button class="auth-submit" id="forgot-btn" onclick="doForgot()">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>الحصول على رابط التعيين</span>
+        </button>
+        <div class="reset-token-box" id="reset-token-box">
+          <div style="color:var(--green);font-weight:700;margin-bottom:8px;font-family:'Cairo',sans-serif;">✅ انسخ الرمز وانتقل لتعيين كلمة السر:</div>
+          <div id="reset-token-display" style="direction:ltr;background:var(--ink2);padding:8px;border-radius:6px;font-family:monospace;"></div>
+          <button class="auth-link" style="margin-top:12px;display:inline-block;" onclick="switchAuthScreen('reset')">
+            ← المتابعة لتعيين كلمة السر الجديدة
+          </button>
+        </div>
+        <div class="auth-footer" style="margin-top:12px;">
+          <button class="auth-link" onclick="switchAuthScreen('login')">← العودة لتسجيل الدخول</button>
+        </div>
+      </div>
+
+      <!-- ── شاشة RESET PASSWORD ── -->
+      <div class="auth-screen" id="screen-reset">
+        <div class="fgroup">
+          <label class="mlabel">كلمة السر الجديدة</label>
+          <input class="minput" id="reset-new-pw" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password">
+        </div>
+        <div class="fgroup">
+          <label class="mlabel">تأكيد كلمة السر</label>
+          <input class="minput" id="reset-confirm-pw" type="password" placeholder="••••••••" dir="ltr">
+        </div>
+        <button class="auth-submit" id="reset-btn" onclick="doReset()">
+          <i class="fa-solid fa-key"></i>
+          <span>تعيين كلمة السر</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="footer-inner">
