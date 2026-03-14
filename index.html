@@ -4062,6 +4062,7 @@ async function doRegister() {
 async function doForgot() {
   clearAuthError();
   document.getElementById('forgot-success-msg').style.display = 'none';
+  document.getElementById('forgot-token-box').classList.remove('show');
   const email = document.getElementById('forgot-email').value.trim();
   if (!email) return showAuthError('أدخل البريد الإلكتروني');
   authBtnLoading('forgot-btn', true);
@@ -4069,14 +4070,35 @@ async function doForgot() {
     const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'forgot',email}) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'خطأ');
-    // إظهار رسالة النجاح
-    document.getElementById('forgot-success-msg').style.display = 'block';
+
+    if (data.emailSent) {
+      // البريد أُرسل — أظهر رسالة النجاح التقليدية
+      document.getElementById('forgot-success-msg').style.display = 'block';
+    } else if (data.resetToken) {
+      // لا يوجد خدمة بريد — أظهر التوكن مباشرة في الـ UI
+      _resetToken = data.resetToken;
+      document.getElementById('forgot-token-display').textContent = data.resetToken;
+      document.getElementById('forgot-token-box').classList.add('show');
+    } else {
+      // البريد غير مسجل — نظهر رسالة عامة لحماية الخصوصية
+      document.getElementById('forgot-success-msg').style.display = 'block';
+    }
     document.getElementById('forgot-email').value = '';
   } catch(e) {
     showAuthError(e.message);
   } finally {
     authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال رابط التعيين');
   }
+}
+
+function copyResetToken() {
+  const token = document.getElementById('forgot-token-display').textContent;
+  navigator.clipboard.writeText(token).then(() => showToast('✅ تم نسخ الرمز'));
+}
+
+function proceedToReset() {
+  // التوكن محفوظ في _resetToken، انتقل لشاشة إعادة التعيين
+  switchAuthScreen('reset');
 }
 
 // ── تعيين كلمة السر الجديدة ─────────────────────────────────
@@ -4527,10 +4549,28 @@ function startPaymentForStudy() {
           <i class="fa-solid fa-paper-plane"></i>
           <span>إرسال رابط التعيين</span>
         </button>
+        <!-- رسالة نجاح الإيميل -->
         <div id="forgot-success-msg" style="display:none;margin-top:16px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:10px;padding:14px 16px;text-align:center;">
           <div style="font-size:1.6rem;margin-bottom:6px;">📧</div>
           <div style="color:var(--green);font-weight:700;font-size:0.95rem;margin-bottom:4px;">تم الإرسال بنجاح!</div>
           <div style="color:var(--text2);font-size:0.82rem;line-height:1.7;">تحقق من بريدك الإلكتروني وانقر على الرابط لتعيين كلمة مرور جديدة.<br>الرابط صالح لمدة ساعة واحدة.</div>
+        </div>
+        <!-- صندوق التوكن (يظهر عند غياب خدمة البريد) -->
+        <div class="reset-token-box" id="forgot-token-box">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <i class="fa-solid fa-key" style="color:var(--gold);"></i>
+            <strong style="color:var(--text);font-size:0.82rem;">رمز إعادة التعيين</strong>
+          </div>
+          <div style="background:var(--ink);border-radius:8px;padding:10px;margin-bottom:10px;word-break:break-all;font-family:monospace;font-size:0.72rem;color:var(--text2);" id="forgot-token-display"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="copyResetToken()" style="flex:1;background:var(--ink3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+              <i class="fa-solid fa-copy"></i> نسخ الرمز
+            </button>
+            <button onclick="proceedToReset()" style="flex:1;background:var(--gold);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+              <i class="fa-solid fa-arrow-left"></i> إعادة تعيين الآن
+            </button>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text2);margin-top:8px;opacity:0.7;">⏳ هذا الرمز صالح لمدة ساعة واحدة</div>
         </div>
         <div class="auth-footer" style="margin-top:12px;">
           <button class="auth-link" onclick="switchAuthScreen('login')">← العودة لتسجيل الدخول</button>

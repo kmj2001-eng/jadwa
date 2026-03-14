@@ -206,11 +206,25 @@ export default async function handler(req, res) {
       const resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt  = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // ساعة
       await setResetToken(user.email, resetToken, expiresAt);
-      // إرسال الإيميل عبر Resend
-      const siteUrl   = process.env.SITE_URL || 'https://jadwa-omega.vercel.app';
+
+      const siteUrl   = process.env.SITE_URL || 'https://thakaa-alabmal.com';
       const resetLink = `${siteUrl}/#reset?token=${resetToken}`;
-      await sendResetEmail({ to: user.email, name: user.name, resetLink });
-      return res.status(200).json({ success: true });
+
+      // ── إرسال الإيميل إذا تم ضبط RESEND_API_KEY ──────────
+      if (process.env.RESEND_API_KEY) {
+        try {
+          await sendResetEmail({ to: user.email, name: user.name, resetLink });
+          // البريد أُرسل بنجاح — لا نُرجع التوكن (أمان)
+          return res.status(200).json({ success: true, emailSent: true });
+        } catch (emailErr) {
+          console.warn('Resend email failed, falling back to token response:', emailErr.message);
+          // سقوط للوضع الاحتياطي: إرجاع التوكن مباشرة
+        }
+      }
+
+      // ── الوضع الاحتياطي: لا يوجد بريد أو فشل الإرسال ──────
+      // نُرجع التوكن ليعرضه الـ UI مباشرة
+      return res.status(200).json({ success: true, emailSent: false, resetToken, resetLink });
     }
 
     // ── RESET PASSWORD ───────────────────────────────────────
