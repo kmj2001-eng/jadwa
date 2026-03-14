@@ -2955,13 +2955,58 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
+
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
       throw new Error((err?.error) || 'HTTP '+res.status);
     }
-    const data = await res.json();
+
+    // ── استقبال الـ Stream كلمة بكلمة ──────────────────────
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer   = '';
+    let fullText = '';
+    let streamError = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.error) {
+            streamError = parsed.error;
+            break;
+          }
+          if (parsed.chunk) {
+            fullText += parsed.chunk;
+            // تحديث مؤشر التحميل بعدد الكلمات
+            const wc = fullText.split(/\s+/).length;
+            const loaderText = document.getElementById('study-status-msg');
+            if (loaderText) loaderText.textContent = `✍️ جاري الكتابة... ${wc.toLocaleString('ar-SA')} كلمة`;
+          }
+          if (parsed.done && parsed.text) {
+            fullText = parsed.text;
+          }
+        } catch (_) {}
+      }
+      if (streamError) break;
+    }
+
     hideStudyLoader(studyLoader);
-    showResult(data.text || getDemoStudy(name, selSector, location, capital));
+
+    if (streamError) throw new Error(streamError);
+    if (!fullText) throw new Error('لم يتم استلام محتوى');
+
+    showResult(fullText);
+
   }catch(e){
     hideStudyLoader(studyLoader);
     showToast((e.message || 'خطأ في الاتصال') + ' — جاري عرض نموذج تجريبي');
@@ -3125,17 +3170,17 @@ function startPaymentForStudy(){
     'اللمسات الأخيرة على دراستك...',
   ];
 
-  let seconds = 30, msgIndex = 0;
+  let seconds = 90, msgIndex = 0;
   const interval = setInterval(() => {
     seconds--;
-    const progress = ((30 - seconds) / 30) * 100;
+    const progress = ((90 - seconds) / 90) * 100;
     const bar = document.getElementById('study-progress-bar');
     const countdown = document.getElementById('study-countdown');
     const statusMsg = document.getElementById('study-status-msg');
     if (bar) bar.style.width = progress + '%';
-    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'لحظات...';
-    if (statusMsg) {
-      const idx = Math.floor(((30 - seconds) / 30) * messages.length);
+    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'قريباً جداً...';
+    if (statusMsg && !statusMsg.textContent.includes('✍️')) {
+      const idx = Math.floor(((90 - seconds) / 90) * messages.length);
       statusMsg.textContent = messages[Math.min(idx, messages.length - 1)];
     }
     if (seconds <= 0) clearInterval(interval);
