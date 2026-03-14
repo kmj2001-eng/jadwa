@@ -2913,13 +2913,13 @@ const currencyMap = {
 // ─── AI STUDY GENERATION ───
 async function generateStudy(){
   goStep(4);
-  const name = document.getElementById('f-name').value || 'مشروع تجاري';
-  const country = document.getElementById('f-country').options[document.getElementById('f-country').selectedIndex]?.text || '';
-  const region = document.getElementById('f-region').value || '';
- const province = document.getElementById('f-province').value || '';
-const location = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
-const countryCode = document.getElementById('f-country').value || 'SA';
-const currency = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
+  const name      = document.getElementById('f-name').value || 'مشروع تجاري';
+  const country   = document.getElementById('f-country').options[document.getElementById('f-country').selectedIndex]?.text || '';
+  const region    = document.getElementById('f-region').value    || '';
+  const province  = document.getElementById('f-province').value  || '';
+  const location  = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
+  const countryCode = document.getElementById('f-country').value || 'SA';
+  const currency  = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
   const size      = document.getElementById('f-size').value      || 'مشروع صغير';
   const workers   = document.getElementById('workers-val').textContent;
   const capital   = document.getElementById('capital-val').textContent;
@@ -2928,6 +2928,7 @@ const currency = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
   const target    = document.getElementById('f-target').value;
   const advantage = document.getElementById('f-advantage').value || 'الجودة والخدمة';
   const details   = document.getElementById('f-details').value;
+
   document.getElementById('output-title').textContent     = 'دراسة جدوى: ' + name;
   document.getElementById('study-subtitle').textContent   = 'جاري إنشاء دراسة الجدوى لـ: ' + name;
   document.getElementById('typing-state').style.display  = 'flex';
@@ -2949,23 +2950,29 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
 أنشئ دراسة الجدوى الكاملة الآن بجميع أقسامها مع جداول HTML دقيقة للأرقام المالية.`;
 
-  try{
+  // ── دالة مساعدة: تستقبل SSE stream لجزء واحد ──────────────
+  async function streamPart(partNum, combinedText) {
+    const loaderText = document.getElementById('study-status-msg');
+    const partLabel  = partNum === 1
+      ? '📝 الجزء الأول (1/2) — التحليل الاستراتيجي والسوقي...'
+      : '📊 الجزء الثاني (2/2) — التحليل المالي والتنفيذي...';
+    if (loaderText) loaderText.textContent = partLabel;
+
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt, part: partNum })
     });
 
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      throw new Error((err?.error) || 'HTTP '+res.status);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err?.error) || 'HTTP ' + res.status);
     }
 
-    // ── استقبال الـ Stream كلمة بكلمة ──────────────────────
     const reader  = res.body.getReader();
     const decoder = new TextDecoder();
-    let buffer   = '';
-    let fullText = '';
+    let buffer    = '';
+    let partText  = '';
     let streamError = null;
 
     while (true) {
@@ -2981,42 +2988,50 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
         const raw = line.slice(6).trim();
         try {
           const parsed = JSON.parse(raw);
-          if (parsed.error) {
-            streamError = parsed.error;
-            break;
-          }
+          if (parsed.error) { streamError = parsed.error; break; }
           if (parsed.chunk) {
-            fullText += parsed.chunk;
-            // تحديث مؤشر التحميل بعدد الكلمات
-            const wc = fullText.split(/\s+/).length;
-            const loaderText = document.getElementById('study-status-msg');
-            if (loaderText) loaderText.textContent = `✍️ جاري الكتابة... ${wc.toLocaleString('ar-SA')} كلمة`;
+            partText += parsed.chunk;
+            const totalWords = (combinedText + partText).split(/\s+/).length;
+            if (loaderText) loaderText.textContent =
+              `✍️ الجزء ${partNum}/2 — ${totalWords.toLocaleString('ar-SA')} كلمة`;
           }
-          if (parsed.done && parsed.text) {
-            fullText = parsed.text;
-          }
+          if (parsed.done && parsed.text) partText = parsed.text;
         } catch (_) {}
       }
       if (streamError) break;
     }
 
-    hideStudyLoader(studyLoader);
-
     if (streamError) throw new Error(streamError);
-    if (!fullText) throw new Error('لم يتم استلام محتوى');
+    return partText;
+  }
 
+  // ── تشغيل الجزأين تباعاً ───────────────────────────────────
+  let fullText = '';
+  try {
+    // الجزء الأول: الأقسام 1-5
+    const part1 = await streamPart(1, '');
+    fullText = part1;
+
+    // إشعار انتهاء الجزء الأول وبدء الثاني
+    const loaderText = document.getElementById('study-status-msg');
+    if (loaderText) loaderText.textContent = '✅ الجزء الأول مكتمل — جاري توليد الجزء الثاني...';
+
+    // الجزء الثاني: الأقسام 6-10
+    const part2 = await streamPart(2, part1);
+    fullText = part1.trimEnd() + '\n\n---\n\n' + part2.trimStart();
+
+    hideStudyLoader(studyLoader);
+    if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
     showResult(fullText);
 
-  }catch(e){
+  } catch(e) {
     hideStudyLoader(studyLoader);
     const errMsg = e.message || 'خطأ في الاتصال';
-    // إذا توفر نص حقيقي من Claude (>200 كلمة) — اعرضه حتى لو لم يكتمل
     if (fullText && fullText.split(/\s+/).length > 200) {
       showToast('⚠️ الدراسة جزئية: ' + errMsg);
       showResult(fullText);
     } else {
-      // خطأ حقيقي — اعرض الرسالة الصريحة
-      goStep(3); // أعد المستخدم للخطوة السابقة
+      goStep(3);
       showToast('❌ خطأ في التوليد: ' + errMsg, 8000);
     }
   }
