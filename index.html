@@ -3027,6 +3027,24 @@ function downloadPDF(){
   exportPDF();
 }
 
+// ── نسخة احتياطية: تحويل HTML إلى نص markdown تقريبي ──
+function htmlToMarkdownFallback(el) {
+  let md = '';
+  el.querySelectorAll('h2,h3,p,li,tr').forEach(node => {
+    const t = node.tagName.toLowerCase();
+    const txt = node.textContent.trim();
+    if (!txt) return;
+    if (t === 'h2') md += '\n## ' + txt + '\n\n';
+    else if (t === 'h3') md += '\n### ' + txt + '\n\n';
+    else if (t === 'p') md += txt + '\n\n';
+    else if (t === 'li') md += '- ' + txt + '\n';
+    else if (t === 'tr') {
+      md += node.querySelectorAll('th,td').map(c => c.textContent.trim()).join(' | ') + '\n';
+    }
+  });
+  return md.trim();
+}
+
 async function downloadWord(){
   if(!window._studyUnlocked){
     document.getElementById('study-paywall')?.scrollIntoView({behavior:'smooth'});
@@ -3457,12 +3475,64 @@ function openPDFTemplate(){
   }
 }
 
-function exportPDF(){
-  const title  = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
-  const bodyEl = document.getElementById('output-body');
+async function exportPDF(){
+  const title    = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
+  // المحتوى الخام من Claude (markdown) — الأفضل، وإلا نحوّل HTML
+  const markdown = window._fullStudyText
+    || htmlToMarkdownFallback(document.getElementById('output-body'));
+
+  if (!markdown) {
+    showToast('❌ لا يوجد محتوى للتحميل');
+    return;
+  }
+
   const loader = showPDFLoader();
 
-  // ── بناء container طباعة أبيض ──
+  try {
+    // ── استدعاء Claude API عبر الـ backend ──
+    const res = await fetch('/api/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, markdown })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || 'فشل توليد PDF');
+    }
+
+    const { html } = await res.json();
+    if (!html) throw new Error('استجابة فارغة من الـ API');
+
+    // ── إنشاء Blob وفتح في تبويب جديد (الطباعة تُشغَّل تلقائياً) ──
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+
+    if (!win) {
+      // إذا حُجبت النافذة (popup blocker) نزّل كـ HTML
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = title + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('📥 تم تنزيل الملف — افتحه واطبعه كـ PDF');
+    } else {
+      showToast('✅ جاهز — اختر "حفظ كـ PDF" في مربع الطباعة');
+    }
+
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    hidePDFLoader(loader);
+
+  } catch (err) {
+    hidePDFLoader(loader);
+    showToast('❌ فشل إنشاء PDF: ' + err.message);
+  }
+
+  // ── [قديم — html2pdf] محذوف ──
+  if(false){
+  const bodyEl = document.getElementById('output-body');
   const wrap = document.createElement('div');
   wrap.style.cssText = [
     'position:fixed','top:0','left:-9999px','width:794px',
@@ -3770,7 +3840,8 @@ function exportPDF(){
     hidePDFLoader(loader);
     showToast('✅ تم إنشاء ملف PDF — سيُفتح في تبويب جديد!');
   });
-} // if(false)
+  } // if(false) — pdfMake
+} // if(false) — html2pdf
 } // exportPDF
 
 function getDemoStudy(name,sector,loc,capital){
