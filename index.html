@@ -3462,7 +3462,49 @@ function exportPDF(){
   const bodyEl = document.getElementById('output-body');
   const loader = showPDFLoader();
 
-  // ── في pdfMake الهامش: [يسار, أعلى, يمين, أسفل] ──
+  // بناء container أبيض للطباعة
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:794px;background:#fff;color:#111;padding:40px 48px;direction:rtl;font-family:Cairo,Tajawal,Arial,sans-serif;font-size:13px;line-height:1.9;';
+  wrap.innerHTML = `<div style="text-align:center;border-bottom:3px solid #1D4ED8;padding-bottom:18px;margin-bottom:24px;"><div style="font-size:22px;font-weight:800;color:#1D4ED8;margin-bottom:4px;">${title}</div><div style="font-size:11px;color:#666;">أُعدَّت بواسطة منصة ذكاء الأعمال · ${new Date().toLocaleDateString('ar-SA')}</div></div>`;
+  const clone = bodyEl.cloneNode(true);
+  clone.querySelectorAll('h2').forEach(h => { h.style.cssText='color:#1D4ED8;font-size:16px;font-weight:800;margin:22px 0 8px;border-right:4px solid #1D4ED8;padding-right:10px;'; });
+  clone.querySelectorAll('h3').forEach(h => { h.style.cssText='color:#1e3a8a;font-size:14px;font-weight:700;margin:14px 0 6px;'; });
+  clone.querySelectorAll('p,li').forEach(el => { el.style.cssText='color:#222;line-height:1.9;margin:4px 0;'; });
+  clone.querySelectorAll('strong,b').forEach(el => { el.style.color='#111'; });
+  clone.querySelectorAll('table').forEach(t => { t.style.cssText='width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;'; });
+  clone.querySelectorAll('th').forEach(th => { th.style.cssText='background:#1D4ED8;color:#fff;padding:8px 10px;border:1px solid #93c5fd;text-align:right;font-weight:700;'; });
+  clone.querySelectorAll('td').forEach(td => { td.style.cssText='padding:7px 10px;border:1px solid #ddd;text-align:right;'; });
+  wrap.appendChild(clone);
+  const foot = document.createElement('div');
+  foot.style.cssText='margin-top:32px;border-top:1px solid #e0e7ff;padding-top:10px;text-align:center;color:#999;font-size:11px;';
+  foot.textContent='منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي';
+  wrap.appendChild(foot);
+  document.body.appendChild(wrap);
+
+  html2pdf().set({
+    margin:[12,12,12,12], filename: title+'.pdf',
+    image:{type:'jpeg',quality:0.97},
+    html2canvas:{scale:2,useCORS:true,logging:false},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(wrap).toPdf().get('pdf').then(function(pdf){
+    document.body.removeChild(wrap);
+    const blob = pdf.output('blob');
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=title+'.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>{ window.open(url,'_blank'); }, 500);
+    setTimeout(()=>{ URL.revokeObjectURL(url); }, 12000);
+    hidePDFLoader(loader);
+    showToast('✅ تم إنشاء ملف PDF بنجاح!');
+  }).catch(function(err){
+    if(document.body.contains(wrap)) document.body.removeChild(wrap);
+    hidePDFLoader(loader);
+    showToast('❌ فشل إنشاء PDF: ' + err.message);
+  });
+
+  // ── الكود القديم (pdfMake) — محذوف ──
+  if(false){ // ── في pdfMake الهامش: [يسار, أعلى, يمين, أسفل] ──
   // لأن الصفحة A4 عرضها 595 والهوامش 60+60=120 → عرض المحتوى 475
   const PAGE_W = 475; // عرض المحتوى الفعلي داخل الهوامش
 
@@ -3658,7 +3700,8 @@ function exportPDF(){
     hidePDFLoader(loader);
     showToast('✅ تم إنشاء ملف PDF — سيُفتح في تبويب جديد!');
   });
-}
+} // if(false)
+} // exportPDF
 
 function getDemoStudy(name,sector,loc,capital){
   return`## الملخص التنفيذي\n\nيستعرض هذا التقرير دراسة جدوى شاملة لمشروع **${name}** في قطاع ${sector||'التجارة'} بمنطقة ${loc||'السعودية'}، برأس مال مبدئي قدره **${capital}**.\n\nتشير نتائج التحليل إلى أن المشروع **قابل للتطبيق اقتصادياً** بمعدل عائد داخلي (IRR) يبلغ **22.4%**، وفترة استرداد لرأس المال تُقدّر بـ **28 شهراً**.\n\n## وصف المشروع والفرصة السوقية\n\nيستهدف المشروع فجوة واضحة في السوق المحلي، حيث يُشير تحليل الطلب إلى نمو سنوي بنسبة **8.5%** في هذا القطاع خلال الفترة 2024-2028.\n\n## تحليل السوق والمنافسة\n\n### جدول المنافسين الرئيسيين\n\n<table>\n<tr><th>المنافس</th><th>الحصة السوقية</th><th>نقطة القوة</th><th>نقطة الضعف</th></tr>\n<tr><td>المنافس الأول</td><td>35%</td><td>العلامة التجارية</td><td>الأسعار المرتفعة</td></tr>\n<tr><td>المنافس الثاني</td><td>25%</td><td>الموقع الجغرافي</td><td>جودة الخدمة</td></tr>\n<tr><td>مشروعنا (مستهدف)</td><td>15%</td><td>الجودة + التقنية</td><td>العلامة الناشئة</td></tr>\n</table>\n\n**نقاط القوة:** موقع استراتيجي، فريق متخصص، ميزة تنافسية واضحة.\n**الفرص:** نمو القطاع، دعم حكومي، تحول رقمي متسارع.\n\n## الخطة التشغيلية\n\nيستلزم المشروع فريقاً من **8-12 موظفاً** في المرحلة الأولى، مع خطة توسعية لرفع الطاقة بنسبة 40% في السنة الثالثة.\n\n## التحليل المالي\n\n### التكاليف الاستثمارية\n\n<table>\n<tr><th>البند</th><th>التكلفة</th><th>النسبة</th></tr>\n<tr><td>الأصول الثابتة والتجهيزات</td><td>145,000 ر.س</td><td>42%</td></tr>\n<tr><td>الترخيص والتأسيس</td><td>35,000 ر.س</td><td>10%</td></tr>\n<tr><td>رأس المال التشغيلي</td><td>120,000 ر.س</td><td>35%</td></tr>\n<tr><td>التسويق والانطلاق</td><td>45,000 ر.س</td><td>13%</td></tr>\n</table>\n\n### الإسقاطات المالية (5 سنوات)\n\n<table>\n<tr><th>السنة</th><th>الإيرادات</th><th>التكاليف</th><th>صافي الربح</th><th>الهامش</th></tr>\n<tr><td>الأولى</td><td>480,000</td><td>420,000</td><td>60,000</td><td>12.5%</td></tr>\n<tr><td>الثانية</td><td>680,000</td><td>540,000</td><td>140,000</td><td>20.6%</td></tr>\n<tr><td>الثالثة</td><td>890,000</td><td>650,000</td><td>240,000</td><td>27.0%</td></tr>\n<tr><td>الرابعة</td><td>1,100,000</td><td>760,000</td><td>340,000</td><td>30.9%</td></tr>\n<tr><td>الخامسة</td><td>1,350,000</td><td>870,000</td><td>480,000</td><td>35.6%</td></tr>\n</table>\n\n**IRR:** 22.4% | **NPV:** 285,000 ر.س | **نقطة التعادل:** الشهر السادس | **استرداد رأس المال:** 28 شهراً\n\n## التوصية النهائية\n\n**مستوى المخاطرة: متوسط ✅** — يُوصى بالمضي قدماً في المشروع مع التدرج في التوسع والتركيز على بناء قاعدة عملاء وفاء في السنة الأولى.`;
