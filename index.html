@@ -3009,8 +3009,19 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
   }catch(e){
     hideStudyLoader(studyLoader);
-    showToast((e.message || 'خطأ في الاتصال') + ' — جاري عرض نموذج تجريبي');
-    showResult(getDemoStudy(name, selSector, location, capital));
+    const errMsg = e.message || 'خطأ في الاتصال';
+    // إذا توفر نص جزئي من الـ stream — اعرضه بدل النموذج التجريبي
+    if (fullText && fullText.length > 500) {
+      showToast('⚠️ اكتملت الدراسة جزئياً: ' + errMsg);
+      showResult(fullText);
+    } else {
+      showToast('❌ ' + errMsg);
+      // لا نعرض نموذجاً تجريبياً — نُظهر رسالة خطأ واضحة
+      document.getElementById('typing-state').style.display   = 'none';
+      document.getElementById('output-result').style.display  = 'none';
+      document.getElementById('output-title').textContent     = '⚠️ فشل توليد الدراسة';
+      document.getElementById('study-subtitle').textContent   = errMsg;
+    }
   }
 }
 function showResult(text){
