@@ -3010,17 +3010,14 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
   }catch(e){
     hideStudyLoader(studyLoader);
     const errMsg = e.message || 'خطأ في الاتصال';
-    // إذا توفر نص جزئي من الـ stream — اعرضه بدل النموذج التجريبي
-    if (fullText && fullText.length > 500) {
-      showToast('⚠️ اكتملت الدراسة جزئياً: ' + errMsg);
+    // إذا توفر نص حقيقي من Claude (>200 كلمة) — اعرضه حتى لو لم يكتمل
+    if (fullText && fullText.split(/\s+/).length > 200) {
+      showToast('⚠️ الدراسة جزئية: ' + errMsg);
       showResult(fullText);
     } else {
-      showToast('❌ ' + errMsg);
-      // لا نعرض نموذجاً تجريبياً — نُظهر رسالة خطأ واضحة
-      document.getElementById('typing-state').style.display   = 'none';
-      document.getElementById('output-result').style.display  = 'none';
-      document.getElementById('output-title').textContent     = '⚠️ فشل توليد الدراسة';
-      document.getElementById('study-subtitle').textContent   = errMsg;
+      // خطأ حقيقي — اعرض الرسالة الصريحة
+      goStep(3); // أعد المستخدم للخطوة السابقة
+      showToast('❌ خطأ في التوليد: ' + errMsg, 8000);
     }
   }
 }
