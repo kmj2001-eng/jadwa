@@ -1237,11 +1237,25 @@ input[type=range]::-webkit-slider-thumb {
 }
 .output-body h2 {
   font-family:'Cairo',sans-serif; font-size:1.35rem; color:var(--gold);
-  margin:28px 0 12px; padding-bottom:10px;
+  margin:32px 0 12px; padding-bottom:10px;
   border-bottom:1px solid var(--border);
 }
 .output-body h2:first-child { margin-top:0; }
-.output-body h3 { font-size:0.9rem; color:var(--gold2); margin:18px 0 8px; font-weight:700; }
+/* h3 = قسم رئيسي من ## | h2 = عنوان رئيسي من # */
+.output-body h3 {
+  font-family:'Cairo',sans-serif; font-size:1.15rem; color:var(--gold);
+  margin:36px 0 14px; padding:10px 14px 10px 0;
+  border-right:4px solid #3B82F6; padding-right:14px;
+  background:rgba(59,130,246,0.04); border-radius:0 8px 8px 0;
+  clear:both;
+}
+.output-body h3:first-child { margin-top:0; }
+/* h4 = قسم فرعي من ### */
+.output-body h4 {
+  font-size:0.92rem; color:var(--gold2); margin:18px 0 8px; font-weight:700;
+  padding-bottom:5px; border-bottom:1px dashed var(--border);
+  clear:both;
+}
 .output-body p { margin-bottom:10px; }
 .output-body ul { padding-right:20px; margin-bottom:10px; }
 .output-body li { margin-bottom:6px; }
@@ -1249,11 +1263,12 @@ input[type=range]::-webkit-slider-thumb {
 /* كل study-section يأخذ عرض كامل في عمود واحد */
 .output-body .study-section {
   display:block; width:100%; clear:both;
-  margin-bottom:8px;
+  margin-bottom:28px;
+  padding-bottom:8px;
 }
 .output-body .table-wrap {
   display:block; width:100%; clear:both;
-  overflow-x:auto; margin:18px 0; border-radius:10px;
+  overflow-x:auto; margin:18px 0 26px; border-radius:10px;
   box-shadow:0 2px 12px rgba(0,0,0,0.18);
 }
 .output-body table {
@@ -4792,7 +4807,8 @@ function showResult(text){
   let current = null;
 
   Array.from(tempDiv.childNodes).forEach(node => {
-    if(node.nodeType === 1 && (node.tagName === 'H1' || node.tagName === 'H2')){
+    // ## (H3) = أقسام رئيسية من Claude | # (H2) = عنوان رئيسي نادر
+    if(node.nodeType === 1 && (node.tagName === 'H2' || node.tagName === 'H3')){
       current = document.createElement('div');
       current.className = 'study-section';
       current.appendChild(node.cloneNode(true));
@@ -4800,7 +4816,6 @@ function showResult(text){
     } else if(current){
       current.appendChild(node.cloneNode(true));
     } else {
-      // محتوى قبل أول عنوان
       current = document.createElement('div');
       current.className = 'study-section';
       current.appendChild(node.cloneNode(true));
@@ -4814,8 +4829,8 @@ function showResult(text){
   // ── بناء فهرس المحتويات ──
   const headings = [];
   sections.forEach(sec => {
-    const h2 = sec.querySelector('h1, h2');
-    if (h2) headings.push(h2.textContent.trim());
+    const heading = sec.querySelector('h2, h3');
+    if (heading) headings.push(heading.textContent.trim());
   });
 
   if (headings.length > 0) {
@@ -5548,7 +5563,7 @@ body{
 .toc-row:last-child{ border-bottom:none; }
 .toc-t{
   color:#1e3a8a; font-weight:700;
-  flex-shrink:0; white-space:nowrap;
+  flex-shrink:1; white-space:normal; word-break:break-word;
 }
 .toc-dots{
   flex:1; border-bottom:1.5px dotted #94A3B8;
@@ -5570,18 +5585,31 @@ h2{
   margin:0 0 12px;
   background:linear-gradient(to left,#EFF6FF 0%,#fff 70%);
   page-break-before:always; break-before:page;
-  page-break-after:avoid;  break-after:avoid;
+  page-break-after:avoid; break-after:avoid;
   -webkit-print-color-adjust:exact; print-color-adjust:exact;
 }
 h2:first-of-type{ page-break-before:avoid; break-before:avoid; }
+/* h3 = قسم رئيسي من ## Claude */
 h3{
-  font-size:12pt; font-weight:700; color:#1e3a8a;
-  margin:16px 0 7px;
+  font-size:13pt; font-weight:800; color:#1D4ED8;
+  border-right:5px solid #1D4ED8;
+  padding:9px 14px 9px 8px;
+  margin:0 0 12px;
+  background:linear-gradient(to left,#EFF6FF 0%,#fff 70%);
+  page-break-before:always; break-before:page;
+  page-break-after:avoid; break-after:avoid;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+h3:first-of-type{ page-break-before:avoid; break-before:avoid; }
+/* h4 = قسم فرعي من ### Claude */
+h4{
+  font-size:11.5pt; font-weight:700; color:#1e3a8a;
+  margin:14px 0 6px;
   padding-bottom:4px;
   border-bottom:1.5px solid #BFDBFE;
   page-break-after:avoid; break-after:avoid;
 }
-h4{ font-size:11pt; font-weight:700; color:#374151; margin:10px 0 5px; }
+h5{ font-size:11pt; font-weight:700; color:#374151; margin:10px 0 5px; }
 p{ margin-bottom:9px; color:#1e293b; text-align:justify; }
 ul,ol{ padding-right:26px; margin:7px 0 11px; }
 li{ margin-bottom:5px; color:#1e293b; }
