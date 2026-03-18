@@ -3499,6 +3499,11 @@ footer {
   <div class="study-viewer-topbar">
     <div class="study-viewer-topbar-title" id="study-viewer-title">دراسة الجدوى</div>
     <div class="study-viewer-actions">
+      <button class="study-viewer-close-btn" id="viewer-pdf-btn"
+        style="display:none;background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60A5FA;"
+        onclick="exportReadyStudyPDF()">
+        <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+      </button>
       <button class="study-viewer-close-btn" onclick="closeStudyViewer()">
         <i class="fa-solid fa-xmark"></i> إغلاق
       </button>
@@ -4096,6 +4101,9 @@ async function openReadyStudy(id) {
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
   overlay.scrollTop = 0;
+  // دراسات جاهزة: بدون زر PDF
+  const pdfBtn = document.getElementById('viewer-pdf-btn');
+  if (pdfBtn) pdfBtn.style.display = 'none';
 
   // Serve from cache if available
   if (_readyStudyCache[id]) {
@@ -5761,6 +5769,9 @@ function openSavedStudy(id) {
     body.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
     window._viewerStudyText = study.content;
     window._fullStudyText   = study.content; // لدعم تصدير PDF
+    // دراسات المستخدم: أظهر زر PDF
+    const pdfBtn = document.getElementById('viewer-pdf-btn');
+    if (pdfBtn) pdfBtn.style.display = '';
   } catch(e){ showToast('❌ خطأ في فتح الدراسة'); }
 }
 
