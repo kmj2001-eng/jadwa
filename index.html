@@ -4095,15 +4095,86 @@ tr:first-child th{border-top:2px solid #1740a8;}
 
 </body></html>`;
 
-    // ── تركيب iframe مخفي ──
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = `position:fixed;top:0;left:-9999px;width:${A4_W}px;height:1px;border:0;visibility:hidden;`;
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(printHtml);
-    iframe.contentDocument.close();
+    // ── تركيب div مخفي في نفس المستند (لأن html2canvas لا تعمل على iframe) ──
+    const PID = 'pdf-print-root';
+    const oldEl = document.getElementById(PID);
+    if (oldEl) oldEl.remove();
 
-    await new Promise(r => setTimeout(r, 700));
+    // CSS مُضمَّن مع prefix للتجاوز على ستايلات الصفحة الداكنة
+    const pStyle = document.createElement('style');
+    pStyle.id = PID + '-css';
+    pStyle.textContent = `
+#${PID}{all:initial;position:fixed;top:0;left:-${A4_W+200}px;width:${A4_W}px;
+  font-family:Arial,Tahoma,"Segoe UI",sans-serif!important;
+  direction:rtl;background:#fff!important;color:#111!important;
+  font-size:12px;line-height:1.85;box-sizing:border-box;}
+#${PID} *{box-sizing:border-box;margin:0;padding:0;font-family:inherit;}
+#${PID} .cover{width:${A4_W}px;min-height:1122px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;page-break-after:always;
+  padding:80px 60px;background:#fff!important;position:relative;text-align:center;}
+#${PID} .cover-bar-top,#${PID} .cover-bar-bot{position:absolute;right:0;left:0;height:10px;background:#1D4ED8!important;}
+#${PID} .cover-bar-top{top:0;} #${PID} .cover-bar-bot{bottom:0;}
+#${PID} .cover-brand{font-size:12px;color:#3B82F6!important;font-weight:700;
+  border:1px solid #BFDBFE;padding:6px 20px;border-radius:20px;margin-bottom:70px;}
+#${PID} .cover-icon{font-size:48px;margin-bottom:20px;}
+#${PID} .cover-title{font-size:26px;font-weight:800;color:#1D4ED8!important;line-height:1.4;margin-bottom:16px;}
+#${PID} .cover-line{width:80px;height:4px;background:#1D4ED8!important;margin:18px auto;}
+#${PID} .cover-desc{font-size:13px;color:#64748B!important;margin-bottom:70px;}
+#${PID} .cover-meta{font-size:10px;color:#94A3B8!important;border-top:1px solid #E2E8F0;padding-top:18px;width:100%;}
+#${PID} .toc{padding:50px 56px;page-break-after:always;background:#fff!important;}
+#${PID} .toc-title{font-size:17px;font-weight:800;color:#1D4ED8!important;
+  border-right:5px solid #1D4ED8;padding-right:12px;margin-bottom:26px;}
+#${PID} .toc-item{display:flex;align-items:center;gap:12px;
+  padding:8px 4px;border-bottom:1px dotted #CBD5E1;font-size:12px;}
+#${PID} .toc-num{background:#1D4ED8!important;color:#fff!important;font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:12px;min-width:28px;text-align:center;flex-shrink:0;}
+#${PID} .toc-text{color:#1e3a8a!important;font-weight:600;}
+#${PID} .content{padding:36px 56px 28px;}
+#${PID} h2{color:#1D4ED8!important;font-size:15px;font-weight:800;
+  border-right:5px solid #1D4ED8;padding:10px 14px 10px 0;
+  margin:0 0 12px;page-break-before:always;page-break-after:avoid;
+  background:linear-gradient(to left,#EFF6FF,transparent)!important;}
+#${PID} h2:first-child{page-break-before:avoid;}
+#${PID} h3{color:#1e3a8a!important;font-size:13px;font-weight:700;
+  margin:16px 0 6px;page-break-after:avoid;}
+#${PID} p{margin-bottom:8px;color:#1e293b!important;}
+#${PID} ul,#${PID} ol{padding-right:22px;margin:6px 0 10px;}
+#${PID} li{margin-bottom:4px;color:#1e293b!important;}
+#${PID} strong,#${PID} b{font-weight:700;color:#0f172a!important;}
+#${PID} table{width:100%;border-collapse:collapse;margin:14px 0;
+  font-size:11px;table-layout:fixed;page-break-inside:avoid;}
+#${PID} th{background:#1D4ED8!important;color:#fff!important;
+  padding:8px 10px;border:1px solid #2563EB;text-align:right;font-weight:700;word-break:break-word;}
+#${PID} td{padding:7px 10px;border:1px solid #CBD5E1;
+  color:#1e293b!important;background:#fff!important;text-align:right;word-break:break-word;vertical-align:top;}
+#${PID} tr:nth-child(even) td{background:#EFF6FF!important;}
+#${PID} .pdf-footer{margin-top:36px;border-top:2px solid #E2E8F0;
+  padding:14px 56px;text-align:center;color:#94A3B8!important;font-size:10px;}
+`;
+    document.head.appendChild(pStyle);
+
+    const wrap = document.createElement('div');
+    wrap.id = PID;
+    wrap.innerHTML = `
+<div class="cover">
+  <div class="cover-bar-top"></div>
+  <div class="cover-brand">منصة ذكاء الأعمال · eses.store</div>
+  <div class="cover-icon">📊</div>
+  <div class="cover-title">${title}</div>
+  <div class="cover-line"></div>
+  <div class="cover-desc">دراسة جدوى شاملة — مُعدَّة بتقنيات الذكاء الاصطناعي</div>
+  <div class="cover-meta">تاريخ الإصدار: ${date}</div>
+  <div class="cover-bar-bot"></div>
+</div>
+<div class="toc">
+  <div class="toc-title">📋 فهرس المحتويات</div>
+  ${tocHtml}
+</div>
+<div class="content">${cleanBody}</div>
+<div class="pdf-footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي &nbsp;·&nbsp; eses.store</div>`;
+    document.body.appendChild(wrap);
+
+    await new Promise(r => setTimeout(r, 800));
 
     await html2pdf().set({
       margin:      [8, 8, 8, 8],
@@ -4116,9 +4187,10 @@ tr:first-child th{border-top:2px solid #1740a8;}
       },
       jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak:   { mode: ['css','legacy'], before: ['.toc','.cover','h2'], avoid: ['tr','li','h3','.toc-item'] }
-    }).from(iframe.contentDocument.body).save();
+    }).from(wrap).save();
 
-    document.body.removeChild(iframe);
+    wrap.remove();
+    document.getElementById(PID + '-css')?.remove();
     hidePDFLoader(loader);
     showToast('✅ تم تحميل الدراسة كـ PDF بنجاح!');
 
