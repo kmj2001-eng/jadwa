@@ -6,6 +6,11 @@ export default async function handler(req, res) {
 
   const sql = neon(process.env.POSTGRES_URL);
 
+  // حذف الحساب التجريبي إن طُلب
+  if (req.query.delete_test === '1') {
+    await sql`DELETE FROM users WHERE email = 'test_diag@test.com'`;
+  }
+
   const users = await sql`
     SELECT id, name, email, phone,
            password_hash IS NOT NULL AS has_password,
