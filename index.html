@@ -312,6 +312,10 @@ body {
 }
 .cursor.expand { width:20px; height:20px; }
 .cursor-ring.expand { width:56px; height:56px; border-color:var(--gold); }
+/* إخفاء المؤشر المخصص على الأجهزة اللمسية */
+@media (hover:none),(pointer:coarse){
+  .cursor,.cursor-ring{display:none!important;}
+}
 
 /* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar { width:4px; }
@@ -1900,8 +1904,9 @@ footer {
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:960px){
-  nav{padding:0 20px;}
-  .nav-links .nav-link:not(.nav-cta){display:none;}
+  nav{padding:0 16px;}
+  .nav-links .nav-link{display:none;}
+  .nav-cta{display:none!important;}
   .hero,.section,.hiw-section,.features-section,.pricing-section,.testi-section,.cta-band{padding-left:20px;padding-right:20px;}
   .hero-visual{display:none;}
   .hero-title{font-size:1.8rem;}
@@ -3502,6 +3507,9 @@ footer {
   <div class="study-viewer-topbar">
     <div class="study-viewer-topbar-title" id="study-viewer-title">دراسة الجدوى</div>
     <div class="study-viewer-actions">
+      <button class="study-viewer-close-btn" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60A5FA;" onclick="exportReadyStudyPDF()">
+        <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+      </button>
       <button class="study-viewer-close-btn" onclick="closeStudyViewer()">
         <i class="fa-solid fa-xmark"></i> إغلاق
       </button>
@@ -3577,7 +3585,7 @@ footer {
       </div>
       <div class="dmenu-item active"><span class="dicon">📊</span> نظرة عامة</div>
       <div class="dmenu-item" onclick="showPage('tool')"><span class="dicon">✨</span> دراسة جديدة</div>
-      <div class="dmenu-item"><span class="dicon">📂</span> دراساتي</div>
+      <div class="dmenu-item" onclick="document.querySelector('.studies-panel')?.scrollIntoView({behavior:'smooth'})"><span class="dicon">📂</span> دراساتي</div>
       <div class="dmenu-item" onclick="showPage('ready')"><span class="dicon">📁</span> دراسات جاهزة</div>
       <div class="dmenu-item"><span class="dicon">👥</span> الإحالة</div>
       <div class="dmenu-item" onclick="showPage('pricing')"><span class="dicon">⬆️</span> ترقية الباقة</div>
@@ -3646,6 +3654,11 @@ function animRing(){
   requestAnimationFrame(animRing);
 }
 animRing();
+// تعطيل المؤشر المخصص على الأجهزة اللمسية
+if(('ontouchstart' in window)||navigator.maxTouchPoints>0){
+  if(cur)cur.style.display='none';
+  if(ring)ring.style.display='none';
+}
 document.querySelectorAll('a,button,.nav-link,.article-card,.feat-card,.plan-card,.sample-card,.sector-btn,.hiw-step,.wz-step,.dmenu-item').forEach(el=>{
   el.addEventListener('mouseenter',()=>{cur.classList.add('expand');ring.classList.add('expand');});
   el.addEventListener('mouseleave',()=>{cur.classList.remove('expand');ring.classList.remove('expand');});
@@ -4181,6 +4194,8 @@ function showPage(id, pushState){
     document.body.scrollTop = 0;
     window.scrollTo({top: 0, left: 0, behavior: 'instant'});
   });
+  // تحميل الدراسات المحفوظة عند فتح لوحة التحكم
+  if (id === 'dashboard') loadDashboardStudies();
 }
 window.addEventListener('popstate', function(e){
   const id = (e.state && e.state.page) ? e.state.page : 'home';
@@ -4764,6 +4779,11 @@ async function generateStudy(){
 function showResult(text){
   window._fullStudyText = text;
   window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
+  // ── حفظ تلقائي في localStorage ──
+  try {
+    const studyTitle = (document.getElementById('output-title').textContent.trim()) || 'دراسة جدوى';
+    saveStudyToLocal(studyTitle, text);
+  } catch(e){}
 
   const html = mdToHtml(text);
 
@@ -5398,7 +5418,42 @@ async function exportPDF(){
   }
 
   const loader = showPDFLoader();
-  showToast('⏳ جاري تجهيز الدراسة للطباعة...');
+  showToast('⏳ جاري تجهيز ملف PDF...');
+
+  // ── محاولة التحميل التلقائي عبر html2pdf.js ──
+  if (typeof html2pdf === 'function') {
+    try {
+      const tmp2 = document.createElement('div');
+      tmp2.innerHTML = mdToHtml(markdown);
+      tmp2.querySelectorAll('th').forEach(th=>{
+        th.style.setProperty('background','#1D4ED8','important');
+        th.style.setProperty('color','#ffffff','important');
+      });
+      tmp2.querySelectorAll('.table-wrap').forEach(w=>{const t=w.querySelector('table');if(t)w.replaceWith(t);});
+
+      const wrapper = document.createElement('div');
+      wrapper.dir = 'rtl';
+      wrapper.style.cssText = 'font-family:Cairo,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.85;background:#fff;padding:18px 22px;';
+      wrapper.appendChild(tmp2);
+      wrapper.style.position='fixed'; wrapper.style.top='-99999px'; wrapper.style.left='0'; wrapper.style.width='210mm';
+      document.body.appendChild(wrapper);
+
+      const opt = {
+        margin:[15,12,20,12], filename: title+'.pdf',
+        image:{type:'jpeg',quality:0.97},
+        html2canvas:{scale:2,useCORS:true,letterRendering:true,logging:false,
+          onclone:(doc)=>{doc.documentElement.dir='rtl';}},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+      };
+      await html2pdf().set(opt).from(wrapper).save();
+      document.body.removeChild(wrapper);
+      hidePDFLoader(loader);
+      showToast('✅ تم تحميل الدراسة PDF! تحقق من مجلد التنزيلات.');
+      return;
+    } catch(e2) {
+      console.warn('html2pdf fallback to print:', e2);
+    }
+  }
 
   const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
 
@@ -5537,7 +5592,7 @@ body{
 }
 
 /* ════ محتوى ════ */
-.content{ }
+.content{ direction:rtl; text-align:right; }
 
 h2{
   font-size:13.5pt; font-weight:800; color:#1D4ED8;
@@ -5672,6 +5727,142 @@ document.fonts.ready.then(function(){
 
 function getDemoStudy(name,sector,loc,capital){
   return`## الملخص التنفيذي\n\nيستعرض هذا التقرير دراسة جدوى شاملة لمشروع **${name}** في قطاع ${sector||'التجارة'} بمنطقة ${loc||'السعودية'}، برأس مال مبدئي قدره **${capital}**.\n\nتشير نتائج التحليل إلى أن المشروع **قابل للتطبيق اقتصادياً** بمعدل عائد داخلي (IRR) يبلغ **22.4%**، وفترة استرداد لرأس المال تُقدّر بـ **28 شهراً**.\n\n## وصف المشروع والفرصة السوقية\n\nيستهدف المشروع فجوة واضحة في السوق المحلي، حيث يُشير تحليل الطلب إلى نمو سنوي بنسبة **8.5%** في هذا القطاع خلال الفترة 2024-2028.\n\n## تحليل السوق والمنافسة\n\n### جدول المنافسين الرئيسيين\n\n<table>\n<tr><th>المنافس</th><th>الحصة السوقية</th><th>نقطة القوة</th><th>نقطة الضعف</th></tr>\n<tr><td>المنافس الأول</td><td>35%</td><td>العلامة التجارية</td><td>الأسعار المرتفعة</td></tr>\n<tr><td>المنافس الثاني</td><td>25%</td><td>الموقع الجغرافي</td><td>جودة الخدمة</td></tr>\n<tr><td>مشروعنا (مستهدف)</td><td>15%</td><td>الجودة + التقنية</td><td>العلامة الناشئة</td></tr>\n</table>\n\n**نقاط القوة:** موقع استراتيجي، فريق متخصص، ميزة تنافسية واضحة.\n**الفرص:** نمو القطاع، دعم حكومي، تحول رقمي متسارع.\n\n## الخطة التشغيلية\n\nيستلزم المشروع فريقاً من **8-12 موظفاً** في المرحلة الأولى، مع خطة توسعية لرفع الطاقة بنسبة 40% في السنة الثالثة.\n\n## التحليل المالي\n\n### التكاليف الاستثمارية\n\n<table>\n<tr><th>البند</th><th>التكلفة</th><th>النسبة</th></tr>\n<tr><td>الأصول الثابتة والتجهيزات</td><td>145,000 ر.س</td><td>42%</td></tr>\n<tr><td>الترخيص والتأسيس</td><td>35,000 ر.س</td><td>10%</td></tr>\n<tr><td>رأس المال التشغيلي</td><td>120,000 ر.س</td><td>35%</td></tr>\n<tr><td>التسويق والانطلاق</td><td>45,000 ر.س</td><td>13%</td></tr>\n</table>\n\n### الإسقاطات المالية (5 سنوات)\n\n<table>\n<tr><th>السنة</th><th>الإيرادات</th><th>التكاليف</th><th>صافي الربح</th><th>الهامش</th></tr>\n<tr><td>الأولى</td><td>480,000</td><td>420,000</td><td>60,000</td><td>12.5%</td></tr>\n<tr><td>الثانية</td><td>680,000</td><td>540,000</td><td>140,000</td><td>20.6%</td></tr>\n<tr><td>الثالثة</td><td>890,000</td><td>650,000</td><td>240,000</td><td>27.0%</td></tr>\n<tr><td>الرابعة</td><td>1,100,000</td><td>760,000</td><td>340,000</td><td>30.9%</td></tr>\n<tr><td>الخامسة</td><td>1,350,000</td><td>870,000</td><td>480,000</td><td>35.6%</td></tr>\n</table>\n\n**IRR:** 22.4% | **NPV:** 285,000 ر.س | **نقطة التعادل:** الشهر السادس | **استرداد رأس المال:** 28 شهراً\n\n## التوصية النهائية\n\n**مستوى المخاطرة: متوسط ✅** — يُوصى بالمضي قدماً في المشروع مع التدرج في التوسع والتركيز على بناء قاعدة عملاء وفاء في السنة الأولى.`;
+}
+
+// ─── SAVED STUDIES (localStorage) ───
+function saveStudyToLocal(title, content) {
+  try {
+    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+    // تجنب التكرار بنفس العنوان خلال نفس الجلسة
+    const idx = studies.findIndex(s => s.title === title);
+    if (idx !== -1) studies.splice(idx, 1);
+    studies.unshift({
+      id: Date.now(),
+      title: title,
+      content: content,
+      date: new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+    });
+    if (studies.length > 30) studies.splice(30);
+    localStorage.setItem('saved_studies', JSON.stringify(studies));
+  } catch(e){ console.warn('saveStudyToLocal:', e); }
+}
+
+function loadDashboardStudies() {
+  try {
+    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+    const tbody = document.getElementById('user-studies-tbody');
+    const noRow = document.getElementById('no-studies-row');
+    if (!tbody) return;
+    // إزالة الصفوف الديناميكية القديمة
+    tbody.querySelectorAll('.study-row').forEach(r => r.remove());
+    if (studies.length === 0) {
+      if (noRow) noRow.style.display = '';
+      document.getElementById('kpi-total').textContent = '0';
+      document.getElementById('kpi-done').textContent  = '0';
+      return;
+    }
+    if (noRow) noRow.style.display = 'none';
+    studies.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.className = 'study-row';
+      tr.innerHTML = `
+        <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${s.id})">${s.title}</span></td>
+        <td>—</td><td>—</td><td>—</td>
+        <td><span class="sbadge sbadge-done">مكتملة</span></td>
+        <td style="font-size:0.75rem;color:var(--text3);">${s.date}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('kpi-total').textContent = studies.length;
+    document.getElementById('kpi-done').textContent  = studies.length;
+  } catch(e){ console.warn('loadDashboardStudies:', e); }
+}
+
+function openSavedStudy(id) {
+  try {
+    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+    const study = studies.find(s => s.id === id);
+    if (!study) { showToast('⚠️ لم يُعثر على الدراسة'); return; }
+    const overlay = document.getElementById('study-viewer-overlay');
+    const body    = document.getElementById('study-viewer-body');
+    const titleEl = document.getElementById('study-viewer-title');
+    if (!overlay || !body) return;
+    titleEl.textContent = study.title;
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    overlay.scrollTop = 0;
+    body.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
+    window._viewerStudyText = study.content;
+    window._fullStudyText   = study.content; // لدعم تصدير PDF
+  } catch(e){ showToast('❌ خطأ في فتح الدراسة'); }
+}
+
+function exportReadyStudyPDF() {
+  const body    = document.getElementById('study-viewer-body');
+  const titleEl = document.getElementById('study-viewer-title');
+  const title   = (titleEl && titleEl.textContent.trim()) || 'دراسة الجدوى';
+  if (!body || !body.innerHTML.trim()) { showToast('❌ لا يوجد محتوى'); return; }
+
+  // محاولة html2pdf.js أولاً
+  if (typeof html2pdf === 'function') {
+    const wrapper = document.createElement('div');
+    wrapper.dir = 'rtl';
+    wrapper.style.cssText = 'font-family:Cairo,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.85;background:#fff;padding:18px 22px;';
+    wrapper.innerHTML = body.innerHTML;
+    wrapper.querySelectorAll('th').forEach(th=>{th.style.setProperty('background','#1D4ED8','important');th.style.setProperty('color','#fff','important');});
+    wrapper.style.position='fixed'; wrapper.style.top='-99999px'; wrapper.style.left='0'; wrapper.style.width='210mm';
+    document.body.appendChild(wrapper);
+    const opt = {
+      margin:[15,12,20,12], filename: title+'.pdf',
+      image:{type:'jpeg',quality:0.97},
+      html2canvas:{scale:2,useCORS:true,letterRendering:true,logging:false,onclone:(doc)=>{doc.documentElement.dir='rtl';}},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    };
+    showToast('⏳ جاري إعداد ملف PDF...');
+    html2pdf().set(opt).from(wrapper).save().then(()=>{
+      document.body.removeChild(wrapper);
+      showToast('✅ تم تحميل PDF! تحقق من مجلد التنزيلات.');
+    }).catch(err=>{
+      document.body.removeChild(wrapper);
+      _exportReadyStudyPDFPrint(title, body);
+    });
+    return;
+  }
+  _exportReadyStudyPDFPrint(title, body);
+}
+
+function _exportReadyStudyPDFPrint(title, body) {
+  const pw = window.open('','_blank','width=960,height=800');
+  if (!pw) { showToast('❌ يرجى السماح بالنوافذ المنبثقة'); return; }
+  const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  pw.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 portrait;margin:22mm 16mm 28mm 16mm;}*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo',Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.9;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+h2{font-size:13pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:9px 14px 9px 6px;margin:0 0 11px;background:linear-gradient(to left,#EFF6FF,#fff 70%);page-break-before:always;break-before:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;}h2:first-of-type{page-break-before:avoid;break-before:avoid;}
+h3{font-size:11.5pt;font-weight:700;color:#1e3a8a;margin:14px 0 6px;border-bottom:1.5px solid #BFDBFE;padding-bottom:4px;}
+p{margin-bottom:8px;text-align:justify;}ul,ol{padding-right:24px;margin:6px 0 10px;}li{margin-bottom:4px;}
+table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:9.5pt;table-layout:auto;page-break-inside:avoid;}
+th{background:#1D4ED8!important;color:#fff!important;padding:8px 10px;text-align:right;font-weight:700;border:1px solid #1740a8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+td{padding:6px 9px;border:1px solid #CBD5E1;text-align:right;font-size:9pt;vertical-align:top;word-break:break-word;}
+tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.table-wrap{display:block;width:100%;overflow:visible;}
+.cover{page-break-after:always;break-after:page;padding:60mm 30mm 30mm;text-align:center;}
+.footer{margin-top:24px;padding-top:10px;border-top:1.5px solid #E2E8F0;text-align:center;color:#94A3B8;font-size:8.5pt;}
+@media print{.no-print{display:none!important;}}
+</style></head><body>
+<div class="cover">
+  <div style="font-size:20pt;font-weight:900;color:#1D4ED8;margin-bottom:10px;">${title}</div>
+  <div style="color:#475569;font-size:11pt;margin-bottom:12px;">دراسة جدوى استثمارية شاملة</div>
+  <div style="font-size:9pt;color:#94A3B8;">📅 ${date} — ذكاء الأعمال · eses.store</div>
+</div>
+<div style="direction:rtl;text-align:right;">${body.innerHTML}</div>
+<div class="footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي | eses.store</div>
+<script>document.fonts.ready.then(()=>setTimeout(()=>window.print(),700));<\/script>
+</body></html>`);
+  pw.document.close();
+  showToast('✅ ستُفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم "حفظ"');
 }
 
 // ─── PAYMOB / PAYMENT REMOVED ───
