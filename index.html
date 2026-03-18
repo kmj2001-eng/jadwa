@@ -3806,6 +3806,9 @@ const currencyMap = {
 };
 // ─── AI STUDY GENERATION ───
 async function generateStudy(){
+  // منع الضغط المتكرر
+  const genBtn = document.querySelector('.btn-next[onclick="generateStudy()"]');
+  if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.5'; genBtn.style.pointerEvents = 'none'; }
   goStep(4);
   const name      = document.getElementById('f-name').value || 'مشروع تجاري';
   const country   = document.getElementById('f-country').options[document.getElementById('f-country').selectedIndex]?.text || '';
@@ -3981,6 +3984,8 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
       showResult(partial);
     } else {
       goStep(3);
+      // إعادة تفعيل الزر عند الخطأ
+      if (genBtn) { genBtn.disabled = false; genBtn.style.opacity = ''; genBtn.style.pointerEvents = ''; }
       const errMsg = e.message || 'خطأ في الاتصال';
       showToast('❌ ' + errMsg, 7000);
       console.error('[generateStudy] خطأ نهائي:', errMsg);
