@@ -6128,6 +6128,18 @@ async function saveStudy(title, content) {
   const metadata   = window._currentStudyMeta   || {};
   const input_data = window._currentStudyForm   || null; // بيانات النموذج الكاملة
 
+  // ── استخراج IRR من المحتوى إن لم يكن موجوداً في metadata ──
+  if (!metadata.irr && content) {
+    try {
+      const m = content.match(/IRR[^%\d]*?([\d.]+)\s*%/i)
+             || content.match(/معدل العائد الداخلي[^%\d]*?([\d.]+)\s*%/);
+      if (m) metadata.irr = m[1] + '%';
+    } catch(_) {}
+  }
+  // ── استكمال القطاع ورأس المال من input_data إن كانا مفقودَين ──
+  if (!metadata.sector  && input_data?.sector)  metadata.sector  = input_data.sector;
+  if (!metadata.capital && input_data?.capital) metadata.capital = input_data.capital;
+
   // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
   const user = _getLoggedUser();
   if (user && user.id) {
@@ -6215,13 +6227,20 @@ async function loadDashboardStudies() {
       const res = await fetch('/api/studies', { headers: { 'x-user-id': String(user.id) } });
       if (res.ok) {
         const data = await res.json();
-        studies = (data.studies || []).map(s => ({
-          id      : 'db_' + s.id,
-          dbId    : s.id,
-          title   : s.title,
-          metadata: s.metadata || {},
-          date    : new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
-        }));
+        studies = (data.studies || []).map(s => {
+          const meta = s.metadata || {};
+          const inp  = s.input_data || {};
+          // استخدم input_data كـ fallback إذا كان metadata ناقصاً
+          if (!meta.sector  && inp.sector)  meta.sector  = inp.sector;
+          if (!meta.capital && inp.capital) meta.capital = inp.capital;
+          return {
+            id      : 'db_' + s.id,
+            dbId    : s.id,
+            title   : s.title,
+            metadata: meta,
+            date    : new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+          };
+        });
       }
     } catch(e) { console.warn('loadDashboardStudies DB:', e); }
   }
@@ -6247,9 +6266,18 @@ async function loadDashboardStudies() {
     tr.className  = 'study-row';
     const idParam = JSON.stringify(s.id);
     const meta    = s.metadata || {};
-    const sector  = meta.sector   || '—';
-    const capital = meta.capital  || '—';
-    const irr     = meta.irr      || '—';
+    // محاولة استخراج من input_data إذا كانت metadata فارغة
+    const inp     = s.input_data || {};
+    const sector  = meta.sector  || inp.sector  || '—';
+    const rawCap  = meta.capital || inp.capital || null;
+    const capital = rawCap
+      ? (typeof rawCap === 'number'
+          ? rawCap.toLocaleString('ar-SA') + ' ر.س'
+          : String(rawCap).replace(/[^\d,]/g,'')
+              ? Number(String(rawCap).replace(/[^\d]/g,'')).toLocaleString('ar-SA') + ' ر.س'
+              : rawCap)
+      : '—';
+    const irr     = meta.irr || inp.irr || '—';
     tr.innerHTML = `
       <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span></td>
       <td style="font-size:0.8rem;color:var(--text2);">${sector}</td>

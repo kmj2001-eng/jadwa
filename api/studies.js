@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       }
 
       const rows = await sql`
-        SELECT id, project_name AS title, metadata, created_at
+        SELECT id, project_name AS title, metadata, input_data, created_at
         FROM feasibility_studies
         WHERE user_id = ${userId}
         ORDER BY created_at DESC
