@@ -1231,7 +1231,8 @@ input[type=range]::-webkit-slider-thumb {
 .oaction:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .output-body {
   padding:36px; line-height:1.9; font-size:0.85rem;
-  color:var(--text2); max-height:600px; overflow-y:auto;
+  color:var(--text2); max-height:80vh; overflow-y:auto;
+  scroll-behavior:smooth;
 }
 .output-body h2 {
   font-family:'Cairo',sans-serif; font-size:1.35rem; color:var(--gold);
@@ -1273,6 +1274,33 @@ input[type=range]::-webkit-slider-thumb {
 }
 .output-body tr:nth-child(even) td { background:#f0f7ff !important; color:#1e293b !important; }
 .output-body tr:hover td { background:#dbeafe; transition:background 0.15s; }
+
+/* ════ فهرس المحتويات في الصفحة ════ */
+.study-toc {
+  background:var(--panel2); border:1px solid var(--border3);
+  border-right:5px solid #1D4ED8;
+  border-radius:14px; padding:24px 28px;
+  margin-bottom:32px;
+}
+.study-toc-head {
+  font-size:1.05rem; font-weight:800; color:#1D4ED8;
+  margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+.study-toc-row {
+  display:flex; align-items:center; gap:10px;
+  padding:7px 4px; border-bottom:1px dashed var(--border);
+  font-size:0.82rem; cursor:pointer; transition:background 0.15s;
+  border-radius:6px;
+}
+.study-toc-row:last-child { border-bottom:none; }
+.study-toc-row:hover { background:rgba(59,130,246,0.07); }
+.study-toc-num {
+  background:#1D4ED8; color:#fff; font-size:0.72rem; font-weight:700;
+  padding:2px 9px; border-radius:12px; min-width:28px;
+  text-align:center; flex-shrink:0;
+}
+.study-toc-title { color:#1e3a8a; font-weight:700; flex:1; }
+.study-toc-arrow { color:#94A3B8; font-size:0.75rem; }
 
 .typing-state {
   padding:40px 28px; display:flex; align-items:center; gap:14px;
@@ -4019,8 +4047,29 @@ function showResult(text){
   const outputBody = document.getElementById('output-body');
   outputBody.innerHTML = '';
 
-  // عرض جميع الأقسام بدون تقييد
+  // ── بناء فهرس المحتويات ──
+  const headings = [];
   sections.forEach(sec => {
+    const h2 = sec.querySelector('h2');
+    if (h2) headings.push(h2.textContent.trim());
+  });
+
+  if (headings.length > 0) {
+    const tocEl = document.createElement('div');
+    tocEl.className = 'study-toc';
+    tocEl.innerHTML = `<div class="study-toc-head">📋 فهرس المحتويات</div>` +
+      headings.map((h, i) => `
+        <div class="study-toc-row" onclick="scrollToSection(${i})">
+          <span class="study-toc-num">${i + 1}</span>
+          <span class="study-toc-title">${h}</span>
+          <span class="study-toc-arrow">↓</span>
+        </div>`).join('');
+    outputBody.appendChild(tocEl);
+  }
+
+  // عرض جميع الأقسام بدون تقييد
+  sections.forEach((sec, idx) => {
+    sec.setAttribute('data-section-idx', idx);
     outputBody.appendChild(sec);
   });
 
@@ -4080,6 +4129,11 @@ function showResult(text){
 
   document.getElementById('typing-state').style.display='none';
   document.getElementById('output-result').style.display='block';
+}
+
+function scrollToSection(idx) {
+  const sec = document.querySelector(`.study-section[data-section-idx="${idx}"]`);
+  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function unlockStudy(){
@@ -4605,8 +4659,10 @@ async function exportPDF(){
     // ── headings لفهرس المحتويات ──
     const headings = [];
     markdown.split('\n').forEach(ln => {
-      const m = ln.match(/^## (.+)$/);
-      if (m) headings.push(m[1].trim());
+      const m2 = ln.match(/^## (.+)$/);
+      const m3 = ln.match(/^### (.+)$/);
+      if (m2) headings.push({ level: 2, text: m2[1].trim() });
+      else if (m3) headings.push({ level: 3, text: m3[1].trim() });
     });
 
     // ── تحويل Markdown → HTML وتنظيف ──
@@ -4623,12 +4679,17 @@ async function exportPDF(){
     const cleanBody = tmp.innerHTML;
 
     // ── فهرس المحتويات ──
-    const tocHtml = headings.map((h,i) => `
-      <div class="toc-row">
-        <span class="toc-n">${i+1}</span>
-        <span class="toc-t">${h}</span>
+    let tocNum = 0;
+    const tocHtml = headings.map(h => {
+      if (h.level === 2) tocNum++;
+      const numLabel = h.level === 2 ? String(tocNum) : '';
+      return `
+      <div class="toc-row" style="${h.level === 3 ? 'padding-right:22px;font-size:9.5pt;font-weight:500;' : ''}">
+        ${numLabel ? `<span class="toc-n">${numLabel}</span>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+        <span class="toc-t" style="${h.level === 3 ? 'color:#334155;font-weight:500;' : ''}">${h.text}</span>
         <span class="toc-dots"></span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     // ── بناء صفحة الطباعة ──
     const pw = window.open('','_blank','width=960,height=800');
