@@ -5726,75 +5726,161 @@ function getDemoStudy(name,sector,loc,capital){
   return`## الملخص التنفيذي\n\nيستعرض هذا التقرير دراسة جدوى شاملة لمشروع **${name}** في قطاع ${sector||'التجارة'} بمنطقة ${loc||'السعودية'}، برأس مال مبدئي قدره **${capital}**.\n\nتشير نتائج التحليل إلى أن المشروع **قابل للتطبيق اقتصادياً** بمعدل عائد داخلي (IRR) يبلغ **22.4%**، وفترة استرداد لرأس المال تُقدّر بـ **28 شهراً**.\n\n## وصف المشروع والفرصة السوقية\n\nيستهدف المشروع فجوة واضحة في السوق المحلي، حيث يُشير تحليل الطلب إلى نمو سنوي بنسبة **8.5%** في هذا القطاع خلال الفترة 2024-2028.\n\n## تحليل السوق والمنافسة\n\n### جدول المنافسين الرئيسيين\n\n<table>\n<tr><th>المنافس</th><th>الحصة السوقية</th><th>نقطة القوة</th><th>نقطة الضعف</th></tr>\n<tr><td>المنافس الأول</td><td>35%</td><td>العلامة التجارية</td><td>الأسعار المرتفعة</td></tr>\n<tr><td>المنافس الثاني</td><td>25%</td><td>الموقع الجغرافي</td><td>جودة الخدمة</td></tr>\n<tr><td>مشروعنا (مستهدف)</td><td>15%</td><td>الجودة + التقنية</td><td>العلامة الناشئة</td></tr>\n</table>\n\n**نقاط القوة:** موقع استراتيجي، فريق متخصص، ميزة تنافسية واضحة.\n**الفرص:** نمو القطاع، دعم حكومي، تحول رقمي متسارع.\n\n## الخطة التشغيلية\n\nيستلزم المشروع فريقاً من **8-12 موظفاً** في المرحلة الأولى، مع خطة توسعية لرفع الطاقة بنسبة 40% في السنة الثالثة.\n\n## التحليل المالي\n\n### التكاليف الاستثمارية\n\n<table>\n<tr><th>البند</th><th>التكلفة</th><th>النسبة</th></tr>\n<tr><td>الأصول الثابتة والتجهيزات</td><td>145,000 ر.س</td><td>42%</td></tr>\n<tr><td>الترخيص والتأسيس</td><td>35,000 ر.س</td><td>10%</td></tr>\n<tr><td>رأس المال التشغيلي</td><td>120,000 ر.س</td><td>35%</td></tr>\n<tr><td>التسويق والانطلاق</td><td>45,000 ر.س</td><td>13%</td></tr>\n</table>\n\n### الإسقاطات المالية (5 سنوات)\n\n<table>\n<tr><th>السنة</th><th>الإيرادات</th><th>التكاليف</th><th>صافي الربح</th><th>الهامش</th></tr>\n<tr><td>الأولى</td><td>480,000</td><td>420,000</td><td>60,000</td><td>12.5%</td></tr>\n<tr><td>الثانية</td><td>680,000</td><td>540,000</td><td>140,000</td><td>20.6%</td></tr>\n<tr><td>الثالثة</td><td>890,000</td><td>650,000</td><td>240,000</td><td>27.0%</td></tr>\n<tr><td>الرابعة</td><td>1,100,000</td><td>760,000</td><td>340,000</td><td>30.9%</td></tr>\n<tr><td>الخامسة</td><td>1,350,000</td><td>870,000</td><td>480,000</td><td>35.6%</td></tr>\n</table>\n\n**IRR:** 22.4% | **NPV:** 285,000 ر.س | **نقطة التعادل:** الشهر السادس | **استرداد رأس المال:** 28 شهراً\n\n## التوصية النهائية\n\n**مستوى المخاطرة: متوسط ✅** — يُوصى بالمضي قدماً في المشروع مع التدرج في التوسع والتركيز على بناء قاعدة عملاء وفاء في السنة الأولى.`;
 }
 
-// ─── SAVED STUDIES (localStorage) ───
-function saveStudyToLocal(title, content) {
-  try {
-    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
-    // تجنب التكرار بنفس العنوان خلال نفس الجلسة
-    const idx = studies.findIndex(s => s.title === title);
-    if (idx !== -1) studies.splice(idx, 1);
-    studies.unshift({
-      id: Date.now(),
-      title: title,
-      content: content,
-      date: new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
-    });
-    if (studies.length > 30) studies.splice(30);
-    localStorage.setItem('saved_studies', JSON.stringify(studies));
-  } catch(e){ console.warn('saveStudyToLocal:', e); }
+// ─── SAVED STUDIES (DB + localStorage fallback) ───
+
+function _getLoggedUser() {
+  try { return JSON.parse(localStorage.getItem('user_data')); } catch(e) { return null; }
 }
 
-function loadDashboardStudies() {
+async function saveStudy(title, content) {
+  const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+
+  // حفظ محلي دائماً كنسخة احتياطية
   try {
-    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
-    const tbody = document.getElementById('user-studies-tbody');
-    const noRow = document.getElementById('no-studies-row');
-    if (!tbody) return;
-    // إزالة الصفوف الديناميكية القديمة
-    tbody.querySelectorAll('.study-row').forEach(r => r.remove());
-    if (studies.length === 0) {
-      if (noRow) noRow.style.display = '';
-      document.getElementById('kpi-total').textContent = '0';
-      document.getElementById('kpi-done').textContent  = '0';
-      return;
-    }
-    if (noRow) noRow.style.display = 'none';
-    studies.forEach(s => {
-      const tr = document.createElement('tr');
-      tr.className = 'study-row';
-      tr.innerHTML = `
-        <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${s.id})">${s.title}</span></td>
-        <td>—</td><td>—</td><td>—</td>
-        <td><span class="sbadge sbadge-done">مكتملة</span></td>
-        <td style="font-size:0.75rem;color:var(--text3);">${s.date}</td>
-      `;
-      tbody.appendChild(tr);
+    const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+    const idx = local.findIndex(s => s.title === title);
+    if (idx !== -1) local.splice(idx, 1);
+    local.unshift({ id: 'local_' + Date.now(), title, content, date });
+    if (local.length > 30) local.splice(30);
+    localStorage.setItem('saved_studies', JSON.stringify(local));
+  } catch(e) { console.warn('saveStudy local:', e); }
+
+  // حفظ في قاعدة البيانات إن كان المستخدم مسجلاً
+  const user = _getLoggedUser();
+  if (!user || !user.id) return;
+  try {
+    await fetch('/api/studies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body: JSON.stringify({ title, content })
     });
-    document.getElementById('kpi-total').textContent = studies.length;
-    document.getElementById('kpi-done').textContent  = studies.length;
-  } catch(e){ console.warn('loadDashboardStudies:', e); }
+  } catch(e) { console.warn('saveStudy DB:', e); }
 }
 
-function openSavedStudy(id) {
-  try {
-    const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
-    const study = studies.find(s => s.id === id);
-    if (!study) { showToast('⚠️ لم يُعثر على الدراسة'); return; }
-    const overlay = document.getElementById('study-viewer-overlay');
-    const body    = document.getElementById('study-viewer-body');
-    const titleEl = document.getElementById('study-viewer-title');
-    if (!overlay || !body) return;
-    titleEl.textContent = study.title;
+// للتوافق مع الكود القديم
+function saveStudyToLocal(title, content) { saveStudy(title, content); }
+
+async function loadDashboardStudies() {
+  const tbody = document.getElementById('user-studies-tbody');
+  const noRow = document.getElementById('no-studies-row');
+  if (!tbody) return;
+  tbody.querySelectorAll('.study-row').forEach(r => r.remove());
+
+  let studies = [];
+  const user = _getLoggedUser();
+
+  if (user && user.id) {
+    // تحميل من قاعدة البيانات
+    try {
+      const res = await fetch('/api/studies', { headers: { 'x-user-id': String(user.id) } });
+      if (res.ok) {
+        const data = await res.json();
+        studies = (data.studies || []).map(s => ({
+          id: 'db_' + s.id,
+          dbId: s.id,
+          title: s.title,
+          date: new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+        }));
+      }
+    } catch(e) { console.warn('loadDashboardStudies DB:', e); }
+  }
+
+  // إن لم تكن هناك دراسات في DB، استخدم localStorage
+  if (studies.length === 0) {
+    try { studies = JSON.parse(localStorage.getItem('saved_studies') || '[]'); } catch(e) {}
+  }
+
+  if (studies.length === 0) {
+    if (noRow) noRow.style.display = '';
+    document.getElementById('kpi-total').textContent = '0';
+    document.getElementById('kpi-done').textContent  = '0';
+    return;
+  }
+
+  if (noRow) noRow.style.display = 'none';
+  studies.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.className = 'study-row';
+    const idParam = JSON.stringify(s.id);
+    tr.innerHTML = `
+      <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span></td>
+      <td>—</td><td>—</td><td>—</td>
+      <td><span class="sbadge sbadge-done">مكتملة</span></td>
+      <td style="font-size:0.75rem;color:var(--text3);">${s.date}
+        <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="margin-right:8px;background:none;border:none;cursor:pointer;color:var(--rose);font-size:0.85rem;">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('kpi-total').textContent = studies.length;
+  document.getElementById('kpi-done').textContent  = studies.length;
+}
+
+async function openSavedStudy(id) {
+  const overlay = document.getElementById('study-viewer-overlay');
+  const body    = document.getElementById('study-viewer-body');
+  const titleEl = document.getElementById('study-viewer-title');
+  if (!overlay || !body) return;
+
+  let study = null;
+
+  if (typeof id === 'string' && id.startsWith('db_')) {
+    // تحميل من قاعدة البيانات
+    const dbId = id.replace('db_', '');
+    const user = _getLoggedUser();
+    if (!user) { showToast('⚠️ يرجى تسجيل الدخول'); return; }
+    // أظهر overlay مع spinner أثناء التحميل
+    body.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3);"><div style="font-size:2rem;margin-bottom:12px;">⏳</div>جاري تحميل الدراسة...</div>';
     overlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
     overlay.scrollTop = 0;
-    body.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
-    window._viewerStudyText = study.content;
-    window._fullStudyText   = study.content; // لدعم تصدير PDF
-    // دراسات المستخدم: أظهر زر PDF
-    const pdfBtn = document.getElementById('viewer-pdf-btn');
-    if (pdfBtn) pdfBtn.style.display = '';
-  } catch(e){ showToast('❌ خطأ في فتح الدراسة'); }
+    try {
+      const res = await fetch(`/api/studies?id=${dbId}`, { headers: { 'x-user-id': String(user.id) } });
+      const data = await res.json();
+      study = data.study;
+    } catch(e) { showToast('❌ خطأ في تحميل الدراسة'); body.innerHTML = ''; overlay.style.display = 'none'; document.body.style.overflow = ''; return; }
+  } else {
+    // تحميل من localStorage
+    try {
+      const studies = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+      study = studies.find(s => s.id === id);
+    } catch(e) {}
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    overlay.scrollTop = 0;
+  }
+
+  if (!study) { showToast('⚠️ لم يُعثر على الدراسة'); body.innerHTML = ''; overlay.style.display = 'none'; document.body.style.overflow = ''; return; }
+
+  titleEl.textContent = study.title;
+  body.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
+  window._viewerStudyText = study.content;
+  window._fullStudyText   = study.content;
+  const pdfBtn = document.getElementById('viewer-pdf-btn');
+  if (pdfBtn) pdfBtn.style.display = '';
+}
+
+async function deleteSavedStudy(id) {
+  if (!confirm('هل تريد حذف هذه الدراسة؟')) return;
+
+  if (typeof id === 'string' && id.startsWith('db_')) {
+    const dbId = id.replace('db_', '');
+    const user = _getLoggedUser();
+    if (!user) { showToast('⚠️ يرجى تسجيل الدخول'); return; }
+    try {
+      await fetch(`/api/studies?id=${dbId}`, { method: 'DELETE', headers: { 'x-user-id': String(user.id) } });
+    } catch(e) { showToast('❌ فشل الحذف'); return; }
+  } else {
+    // حذف من localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+      const updated = local.filter(s => s.id !== id);
+      localStorage.setItem('saved_studies', JSON.stringify(updated));
+    } catch(e) {}
+  }
+
+  showToast('✅ تم حذف الدراسة');
+  loadDashboardStudies();
 }
 
 function exportReadyStudyPDF() {
