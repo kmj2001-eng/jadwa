@@ -1,8 +1,28 @@
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, BorderStyle, WidthType, ShadingType, Header, Footer,
-  convertInchesToTwip, HeadingLevel,
+  convertInchesToTwip,
 } from 'docx';
+
+// ── مساعد: فقرة RTL عربية ─────────────────────────────────
+function rPara(options) {
+  return new Paragraph({
+    ...options,
+    bidirectional: true,
+    alignment: options.alignment ?? AlignmentType.RIGHT,
+  });
+}
+
+// ── مساعد: نص عربي (بلا خطوط حمراء + RTL) ───────────────
+function aRun(options) {
+  return new TextRun({
+    font: 'Arial',
+    ...options,
+    rightToLeft: true,
+    noProofChecking: true,
+    language: { value: 'ar-SA', eastAsia: 'ar-SA' },
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,38 +35,55 @@ export default async function handler(req, res) {
     const children = buildDocxContent(title, content);
 
     const doc = new Document({
+      // ── إعدادات اللغة الافتراضية ──
       styles: {
         default: {
           document: {
-            run: { font: 'Arial', size: 22, color: '1a1a2e' },
+            run: {
+              font: 'Arial',
+              size: 22,
+              color: '1a1a2e',
+              rightToLeft: true,
+              noProofChecking: true,
+              language: { value: 'ar-SA', eastAsia: 'ar-SA' },
+            },
+            paragraph: {
+              bidirectional: true,
+              alignment: AlignmentType.RIGHT,
+            },
           },
         },
       },
+
       sections: [
         {
           properties: {
+            // ── RTL على مستوى القسم ──
+            bidi: true,
             page: {
+              // ── هوامش A4 قياسية ──
               margin: {
-                top:    convertInchesToTwip(1.1),
-                right:  convertInchesToTwip(1.2),
-                bottom: convertInchesToTwip(1.1),
-                left:   convertInchesToTwip(1.2),
+                top:    convertInchesToTwip(1.0),
+                bottom: convertInchesToTwip(1.0),
+                right:  convertInchesToTwip(1.18),  // 3cm
+                left:   convertInchesToTwip(1.18),
+                header: convertInchesToTwip(0.5),
+                footer: convertInchesToTwip(0.5),
               },
             },
           },
+
           headers: {
             default: new Header({
               children: [
-                new Paragraph({
+                rPara({
                   children: [
-                    new TextRun({
-                      text: 'ذكاء الأعمال — دراسات الجدوى الاستثمارية بالذكاء الاصطناعي',
+                    aRun({
+                      text: 'ذكاء الأعمال — دراسات الجدوى الاستثمارية',
                       size: 16,
                       color: '3B82F6',
-                      font: 'Arial',
                     }),
                   ],
-                  alignment: AlignmentType.RIGHT,
                   border: {
                     bottom: { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' },
                   },
@@ -54,16 +91,16 @@ export default async function handler(req, res) {
               ],
             }),
           },
+
           footers: {
             default: new Footer({
               children: [
-                new Paragraph({
+                rPara({
                   children: [
-                    new TextRun({
+                    aRun({
                       text: 'منصة ذكاء الأعمال  ·  eses.store',
                       size: 16,
                       color: '999999',
-                      font: 'Arial',
                     }),
                   ],
                   alignment: AlignmentType.CENTER,
@@ -74,68 +111,91 @@ export default async function handler(req, res) {
               ],
             }),
           },
+
           children,
         },
       ],
     });
 
     const buffer = await Packer.toBuffer(doc);
-    const safeTitle = title.replace(/[^\u0600-\u06FFa-zA-Z0-9\s\-_]/g, '').trim() || 'study';
+    const safeTitle = title
+      .replace(/[^\u0600-\u06FFa-zA-Z0-9\s\-_]/g, '')
+      .trim() || 'study';
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(safeTitle)}.docx`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(safeTitle)}.docx`,
+    );
     res.setHeader('Content-Length', buffer.length);
     return res.status(200).end(buffer);
+
   } catch (err) {
     console.error('DOCX Generation Error:', err);
     return res.status(500).json({ error: err.message });
   }
 }
 
-// ════════════════════════════════
-// بناء محتوى ملف الـ DOCX
-// ════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// بناء محتوى الملف
+// ════════════════════════════════════════════════════════════
 function buildDocxContent(title, html) {
   const children = [];
   const dateStr = new Date().toLocaleDateString('ar-SA', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // ── صفحة الغلاف ──
+  // ── صفحة الغلاف ─────────────────────────────────────────
   children.push(
-    new Paragraph({
-      children: [new TextRun({ text: title, bold: true, size: 52, color: '1D4ED8', font: 'Arial' })],
+    rPara({
+      children: [aRun({ text: title, bold: true, size: 52, color: '1D4ED8' })],
       alignment: AlignmentType.CENTER,
-      spacing: { before: 800, after: 240 },
+      spacing: { before: 1200, after: 300 },
     }),
-    new Paragraph({
-      children: [new TextRun({ text: `أُعدَّت بواسطة منصة ذكاء الأعمال · ${dateStr}`, size: 20, color: '777777', font: 'Arial' })],
+    rPara({
+      children: [aRun({ text: 'دراسة جدوى استثمارية شاملة', size: 24, color: '475569' })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 160 },
     }),
-    // خط فاصل
-    new Paragraph({
+    rPara({
+      children: [aRun({ text: 'ذكاء الأعمال لدراسات الجدوى الاقتصادية', size: 20, color: '3B82F6' })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+    }),
+    // خط فاصل أزرق
+    rPara({
       children: [],
-      border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: '3B82F6' } },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: '3B82F6' } },
+      spacing: { after: 200 },
+    }),
+    rPara({
+      children: [aRun({ text: `📅 تاريخ الإصدار: ${dateStr}`, size: 18, color: '94A3B8' })],
+      alignment: AlignmentType.CENTER,
       spacing: { after: 480 },
+    }),
+    // فاصل صفحة
+    rPara({
+      children: [aRun({ text: '', size: 22 })],
+      pageBreakBefore: true,
+      spacing: { after: 0 },
     }),
   );
 
-  // ── تحليل HTML وتحويله لعناصر docx ──
+  // ── محتوى الدراسة ───────────────────────────────────────
   parseHtmlToDocx(html, children);
 
-  // ── تذييل الدراسة ──
+  // ── نهاية الدراسة ───────────────────────────────────────
   children.push(
-    new Paragraph({
-      children: [new TextRun({ text: '', size: 22 })],
+    rPara({
+      children: [aRun({ text: '', size: 22 })],
       spacing: { before: 800 },
     }),
-    new Paragraph({
+    rPara({
       children: [
-        new TextRun({
-          text: '— نهاية الدراسة — منصة ذكاء الأعمال',
-          size: 18, color: '999999', font: 'Arial',
-        }),
+        aRun({ text: '— نهاية الدراسة —  منصة ذكاء الأعمال  ·  eses.store', size: 18, color: '94A3B8' }),
       ],
       alignment: AlignmentType.CENTER,
       border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'C7D2FE' } },
@@ -146,8 +206,10 @@ function buildDocxContent(title, html) {
   return children;
 }
 
+// ════════════════════════════════════════════════════════════
+// تحليل HTML وتحويله لعناصر DOCX
+// ════════════════════════════════════════════════════════════
 function parseHtmlToDocx(html, children) {
-  // تنظيف HTML أولاً
   let text = html
     .replace(/\r\n/g, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
@@ -156,15 +218,18 @@ function parseHtmlToDocx(html, children) {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
-  // استخراج الجداول وتحويلها (قبل أي replace آخر)
+  // ── استخراج الجداول أولاً ──
   const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
   const tablePositions = [];
   let tMatch;
   while ((tMatch = tableRegex.exec(text)) !== null) {
-    tablePositions.push({ start: tMatch.index, end: tMatch.index + tMatch[0].length, html: tMatch[0] });
+    tablePositions.push({
+      start: tMatch.index,
+      end: tMatch.index + tMatch[0].length,
+      html: tMatch[0],
+    });
   }
 
-  // تقسيم النص إلى أجزاء (جداول وغيرها)
   const parts = [];
   let lastIdx = 0;
   for (const tPos of tablePositions) {
@@ -183,7 +248,7 @@ function parseHtmlToDocx(html, children) {
       const tableEl = buildTable(part.content);
       if (tableEl) {
         children.push(tableEl);
-        children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+        children.push(rPara({ children: [aRun({ text: '' })], spacing: { after: 200 } }));
       }
     } else {
       parseTextHtml(part.content, children);
@@ -194,20 +259,18 @@ function parseHtmlToDocx(html, children) {
 function parseTextHtml(html, children) {
   // h2
   html = html.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: stripTags(t), bold: true, size: 32, color: '1D4ED8', font: 'Arial' })],
-      alignment: AlignmentType.RIGHT,
+    children.push(rPara({
+      children: [aRun({ text: stripTags(t), bold: true, size: 30, color: '1D4ED8' })],
       spacing: { before: 480, after: 180 },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' } },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'BFDBFE' } },
     }));
     return '';
   });
 
   // h3
   html = html.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, t) => {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: stripTags(t), bold: true, size: 26, color: '1e3a8a', font: 'Arial' })],
-      alignment: AlignmentType.RIGHT,
+    children.push(rPara({
+      children: [aRun({ text: stripTags(t), bold: true, size: 26, color: '1e3a8a' })],
       spacing: { before: 280, after: 120 },
     }));
     return '';
@@ -215,9 +278,8 @@ function parseTextHtml(html, children) {
 
   // h4
   html = html.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, t) => {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: stripTags(t), bold: true, size: 22, color: '1e3a8a', font: 'Arial' })],
-      alignment: AlignmentType.RIGHT,
+    children.push(rPara({
+      children: [aRun({ text: stripTags(t), bold: true, size: 22, color: '374151' })],
       spacing: { before: 200, after: 100 },
     }));
     return '';
@@ -229,12 +291,11 @@ function parseTextHtml(html, children) {
     liMatches.forEach(li => {
       const liText = stripTags(li);
       if (liText.trim()) {
-        children.push(new Paragraph({
+        children.push(rPara({
           children: [
-            new TextRun({ text: '• ', bold: true, color: '3B82F6', font: 'Arial', size: 22 }),
-            new TextRun({ text: liText.trim(), size: 22, font: 'Arial' }),
+            aRun({ text: '• ', bold: true, color: '3B82F6', size: 22 }),
+            aRun({ text: liText.trim(), size: 22 }),
           ],
-          alignment: AlignmentType.RIGHT,
           indent: { right: 360 },
           spacing: { after: 80 },
         }));
@@ -249,12 +310,11 @@ function parseTextHtml(html, children) {
     liMatches.forEach((li, idx) => {
       const liText = stripTags(li);
       if (liText.trim()) {
-        children.push(new Paragraph({
+        children.push(rPara({
           children: [
-            new TextRun({ text: `${idx + 1}. `, bold: true, color: '3B82F6', font: 'Arial', size: 22 }),
-            new TextRun({ text: liText.trim(), size: 22, font: 'Arial' }),
+            aRun({ text: `${idx + 1}. `, bold: true, color: '3B82F6', size: 22 }),
+            aRun({ text: liText.trim(), size: 22 }),
           ],
-          alignment: AlignmentType.RIGHT,
           indent: { right: 360 },
           spacing: { after: 80 },
         }));
@@ -263,29 +323,26 @@ function parseTextHtml(html, children) {
     return '';
   });
 
-  // strong داخل p (inline)
   // p
   html = html.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, t) => {
     const pText = stripTags(t);
     if (pText.trim()) {
-      children.push(new Paragraph({
+      children.push(rPara({
         children: buildInlineRuns(t),
-        alignment: AlignmentType.RIGHT,
         spacing: { after: 120 },
       }));
     }
     return '';
   });
 
-  // النص المتبقي بعد إزالة العلامات
+  // النص المتبقي
   const remaining = stripTags(html).trim();
   if (remaining) {
     remaining.split('\n').forEach(line => {
       const l = line.trim();
       if (l) {
-        children.push(new Paragraph({
-          children: [new TextRun({ text: l, size: 22, font: 'Arial' })],
-          alignment: AlignmentType.RIGHT,
+        children.push(rPara({
+          children: [aRun({ text: l, size: 22 })],
           spacing: { after: 100 },
         }));
       }
@@ -295,24 +352,27 @@ function parseTextHtml(html, children) {
 
 function buildInlineRuns(html) {
   const runs = [];
-  // تقسيم النص بناءً على وسوم strong/b
   const parts = html.split(/(<strong[^>]*>[\s\S]*?<\/strong>|<b[^>]*>[\s\S]*?<\/b>)/gi);
   for (const part of parts) {
     const isBold = /^<(strong|b)[^>]*>/i.test(part);
     const text = stripTags(part);
     if (text.trim()) {
-      runs.push(new TextRun({
+      runs.push(aRun({
         text,
         bold: isBold,
         size: 22,
-        font: 'Arial',
         color: isBold ? '1D4ED8' : '1a1a2e',
       }));
     }
   }
-  return runs.length ? runs : [new TextRun({ text: stripTags(html), size: 22, font: 'Arial' })];
+  return runs.length
+    ? runs
+    : [aRun({ text: stripTags(html), size: 22 })];
 }
 
+// ════════════════════════════════════════════════════════════
+// بناء الجداول
+// ════════════════════════════════════════════════════════════
 function buildTable(tableHtml) {
   const rows = [];
   const trMatches = tableHtml.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
@@ -321,24 +381,22 @@ function buildTable(tableHtml) {
     const trHtml = trMatches[rowIdx];
     const isHeaderRow = /<th[^>]*>/i.test(trHtml);
     const cellMatches = trHtml.match(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi) || [];
-
     if (!cellMatches.length) continue;
 
     const cells = cellMatches.map(cellHtml => {
       const cellText = stripTags(cellHtml).trim();
       return new TableCell({
         children: [
-          new Paragraph({
+          rPara({
             children: [
-              new TextRun({
+              aRun({
                 text: cellText,
                 bold: isHeaderRow,
                 size: 18,
-                font: 'Arial',
                 color: isHeaderRow ? 'FFFFFF' : '1a1a2e',
               }),
             ],
-            alignment: AlignmentType.RIGHT,
+            spacing: { before: 40, after: 40 },
           }),
         ],
         shading: isHeaderRow
@@ -346,7 +404,7 @@ function buildTable(tableHtml) {
           : rowIdx % 2 === 0
             ? { fill: 'EFF6FF', type: ShadingType.SOLID }
             : { fill: 'FFFFFF', type: ShadingType.SOLID },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
+        margins: { top: 80, bottom: 80, left: 140, right: 140 },
         borders: {
           top:    { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' },
           bottom: { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' },
@@ -365,16 +423,20 @@ function buildTable(tableHtml) {
     rows,
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: {
-      top:          { style: BorderStyle.SINGLE, size: 8,  color: '1D4ED8' },
-      bottom:       { style: BorderStyle.SINGLE, size: 8,  color: '1D4ED8' },
-      left:         { style: BorderStyle.SINGLE, size: 8,  color: '1D4ED8' },
-      right:        { style: BorderStyle.SINGLE, size: 8,  color: '1D4ED8' },
-      insideH:      { style: BorderStyle.SINGLE, size: 4,  color: 'BFDBFE' },
-      insideV:      { style: BorderStyle.SINGLE, size: 4,  color: 'BFDBFE' },
+      top:     { style: BorderStyle.SINGLE, size: 8, color: '1D4ED8' },
+      bottom:  { style: BorderStyle.SINGLE, size: 8, color: '1D4ED8' },
+      left:    { style: BorderStyle.SINGLE, size: 8, color: '1D4ED8' },
+      right:   { style: BorderStyle.SINGLE, size: 8, color: '1D4ED8' },
+      insideH: { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' },
+      insideV: { style: BorderStyle.SINGLE, size: 4, color: 'BFDBFE' },
     },
+    visuallyRightToLeft: true,
   });
 }
 
+// ════════════════════════════════════════════════════════════
+// تنظيف HTML
+// ════════════════════════════════════════════════════════════
 function stripTags(html) {
   return html
     .replace(/<[^>]+>/g, '')
