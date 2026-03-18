@@ -39,7 +39,14 @@ export default async function handler(req, res) {
     if (process.env.POSTGRES_URL && userId) {
       sql = neon(process.env.POSTGRES_URL);
 
-      // INSERT بدون عمود plan — يستخدم DEFAULT 'basic' تلقائياً حتى لو لم يكن العمود موجوداً بعد
+      // migration شامل — يضيف الأعمدة الناقصة قبل أي عملية كتابة
+      try {
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan       TEXT                     DEFAULT 'basic'`;
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`;
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_id TEXT`;
+      } catch (_) {}
+
+      // INSERT بدون الأعمدة الإضافية — تأخذ DEFAULT تلقائياً
       const dbRows = await sql`
         INSERT INTO orders (user_id, amount, currency, status)
         VALUES (${userId}, ${amount}, ${currency}, 'pending')
@@ -47,9 +54,8 @@ export default async function handler(req, res) {
       `;
       dbOrderId = dbRows[0]?.id;
 
-      // migration آمن — يضيف عمود plan ويُحدِّث السجل
+      // تعيين قيمة plan صراحةً
       try {
-        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'`;
         await sql`UPDATE orders SET plan = ${plan} WHERE id = ${dbOrderId}`;
       } catch (_) {}
     }
