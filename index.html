@@ -1244,21 +1244,28 @@ input[type=range]::-webkit-slider-thumb {
 .output-body ul { padding-right:20px; margin-bottom:10px; }
 .output-body li { margin-bottom:6px; }
 .output-body .table-wrap {
-  overflow-x:auto; margin:14px 0; border-radius:10px;
+  display:block; width:100%; clear:both;
+  overflow-x:auto; margin:18px 0; border-radius:10px;
   box-shadow:0 2px 12px rgba(0,0,0,0.18);
 }
 .output-body table {
-  width:100%; min-width:480px; border-collapse:collapse; font-size:0.78rem;
-  background:#ffffff;
+  display:table; width:100%; max-width:100%;
+  table-layout:fixed; border-collapse:collapse;
+  font-size:0.78rem; background:#ffffff;
 }
 .output-body th {
-  background:#1D4ED8 !important; color:#ffffff !important; padding:11px 14px;
-  text-align:right; border:1px solid #2563EB;
-  font-weight:700; font-size:0.8rem;
+  background:#1D4ED8 !important; color:#ffffff !important;
+  padding:10px 12px; text-align:right;
+  border:1px solid #2563EB; font-weight:700; font-size:0.78rem;
+  word-break:break-word; overflow-wrap:anywhere;
+  white-space:normal;
 }
 .output-body td {
-  padding:10px 14px; border:1px solid #e2e8f0;
-  color:#1e293b !important; background:#ffffff !important; font-size:0.78rem;
+  padding:9px 12px; border:1px solid #e2e8f0;
+  color:#1e293b !important; background:#ffffff !important;
+  font-size:0.78rem; word-break:break-word;
+  overflow-wrap:anywhere; white-space:normal;
+  vertical-align:top;
 }
 .output-body tr:nth-child(even) td { background:#f0f7ff !important; color:#1e293b !important; }
 .output-body tr:hover td { background:#dbeafe; transition:background 0.15s; }
@@ -3451,18 +3458,38 @@ function showResult(text){
     outputBody.appendChild(sec);
   });
 
-  // لف كل جدول بـ wrapper للتمرير الأفقي + فرض ألوان الرؤوس
+  // لف كل جدول بـ wrapper للتمرير الأفقي + فرض ألوان الرؤوس + منع التداخل
   outputBody.querySelectorAll('table').forEach(t => {
-    // فرض تلوين th حتى لو كانت inline styles
+    // إزالة أي inline style يتعارض
+    t.style.cssText = '';
+    t.removeAttribute('width');
+    t.removeAttribute('align');
+
+    // فرض تلوين th + إزالة colspan زائد
     t.querySelectorAll('th').forEach(th => {
       th.style.setProperty('background','#1D4ED8','important');
       th.style.setProperty('color','#ffffff','important');
+      th.style.wordBreak = 'break-word';
+      th.style.overflowWrap = 'anywhere';
+      th.style.whiteSpace = 'normal';
     });
-    // لف بـ div قابل للتمرير
+    t.querySelectorAll('td').forEach(td => {
+      td.style.wordBreak = 'break-word';
+      td.style.overflowWrap = 'anywhere';
+      td.style.whiteSpace = 'normal';
+    });
+
+    // لف بـ div معزول بـ clear:both
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
+    wrap.style.cssText = 'display:block;width:100%;clear:both;';
     t.parentNode.insertBefore(wrap, t);
     wrap.appendChild(t);
+
+    // عنصر clear بعد كل جدول لمنع تداخل العناصر اللاحقة
+    const clr = document.createElement('div');
+    clr.style.cssText = 'clear:both;display:block;width:100%;';
+    wrap.after(clr);
   });
 
   document.getElementById('typing-state').style.display='none';
@@ -3881,9 +3908,10 @@ function openPDFTemplate(){
     ".study-content p{margin-bottom:7px;color:#374151;}",
     ".study-content ul,.study-content ol{padding-right:18px;margin-bottom:8px;}",
     ".study-content li{margin-bottom:3px;}",
-    ".study-content table{width:100%;border-collapse:collapse;margin:10px 0;font-size:10px;table-layout:fixed;word-break:break-word;}",
-    ".study-content th{background:#ffffff;color:#1D4ED8;padding:7px 10px;text-align:right;font-weight:700;border:1.5px solid #93C5FD;}",
-    ".study-content td{padding:6px 10px;border:1.5px solid #BFDBFE;color:#1E293B;}",
+    ".study-content .tw{display:block;width:100%;clear:both;overflow-x:auto;margin:12px 0;}",
+    ".study-content table{display:table;width:100%;max-width:100%;border-collapse:collapse;margin:0;font-size:10px;table-layout:fixed;}",
+    ".study-content th{background:#1D4ED8!important;color:#fff!important;padding:7px 10px;text-align:right;font-weight:700;border:1.5px solid #2563EB;word-break:break-word;overflow-wrap:anywhere;white-space:normal;}",
+    ".study-content td{padding:6px 10px;border:1.5px solid #BFDBFE;color:#1E293B;word-break:break-word;overflow-wrap:anywhere;white-space:normal;vertical-align:top;}",
     ".study-content tr:nth-child(even) td{background:#F0F5FF;}",
     ".page-footer{background:#0F172A;border-top:2px solid #2563EB;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}",
     ".footer-brand{display:flex;align-items:center;gap:8px;}",
