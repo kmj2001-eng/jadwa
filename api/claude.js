@@ -288,14 +288,10 @@ export default async function handler(req, res) {
       const rawMsg = error?.error?.message || '';
       // ترجمة رسائل Anthropic التقنية إلى رسائل مهذبة للمستخدم
       let friendlyMsg;
-      if (/credit|billing|balance|quota/i.test(rawMsg)) {
-        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة جدوى جديدة لعدم توفر رصيد كافٍ من النقاط';
-      } else if (/rate.?limit|too many requests/i.test(rawMsg)) {
-        friendlyMsg = 'الخدمة مشغولة حالياً، يرجى المحاولة بعد دقيقة';
-      } else if (/overloaded|capacity/i.test(rawMsg)) {
-        friendlyMsg = 'الخوادم مُثقَّلة حالياً، يرجى المحاولة مجدداً بعد لحظات';
+      if (/credit|billing|balance|quota|rate.?limit|too many|overloaded|capacity/i.test(rawMsg)) {
+        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة الجدوى في الوقت الحالي نرجو المحاولة بعد 24 ساعة';
       } else {
-        friendlyMsg = rawMsg || 'خطأ من Claude API';
+        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة الجدوى في الوقت الحالي نرجو المحاولة بعد 24 ساعة';
       }
       sendEvent({ error: friendlyMsg });
       return res.end();
