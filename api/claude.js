@@ -267,7 +267,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: [3,4,6,7].includes(Number(section)) ? 16000 : 10000,
+        max_tokens: [3,4,6].includes(Number(section)) ? 20000 : 14000,
         temperature: 0,
         stream: true,
         system: systemPrompt,
@@ -281,33 +281,68 @@ export default async function handler(req, res) {
       return res.end();
     }
 
-    // ── تمرير الـ stream من Anthropic للعميل ──────────────
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let fullText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (raw === '[DONE]') continue;
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
-            const chunk = parsed.delta.text;
-            fullText += chunk;
-            sendEvent({ chunk });
-          }
-        } catch (_) {}
+    // ── دالة مساعدة: stream طلب واحد وإرجاع {text, stopReason} ──
+    const streamOnce = async (apiRes) => {
+      const reader = apiRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '', text = '', stopReason = 'end_turn';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') continue;
+          try {
+            const ev = JSON.parse(raw);
+            if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+              text += ev.delta.text;
+              sendEvent({ chunk: ev.delta.text });
+            }
+            // ← كشف الاقتطاع
+            if (ev.type === 'message_delta' && ev.delta?.stop_reason) {
+              stopReason = ev.delta.stop_reason;
+            }
+          } catch (_) {}
+        }
       }
+      return { text, stopReason };
+    };
+
+    // ── الحلقة الرئيسية: متابعة تلقائية عند max_tokens ──
+    let fullText = '';
+    let { text: t1, stopReason: sr1 } = await streamOnce(response);
+    fullText = t1;
+
+    // إذا اقتُطع: أرسل طلب متابعة (حتى مرتين)
+    for (let pass = 0; pass < 2 && sr1 === 'max_tokens'; pass++) {
+      const contRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 16000,
+          temperature: 0,
+          stream: true,
+          system: systemPrompt,
+          messages: [
+            { role: 'user',      content: prompt },
+            { role: 'assistant', content: fullText },
+            { role: 'user',      content: 'أكمل القسم من حيث توقفت تماماً — أكمل الجدول أو الفقرة دون تكرار ما كُتب.' },
+          ],
+        }),
+      });
+      if (!contRes.ok) break;
+      const { text: t2, stopReason: sr2 } = await streamOnce(contRes);
+      fullText += t2;
+      sr1 = sr2;
     }
 
     sendEvent({ done: true, text: fullText });
