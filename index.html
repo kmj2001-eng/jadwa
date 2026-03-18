@@ -2561,15 +2561,6 @@ footer {
 
   </div>
 </div>
-        <div class="fgroup"><label class="flabel">حجم المشروع</label>
-          <select class="fselect" id="f-size">
-            <option value="">اختر حجم المشروع</option>
-            <option value="مشروع صغير جداً — أقل من 100,000 ر.س">🔹 صغير جداً — أقل من 100,000 ر.س</option>
-            <option value="مشروع صغير — 100,000 إلى 500,000 ر.س">🔸 صغير — 100K إلى 500K ر.س</option>
-            <option value="مشروع متوسط — 500,000 إلى 2,000,000 ر.س">🔶 متوسط — 500K إلى 2M ر.س</option>
-            <option value="مشروع كبير — أكثر من 2,000,000 ر.س">🟠 كبير — أكثر من 2M ر.س</option>
-          </select>
-        </div>
         <div class="fgroup"><label class="flabel">عدد الموظفين المتوقع</label>
           <div class="range-wrap"><input type="range" id="f-workers" min="1" max="200" step="1" value="5" oninput="updateWorkers(this)"><div class="range-display" id="workers-val">5 موظفين</div></div>
         </div>
@@ -3820,7 +3811,6 @@ async function generateStudy(){
   const location  = [country, region, province].filter(Boolean).join(' - ') || 'السعودية';
   const countryCode = document.getElementById('f-country').value || 'SA';
   const currency  = currencyMap[countryCode] || 'ريال سعودي (ر.س)';
-  const size      = document.getElementById('f-size').value      || 'مشروع صغير';
   const workers   = document.getElementById('workers-val').textContent;
   const capital   = document.getElementById('capital-val').textContent;
   const funding   = document.getElementById('f-funding').value;
@@ -3843,7 +3833,7 @@ async function generateStudy(){
   const formData = {
     name, sector: selSector || 'تجارة عامة',
     location, currency,
-    capital, funding, size, workers,
+    capital, funding, workers,
     period, target, advantage,
     competition, returnRate, capacity,
     details,

@@ -11,7 +11,6 @@ export default async function handler(req, res) {
     currency    = 'ريال سعودي (ر.س)',
     capital     = 'غير محدد',
     funding     = 'غير محدد',
-    size        = 'مشروع صغير',
     workers     = '5 موظفين',
     period      = '5 سنوات',
     target      = 'غير محدد',
@@ -40,7 +39,6 @@ export default async function handler(req, res) {
 • مدة الدراسة          : ${period}
 
 🏗️ التشغيل والموارد:
-• حجم المشروع          : ${size}
 • عدد الموظفين         : ${workers}
 • الطاقة الإنتاجية     : ${capacity || 'يُحدد بناءً على حجم المشروع'}
 
