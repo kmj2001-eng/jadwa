@@ -3291,17 +3291,6 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
   // ── دالة مساعدة: تستقبل SSE stream لقسم واحد ─────────────
   async function streamSection(secNum) {
-    const meta      = sectionMeta[secNum - 1];
-    const statusEl  = document.getElementById('study-status-msg');
-    const iconEl    = document.getElementById('study-current-icon');
-    const sectionEl = document.getElementById('study-current-section');
-    const barEl     = document.getElementById('study-progress-bar');
-
-    if (iconEl)    iconEl.textContent    = meta.icon;
-    if (sectionEl) sectionEl.textContent = `${secNum}/10 — ${meta.label}`;
-    if (statusEl)  statusEl.textContent  = 'جاري التحليل والكتابة...';
-    if (barEl)     barEl.style.width     = `${(secNum - 1) * 10}%`;
-
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3329,11 +3318,7 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
         try {
           const p = JSON.parse(raw);
           if (p.error) { streamErr = p.error; break; }
-          if (p.chunk) {
-            secText += p.chunk;
-            if (statusEl)
-              statusEl.textContent = `✍️ ${meta.label} — ${secText.split(/\s+/).length.toLocaleString('ar-SA')} كلمة`;
-          }
+          if (p.chunk) secText += p.chunk;
           if (p.done && p.text) secText = p.text;
         } catch (_) {}
       }
@@ -3344,41 +3329,61 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
     return secText;
   }
 
-  // ── تشغيل الأقسام العشرة تباعاً ─────────────────────────
-  let fullText = '', doneCount = 0;
+  // ── تشغيل الأقسام العشرة بالتوازي ─────────────────────────
+  const statusEl  = document.getElementById('study-status-msg');
+  const iconEl    = document.getElementById('study-current-icon');
+  const sectionEl = document.getElementById('study-current-section');
+  const barEl     = document.getElementById('study-progress-bar');
+  const textEl    = document.getElementById('study-progress-text');
+  const listEl    = document.getElementById('study-completed-list');
+
+  if (iconEl)    iconEl.textContent    = '⚡';
+  if (sectionEl) sectionEl.textContent = 'يتم كتابة الأقسام في آنٍ واحد';
+  if (statusEl)  statusEl.textContent  = 'جاري التحليل...';
+
+  // إنشاء عناصر القائمة بالترتيب 1 → 10 (رمادي في البداية)
+  const listItems = sectionMeta.map((m) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(148,163,184,0.05);border:1px solid rgba(148,163,184,0.1);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#475569;direction:rtl;transition:all 0.4s ease;';
+    item.innerHTML = `<span style="opacity:0.35;font-size:0.85rem;">○</span><span>${m.icon} ${m.label}</span>`;
+    if (listEl) listEl.appendChild(item);
+    return item;
+  });
+
+  let doneCount = 0;
+  const sectionTexts = new Array(10);
+
   try {
-    for (let s = 1; s <= 10; s++) {
-      const secText = await streamSection(s);
-      fullText += (doneCount > 0 ? '\n\n' : '') + secText;
-      doneCount++;
+    await Promise.all(sectionMeta.map((meta, idx) =>
+      streamSection(idx + 1).then(text => {
+        sectionTexts[idx] = text;
+        doneCount++;
 
-      // أضف القسم المكتمل إلى قائمة التقدم
-      const listEl = document.getElementById('study-completed-list');
-      if (listEl) {
-        const m    = sectionMeta[s - 1];
-        const item = document.createElement('div');
-        item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.15);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;animation:fadeSlide 0.4s ease;direction:rtl;';
-        item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${m.icon} ${m.label}</span>`;
-        listEl.prepend(item);
-      }
+        // تحويل عنصر القائمة إلى أخضر فور اكتماله
+        const item = listItems[idx];
+        if (item) {
+          item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;direction:rtl;animation:fadeSlide 0.4s ease;';
+          item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
+        }
 
-      // تحديث شريط التقدم والعداد
-      const barEl  = document.getElementById('study-progress-bar');
-      const textEl = document.getElementById('study-progress-text');
-      if (barEl)  barEl.style.width = `${doneCount * 10}%`;
-      if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
-    }
+        if (barEl)  barEl.style.width     = `${doneCount * 10}%`;
+        if (textEl) textEl.textContent    = `${doneCount} / 10 أقسام مكتملة`;
+        if (statusEl) statusEl.textContent = `✅ ${doneCount} / 10 أقسام مكتملة`;
+      })
+    ));
 
     hideStudyLoader(studyLoader);
+    const fullText = sectionTexts.join('\n\n');
     if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
     showResult(fullText);
 
   } catch(e) {
     hideStudyLoader(studyLoader);
-    const errMsg = e.message || 'خطأ في الاتصال';
-    if (fullText && fullText.split(/\s+/).length > 200) {
+    const errMsg    = e.message || 'خطأ في الاتصال';
+    const partialText = sectionTexts.filter(Boolean).join('\n\n');
+    if (partialText && partialText.split(/\s+/).length > 200) {
       showToast('⚠️ الدراسة جزئية: ' + errMsg);
-      showResult(fullText);
+      showResult(partialText);
     } else {
       goStep(3);
       showToast('❌ خطأ في التوليد: ' + errMsg, 8000);
