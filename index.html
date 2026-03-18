@@ -1332,6 +1332,48 @@ input[type=range]::-webkit-slider-thumb {
 }
 .article-read { color:var(--gold); font-weight:700; display:flex; align-items:center; gap:4px; }
 
+/* ══ صفحات المقالات ══ */
+.art-page { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
+.art-breadcrumb { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--text3); margin-bottom:28px; flex-wrap:wrap; }
+.art-breadcrumb span { cursor:pointer; color:var(--gold); } .art-breadcrumb span:hover { text-decoration:underline; }
+.art-breadcrumb i { font-size:0.65rem; color:var(--text3); }
+.art-hero { margin-bottom:36px; }
+.art-cat-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(59,130,246,0.12); color:var(--gold); border:1px solid rgba(59,130,246,0.25); padding:4px 14px; border-radius:20px; font-size:0.78rem; font-weight:700; margin-bottom:16px; }
+.art-h1 { font-size:clamp(1.4rem,3vw,2rem); font-weight:900; line-height:1.4; margin-bottom:16px; color:var(--text); }
+.art-meta { display:flex; align-items:center; gap:16px; font-size:0.78rem; color:var(--text3); flex-wrap:wrap; padding-bottom:20px; border-bottom:1px solid var(--border3); margin-bottom:32px; }
+.art-meta-item { display:flex; align-items:center; gap:5px; }
+.art-toc { background:var(--panel2); border:1px solid var(--border3); border-right:3px solid var(--gold); border-radius:12px; padding:20px 24px; margin-bottom:36px; }
+.art-toc-title { font-size:0.82rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.art-toc ol { padding-right:20px; margin:0; }
+.art-toc li { margin:6px 0; font-size:0.85rem; color:var(--text3); cursor:pointer; }
+.art-toc li:hover { color:var(--gold); }
+.art-body h2 { font-size:1.15rem; font-weight:800; color:var(--text); margin:36px 0 14px; padding-right:14px; border-right:4px solid var(--gold); }
+.art-body h3 { font-size:1rem; font-weight:700; color:var(--text); margin:24px 0 10px; }
+.art-body p { font-size:0.88rem; line-height:1.95; color:var(--text3); margin-bottom:14px; }
+.art-body ul,.art-body ol { padding-right:22px; margin:12px 0 16px; }
+.art-body li { font-size:0.87rem; line-height:1.85; color:var(--text3); margin-bottom:6px; }
+.art-body strong { color:var(--text); font-weight:700; }
+.art-table-wrap { overflow-x:auto; margin:18px 0 24px; border-radius:10px; border:1px solid var(--border3); }
+.art-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.art-table th { background:var(--panel2); color:var(--gold); font-weight:700; padding:11px 14px; text-align:right; border-bottom:2px solid var(--border3); white-space:nowrap; }
+.art-table td { padding:10px 14px; border-bottom:1px solid var(--border3); color:var(--text3); text-align:right; }
+.art-table tr:last-child td { border-bottom:none; font-weight:700; color:var(--text); background:var(--panel2); }
+.art-formula { background:var(--ink2); border:1px solid var(--border3); border-radius:10px; padding:18px 22px; margin:20px 0; font-size:0.88rem; color:var(--teal); font-weight:700; text-align:center; direction:ltr; }
+.art-callout { background:rgba(59,130,246,0.07); border-right:4px solid var(--gold); border-radius:0 10px 10px 0; padding:16px 20px; margin:20px 0; font-size:0.86rem; color:var(--text3); }
+.art-callout strong { color:var(--gold); }
+.art-cta { background:linear-gradient(135deg,var(--ink2),var(--panel2)); border:1px solid var(--border3); border-radius:16px; padding:32px 28px; text-align:center; margin:48px 0 36px; }
+.art-cta h3 { font-size:1.1rem; font-weight:800; margin-bottom:10px; }
+.art-cta p { font-size:0.84rem; color:var(--text3); margin-bottom:20px; }
+.art-related { margin-top:48px; padding-top:32px; border-top:1px solid var(--border3); }
+.art-related-title { font-size:0.9rem; font-weight:800; color:var(--text3); margin-bottom:18px; text-transform:uppercase; letter-spacing:0.5px; }
+.art-related-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.art-related-card { background:var(--panel2); border:1px solid var(--border3); border-radius:12px; padding:16px; cursor:pointer; transition:var(--transition); }
+.art-related-card:hover { border-color:var(--gold); transform:translateY(-3px); }
+.art-related-cat { font-size:0.72rem; color:var(--gold); font-weight:700; margin-bottom:6px; }
+.art-related-h { font-size:0.84rem; font-weight:700; color:var(--text); line-height:1.5; }
+.art-back-btn { display:inline-flex; align-items:center; gap:7px; background:var(--panel2); border:1px solid var(--border3); color:var(--text3); padding:9px 18px; border-radius:30px; font-size:0.8rem; cursor:pointer; margin-bottom:28px; transition:var(--transition); }
+.art-back-btn:hover { border-color:var(--gold); color:var(--gold); }
+
 /* ════════════════════════════════════
    SAMPLES
 ════════════════════════════════════ */
@@ -2636,23 +2678,23 @@ footer {
     </div>
   </div>
   <div class="articles-grid">
-    <div class="article-card" onclick="showToast('📖 جاري فتح المقال...')">
+    <div class="article-card" onclick="showPage('article-1')">
       <div class="article-thumb" style="background:linear-gradient(135deg,#1A2E45,#05080F);">📈</div>
       <div class="article-body"><div class="article-cat">تحليل مالي</div><div class="article-title">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق</div><div class="article-excerpt">دليل عملي مبسط يشرح حساب Break-Even Point بمثال واقعي لمشروع في السعودية.</div><div class="article-footer"><span>15 دقيقة قراءة</span><span class="article-read">اقرأ المزيد ←</span></div></div>
     </div>
-    <div class="article-card" onclick="showToast('📖 جاري فتح المقال...')">
+    <div class="article-card" onclick="showPage('article-2')">
       <div class="article-thumb" style="background:linear-gradient(135deg,#1A4A35,#05080F);">🏗️</div>
       <div class="article-body"><div class="article-cat">مقاولات</div><div class="article-title">جدوى شركة مقاولات صغيرة: الأرقام الحقيقية</div><div class="article-excerpt">ما رأس المال الأدنى؟ هوامش الربح الواقعية؟ وكيف تتجنب الأخطاء الشائعة؟</div><div class="article-footer"><span>20 دقيقة قراءة</span><span class="article-read">اقرأ المزيد ←</span></div></div>
     </div>
-    <div class="article-card" onclick="showToast('📖 جاري فتح المقال...')">
+    <div class="article-card" onclick="showPage('article-3')">
       <div class="article-thumb" style="background:linear-gradient(135deg,#2A1A45,#05080F);">💻</div>
       <div class="article-body"><div class="article-cat">التقنية</div><div class="article-title">جدوى تطبيق الجوال: لماذا 90% تفشل مالياً</div><div class="article-excerpt">الأسباب الخفية لفشل مشاريع التطبيقات وكيف تبني نموذجاً مالياً واقعياً.</div><div class="article-footer"><span>18 دقيقة قراءة</span><span class="article-read">اقرأ المزيد ←</span></div></div>
     </div>
-    <div class="article-card" onclick="showToast('📖 جاري فتح المقال...')">
+    <div class="article-card" onclick="showPage('article-4')">
       <div class="article-thumb" style="background:linear-gradient(135deg,#1A3A45,#05080F);">🏥</div>
       <div class="article-body"><div class="article-cat">الصحة</div><div class="article-title">افتتاح عيادة طبية خاصة: جدوى كاملة بالأرقام</div><div class="article-excerpt">تكاليف الترخيص والتجهيز والتشغيل، وكيف تحسب وقت استرداد رأس المال.</div><div class="article-footer"><span>22 دقيقة قراءة</span><span class="article-read">اقرأ المزيد ←</span></div></div>
     </div>
-    <div class="article-card" onclick="showToast('📖 جاري فتح المقال...')">
+    <div class="article-card" onclick="showPage('article-5')">
       <div class="article-thumb" style="background:linear-gradient(135deg,#3A2A10,#05080F);">🛒</div>
       <div class="article-body"><div class="article-cat">التجارة الإلكترونية</div><div class="article-title">متجر إلكتروني بـ 50,000 ريال: هل يستحق؟</div><div class="article-excerpt">تحليل واقعي لتكاليف المتجر الإلكتروني وربحيته في السوق السعودي خلال 3 سنوات.</div><div class="article-footer"><span>14 دقيقة قراءة</span><span class="article-read">اقرأ المزيد ←</span></div></div>
     </div>
@@ -2661,6 +2703,513 @@ footer {
       <div class="article-body"><div class="article-cat" style="color:var(--teal);">أداة مجانية</div><div class="article-title">لا تقرأ أكثر — أنشئ دراستك الآن</div><div class="article-excerpt">استخدم أداة الذكاء الاصطناعي وأنشئ دراسة جدوى مخصصة لمشروعك في أقل من 5 دقائق.</div><div class="article-footer"><span>مجاني للتجربة</span><span class="article-read" style="color:var(--gold);">ابدأ الآن ←</span></div></div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ARTICLE 1: نقطة التعادل
+══════════════════════════════════════ -->
+<div class="page" id="page-article-1">
+<div class="art-page">
+  <button class="art-back-btn" onclick="showPage('blog')"><i class="fa-solid fa-arrow-right"></i> العودة للمقالات</button>
+  <nav class="art-breadcrumb" aria-label="breadcrumb">
+    <span onclick="showPage('home')">الرئيسية</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span onclick="showPage('blog')">المقالات</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span style="color:var(--text3);cursor:default;">نقطة التعادل</span>
+  </nav>
+  <div class="art-hero">
+    <div class="art-cat-badge">📈 تحليل مالي</div>
+    <h1 class="art-h1">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق — دليل عملي بالأرقام</h1>
+    <div class="art-meta">
+      <div class="art-meta-item"><i class="fa-regular fa-clock"></i> 15 دقيقة قراءة</div>
+      <div class="art-meta-item"><i class="fa-regular fa-calendar"></i> مارس 2025</div>
+      <div class="art-meta-item"><i class="fa-solid fa-tag"></i> دراسة جدوى — تحليل مالي — Break-Even</div>
+    </div>
+  </div>
+  <div class="art-toc">
+    <div class="art-toc-title">📋 محتويات المقال</div>
+    <ol>
+      <li>ما هي نقطة التعادل ولماذا هي مهمة؟</li>
+      <li>المعادلة الأساسية لحساب نقطة التعادل</li>
+      <li>الفرق بين التكاليف الثابتة والمتغيرة</li>
+      <li>مثال تطبيقي: مطعم صغير في الرياض</li>
+      <li>نقطة التعادل بالوحدات مقابل الإيرادات</li>
+      <li>كيف تُحسّن نقطة التعادل لمشروعك؟</li>
+      <li>أداة احتساب مجانية</li>
+    </ol>
+  </div>
+  <div class="art-body">
+    <h2>ما هي نقطة التعادل ولماذا هي المقياس الأهم في أي دراسة جدوى؟</h2>
+    <p><strong>نقطة التعادل (Break-Even Point)</strong> هي حجم المبيعات أو الإيرادات الذي تُساوي فيه إجمالي التكاليف إجمالي الإيرادات — أي لا ربح ولا خسارة. إنها اللحظة التي يبدأ فيها مشروعك بالتحول من الخسارة إلى الربح.</p>
+    <p>في أي <strong>دراسة جدوى اقتصادية</strong>، تُعدّ نقطة التعادل من أكثر المؤشرات التي يسأل عنها المستثمرون والبنوك، لأنها تجيب على سؤال محوري: <strong>متى سأسترد تكاليفي وأبدأ الربح الفعلي؟</strong></p>
+    <div class="art-callout">
+      <strong>💡 مثال سريع:</strong> إذا كانت تكاليفك الثابتة الشهرية 30,000 ريال وهامش ربحك الصافي 40%، فأنت تحتاج مبيعات شهرية بـ 75,000 ريال لتصل لنقطة التعادل.
+    </div>
+    <h2>المعادلة الأساسية لحساب نقطة التعادل</h2>
+    <p>توجد صيغتان رئيسيتان يستخدمهما المحللون الماليون:</p>
+    <div class="art-formula">نقطة التعادل (بالوحدات) = التكاليف الثابتة ÷ (سعر البيع للوحدة − التكلفة المتغيرة للوحدة)</div>
+    <div class="art-formula">نقطة التعادل (بالإيرادات) = التكاليف الثابتة ÷ نسبة هامش المساهمة</div>
+    <p>حيث: <strong>نسبة هامش المساهمة = (الإيرادات − التكاليف المتغيرة) ÷ الإيرادات × 100</strong></p>
+    <h2>الفرق بين التكاليف الثابتة والمتغيرة</h2>
+    <p>الخطأ الأكثر شيوعاً عند حساب نقطة التعادل هو الخلط بين نوعي التكاليف:</p>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>نوع التكلفة</th><th>تعريفها</th><th>أمثلة</th></tr></thead>
+        <tbody>
+          <tr><td>ثابتة (Fixed)</td><td>لا تتغير مع حجم المبيعات</td><td>الإيجار، الرواتب، التأمين، الاستهلاك</td></tr>
+          <tr><td>متغيرة (Variable)</td><td>ترتفع وتنخفض مع الإنتاج</td><td>المواد الخام، التعبئة، عمولات المبيعات</td></tr>
+          <tr><td>المجموع</td><td>التكاليف الإجمالية</td><td>الثابتة + المتغيرة</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>مثال تطبيقي: مطعم صغير في الرياض</h2>
+    <p>لنفترض أنك تريد افتتاح مطعم وجبات سريعة في الرياض. إليك الأرقام الواقعية:</p>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>البند</th><th>التكلفة الشهرية</th><th>نوعها</th></tr></thead>
+        <tbody>
+          <tr><td>إيجار المحل</td><td>8,000 ريال</td><td>ثابتة</td></tr>
+          <tr><td>رواتب الموظفين (4 موظفين)</td><td>14,000 ريال</td><td>ثابتة</td></tr>
+          <tr><td>فواتير الكهرباء والماء</td><td>3,500 ريال</td><td>ثابتة</td></tr>
+          <tr><td>تسويق ومنصات التوصيل</td><td>2,500 ريال</td><td>ثابتة</td></tr>
+          <tr><td>مواد خام (35% من المبيعات)</td><td>متغيرة</td><td>متغيرة</td></tr>
+          <tr><td>إجمالي التكاليف الثابتة</td><td>28,000 ريال</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>متوسط سعر الوجبة: <strong>45 ريال</strong>، التكلفة المتغيرة للوجبة: <strong>16 ريال</strong> (35%)</p>
+    <div class="art-formula">نقطة التعادل = 28,000 ÷ (45 − 16) = 28,000 ÷ 29 ≈ 966 وجبة شهرياً</div>
+    <p>أي أنك تحتاج بيع <strong>966 وجبة شهرياً</strong> (أي ~32 وجبة يومياً) لتغطية تكاليفك. أي مبيعات فوق ذلك هي ربح صافٍ.</p>
+    <h2>نقطة التعادل بالوحدات مقابل الإيرادات — أيها تستخدم؟</h2>
+    <p>إذا كان مشروعك يبيع منتجاً أو خدمة واحدة بسعر ثابت، استخدم <strong>حساب الوحدات</strong>. أما إذا كنت تبيع منتجات متعددة بأسعار مختلفة (كالمحلات التجارية)، فاستخدم <strong>حساب الإيرادات</strong>.</p>
+    <h2>كيف تُحسّن نقطة التعادل لمشروعك؟</h2>
+    <p>ثلاثة مسارات لخفض نقطة التعادل وتسريع الوصول للربح:</p>
+    <ul>
+      <li><strong>رفع الأسعار بحذر:</strong> زيادة 10% في السعر تُخفّض نقطة التعادل بشكل كبير دون تأثير كبير على الطلب في أغلب الأحيان.</li>
+      <li><strong>خفض التكاليف الثابتة:</strong> التفاوض على الإيجار، استخدام العمالة بدوام جزئي، أو الاستغناء عن مكاتب كبيرة.</li>
+      <li><strong>رفع كفاءة التكاليف المتغيرة:</strong> الشراء بكميات أكبر، أو تحسين سلسلة التوريد.</li>
+    </ul>
+    <div class="art-callout">
+      <strong>⚠️ تحذير مهم:</strong> نقطة التعادل لا تأخذ بعين الاعتبار استرداد رأس المال الأولي (الاستثمار). لذلك تحتاج دراسة جدوى كاملة تشمل IRR و NPV وفترة الاسترداد أيضاً.
+    </div>
+    <h2>هل تريد حساب دقيق لمشروعك؟</h2>
+    <p>نقطة التعادل هي مجرد مؤشر واحد من عشرات المؤشرات في <strong>دراسة الجدوى الاقتصادية الشاملة</strong>. الدراسة الكاملة تشمل: التحليل السوقي، الخطة التشغيلية، التقييم القانوني، وتحليل المخاطر — وهذا ما توفره أداتنا بالذكاء الاصطناعي في دقائق.</p>
+    <div class="art-cta">
+      <h3>🤖 أنشئ دراسة جدوى كاملة لمشروعك الآن</h3>
+      <p>+25 صفحة بالأرقام الحقيقية — تحليل مالي كامل يشمل نقطة التعادل، IRR، NPV، وخطة التنفيذ</p>
+      <button class="btn-hero" onclick="showPage('tool')" style="margin:0 auto;display:inline-flex;">✦ ابدأ دراستك مجاناً</button>
+    </div>
+    <div class="art-related">
+      <div class="art-related-title">مقالات ذات صلة</div>
+      <div class="art-related-grid">
+        <div class="art-related-card" onclick="showPage('article-2')"><div class="art-related-cat">🏗️ مقاولات</div><div class="art-related-h">جدوى شركة مقاولات صغيرة: الأرقام الحقيقية</div></div>
+        <div class="art-related-card" onclick="showPage('article-4')"><div class="art-related-cat">🏥 الصحة</div><div class="art-related-h">افتتاح عيادة طبية خاصة: جدوى كاملة بالأرقام</div></div>
+        <div class="art-related-card" onclick="showPage('article-5')"><div class="art-related-cat">🛒 التجارة الإلكترونية</div><div class="art-related-h">متجر إلكتروني بـ 50,000 ريال: هل يستحق؟</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ARTICLE 2: جدوى مقاولات
+══════════════════════════════════════ -->
+<div class="page" id="page-article-2">
+<div class="art-page">
+  <button class="art-back-btn" onclick="showPage('blog')"><i class="fa-solid fa-arrow-right"></i> العودة للمقالات</button>
+  <nav class="art-breadcrumb" aria-label="breadcrumb">
+    <span onclick="showPage('home')">الرئيسية</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span onclick="showPage('blog')">المقالات</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span style="color:var(--text3);cursor:default;">جدوى المقاولات</span>
+  </nav>
+  <div class="art-hero">
+    <div class="art-cat-badge">🏗️ مقاولات</div>
+    <h1 class="art-h1">جدوى شركة مقاولات صغيرة في السعودية: الأرقام الحقيقية لعام 2025</h1>
+    <div class="art-meta">
+      <div class="art-meta-item"><i class="fa-regular fa-clock"></i> 20 دقيقة قراءة</div>
+      <div class="art-meta-item"><i class="fa-regular fa-calendar"></i> مارس 2025</div>
+      <div class="art-meta-item"><i class="fa-solid fa-tag"></i> مقاولات — دراسة جدوى — رؤية 2030</div>
+    </div>
+  </div>
+  <div class="art-toc">
+    <div class="art-toc-title">📋 محتويات المقال</div>
+    <ol>
+      <li>فرص المقاولات في ظل رؤية 2030</li>
+      <li>رأس المال المطلوب للبداية</li>
+      <li>التكاليف التشغيلية الحقيقية</li>
+      <li>هوامش الربح في قطاع المقاولات</li>
+      <li>الأخطاء الشائعة التي تُفشل شركات المقاولات</li>
+      <li>متطلبات الترخيص والتصنيف</li>
+      <li>التحليل المالي لـ 3 سنوات</li>
+    </ol>
+  </div>
+  <div class="art-body">
+    <h2>فرص المقاولات في السعودية ظل رؤية 2030</h2>
+    <p>قطاع المقاولات في المملكة العربية السعودية يعيش مرحلة ذهبية بفضل <strong>رؤية 2030</strong> ومشاريع التطوير الضخمة كنيوم وذا لاين والقدية والبحر الأحمر. وفقاً لبيانات وزارة الاقتصاد، بلغ حجم سوق المقاولات أكثر من <strong>800 مليار ريال</strong> خلال الفترة 2022-2026.</p>
+    <p>الفرصة الحقيقية للمقاول الصغير ليست في المشاريع العملاقة، بل في <strong>المقاولات من الباطن</strong> والمشاريع السكنية والتجارية المتوسطة التي تتجاوز احتياجات المقاولين الكبار.</p>
+    <div class="art-callout">
+      <strong>📊 رقم مهم:</strong> 78% من عقود المقاولات في السعودية تقل قيمتها عن 5 مليون ريال — وهو النطاق المثالي لشركات المقاولات الصغيرة والمتوسطة.
+    </div>
+    <h2>رأس المال المطلوب لتأسيس شركة مقاولات صغيرة</h2>
+    <p>تتفاوت متطلبات رأس المال حسب التصنيف والنطاق الجغرافي:</p>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>بند الاستثمار</th><th>الحد الأدنى</th><th>الحد الأعلى</th><th>ملاحظات</th></tr></thead>
+        <tbody>
+          <tr><td>رأس المال النظامي للتسجيل</td><td>100,000 ر.س</td><td>500,000 ر.س</td><td>حسب الدرجة التصنيفية</td></tr>
+          <tr><td>معدات وآليات أساسية</td><td>150,000 ر.س</td><td>800,000 ر.س</td><td>يُنصح بالتأجير في البداية</td></tr>
+          <tr><td>مخزون ومواد بناء أولي</td><td>80,000 ر.س</td><td>200,000 ر.س</td><td>—</td></tr>
+          <tr><td>رواتب لمدة 3 أشهر</td><td>120,000 ر.س</td><td>300,000 ر.س</td><td>ضمان للسيولة</td></tr>
+          <tr><td>مكتب وتجهيزات</td><td>30,000 ر.س</td><td>80,000 ر.س</td><td>—</td></tr>
+          <tr><td>الإجمالي التقديري</td><td>480,000 ر.س</td><td>1,880,000 ر.س</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>هوامش الربح الحقيقية في قطاع المقاولات</h2>
+    <p>البيانات الحقيقية من السوق السعودي تُظهر هوامش ربح تتراوح بين:</p>
+    <ul>
+      <li><strong>المقاولات العامة (أعمال مدنية):</strong> 12% - 22% صافي ربح</li>
+      <li><strong>أعمال التشطيب والديكور:</strong> 25% - 40% صافي ربح</li>
+      <li><strong>الكهرباء والسباكة:</strong> 20% - 35% صافي ربح</li>
+      <li><strong>مقاولات من الباطن:</strong> 8% - 15% (مع مخاطر أقل)</li>
+    </ul>
+    <h2>التحليل المالي التقديري لـ 3 سنوات</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>البيان</th><th>السنة الأولى</th><th>السنة الثانية</th><th>السنة الثالثة</th></tr></thead>
+        <tbody>
+          <tr><td>إجمالي الإيرادات</td><td>1,200,000 ر.س</td><td>2,100,000 ر.س</td><td>3,500,000 ر.س</td></tr>
+          <tr><td>إجمالي التكاليف</td><td>1,040,000 ر.س</td><td>1,680,000 ر.س</td><td>2,660,000 ر.س</td></tr>
+          <tr><td>صافي الربح</td><td>160,000 ر.س</td><td>420,000 ر.س</td><td>840,000 ر.س</td></tr>
+          <tr><td>هامش الربح</td><td>13.3%</td><td>20%</td><td>24%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>الأخطاء الشائعة التي تُفشل شركات المقاولات</h2>
+    <ul>
+      <li><strong>التسعير المنخفض للفوز بالعقود:</strong> أكبر خطأ يقع فيه المبتدئون — السعر المنخفض يُفضي لخسائر حقيقية بعد احتساب التكاليف غير المباشرة.</li>
+      <li><strong>غياب إدارة التدفق النقدي:</strong> المقاولات تعتمد على دُفعات متأخرة، والإفلاس سببه غالباً السيولة لا الخسارة.</li>
+      <li><strong>إهمال بنود ضمانات الجودة والغرامات:</strong> قراءة العقد بدقة تُوفر عليك مئات الآلاف.</li>
+      <li><strong>الاعتماد على عمالة غير مؤهلة:</strong> يرفع التكاليف ويُطيل المدة ويُضاعف الأخطاء.</li>
+    </ul>
+    <div class="art-cta">
+      <h3>🤖 أنشئ دراسة جدوى كاملة لشركة المقاولات الخاصة بك</h3>
+      <p>تحليل مالي دقيق يشمل رأس المال، التكاليف، الإيرادات المتوقعة، وخطة التنفيذ خطوة بخطوة</p>
+      <button class="btn-hero" onclick="showPage('tool')" style="margin:0 auto;display:inline-flex;">✦ ابدأ دراستك مجاناً</button>
+    </div>
+    <div class="art-related">
+      <div class="art-related-title">مقالات ذات صلة</div>
+      <div class="art-related-grid">
+        <div class="art-related-card" onclick="showPage('article-1')"><div class="art-related-cat">📈 تحليل مالي</div><div class="art-related-h">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق</div></div>
+        <div class="art-related-card" onclick="showPage('article-4')"><div class="art-related-cat">🏥 الصحة</div><div class="art-related-h">افتتاح عيادة طبية خاصة: جدوى كاملة بالأرقام</div></div>
+        <div class="art-related-card" onclick="showPage('article-5')"><div class="art-related-cat">🛒 التجارة الإلكترونية</div><div class="art-related-h">متجر إلكتروني بـ 50,000 ريال: هل يستحق؟</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ARTICLE 3: جدوى تطبيق الجوال
+══════════════════════════════════════ -->
+<div class="page" id="page-article-3">
+<div class="art-page">
+  <button class="art-back-btn" onclick="showPage('blog')"><i class="fa-solid fa-arrow-right"></i> العودة للمقالات</button>
+  <nav class="art-breadcrumb" aria-label="breadcrumb">
+    <span onclick="showPage('home')">الرئيسية</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span onclick="showPage('blog')">المقالات</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span style="color:var(--text3);cursor:default;">جدوى تطبيق الجوال</span>
+  </nav>
+  <div class="art-hero">
+    <div class="art-cat-badge">💻 التقنية</div>
+    <h1 class="art-h1">جدوى تطبيق الجوال: لماذا 90% تفشل مالياً وكيف تكون في الـ10% الناجحة؟</h1>
+    <div class="art-meta">
+      <div class="art-meta-item"><i class="fa-regular fa-clock"></i> 18 دقيقة قراءة</div>
+      <div class="art-meta-item"><i class="fa-regular fa-calendar"></i> مارس 2025</div>
+      <div class="art-meta-item"><i class="fa-solid fa-tag"></i> تطبيقات — ستارتب — دراسة جدوى تقنية</div>
+    </div>
+  </div>
+  <div class="art-toc">
+    <div class="art-toc-title">📋 محتويات المقال</div>
+    <ol>
+      <li>إحصاءات صادمة عن فشل التطبيقات</li>
+      <li>تكاليف تطوير التطبيق الحقيقية</li>
+      <li>نماذج الإيرادات الأكثر نجاحاً</li>
+      <li>مقارنة نماذج الدفع: اشتراك مقابل مرة واحدة</li>
+      <li>CAC و LTV: المعادلة التي تحدد مصير تطبيقك</li>
+      <li>خطة مالية واقعية لتطبيق ناجح</li>
+    </ol>
+  </div>
+  <div class="art-body">
+    <h2>إحصاءات صادمة: لماذا تفشل 90% من التطبيقات مالياً؟</h2>
+    <p>وفقاً لتقرير <strong>Gartner</strong>، أكثر من 90% من تطبيقات الجوال تُحقق دخلاً أقل من 1,000 دولار طوال فترة وجودها في متاجر التطبيقات. السبب ليس جودة التطبيق دائماً، بل <strong>غياب نموذج مالي واقعي</strong> منذ البداية.</p>
+    <p>المشكلة الأساسية: معظم مؤسسي التطبيقات يفكرون في التطوير أولاً والإيرادات لاحقاً. الناجحون يفعلون العكس تماماً — يبدأون بنموذج الإيرادات ثم يُصممون التطبيق حوله.</p>
+    <div class="art-callout">
+      <strong>📊 الأسباب الحقيقية للفشل:</strong> 42% بسبب غياب الطلب الحقيقي، 29% بسبب نفاد التمويل، 23% بسبب منافسة شديدة لم تُدرَس مسبقاً.
+    </div>
+    <h2>تكاليف تطوير تطبيق الجوال — الأرقام الحقيقية</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>نوع التطبيق</th><th>التكلفة (فريلانسر)</th><th>التكلفة (شركة)</th><th>المدة</th></tr></thead>
+        <tbody>
+          <tr><td>تطبيق بسيط (MVP)</td><td>15,000 – 40,000 ر.س</td><td>60,000 – 120,000 ر.س</td><td>2 - 4 أشهر</td></tr>
+          <tr><td>تطبيق متوسط التعقيد</td><td>50,000 – 120,000 ر.س</td><td>150,000 – 350,000 ر.س</td><td>4 - 8 أشهر</td></tr>
+          <tr><td>تطبيق معقد (e-commerce / marketplace)</td><td>120,000+ ر.س</td><td>400,000+ ر.س</td><td>8 - 14 شهراً</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>⚠️ <strong>تحذير:</strong> هذه التكاليف هي التطوير فقط. لا تشمل التسويق، خوادم السحابة، دعم العملاء، أو التحديثات المستمرة التي تُمثّل 20-30% إضافية سنوياً.</p>
+    <h2>نماذج الإيرادات الأكثر نجاحاً للتطبيقات</h2>
+    <ul>
+      <li><strong>الاشتراك الشهري/السنوي (Subscription):</strong> الأعلى قيمة وأكثر استقراراً — مناسب للتطبيقات التي تُقدم قيمة مستمرة.</li>
+      <li><strong>Freemium:</strong> مجاني مع ميزات مدفوعة — يُناسب التطبيقات التي تحتاج قاعدة مستخدمين كبيرة أولاً.</li>
+      <li><strong>العمولة (Marketplace):</strong> يأخذ التطبيق نسبة من كل معاملة — مناسب لتطبيقات الخدمات والتوصيل.</li>
+      <li><strong>الإعلانات:</strong> الأصعب تحقيقاً — يحتاج ملايين المستخدمين النشطين.</li>
+    </ul>
+    <h2>معادلة CAC و LTV: السر الأهم في دراسة جدوى التطبيق</h2>
+    <div class="art-formula">نسبة النجاح = LTV (قيمة عمر العميل) ÷ CAC (تكلفة اكتساب العميل)</div>
+    <p>لكي يكون تطبيقك مربحاً: <strong>LTV يجب أن يكون ≥ 3 أضعاف CAC</strong></p>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>المؤشر</th><th>القيمة المتوقعة</th><th>القيمة المقبولة</th></tr></thead>
+        <tbody>
+          <tr><td>تكلفة اكتساب العميل (CAC)</td><td>أقل من 30 ر.س</td><td>30 - 80 ر.س</td></tr>
+          <tr><td>معدل الاحتفاظ بعد 30 يوماً</td><td>أعلى من 40%</td><td>25 - 40%</td></tr>
+          <tr><td>قيمة عمر العميل (LTV)</td><td>أعلى من 150 ر.س</td><td>90 - 150 ر.س</td></tr>
+          <tr><td>نسبة LTV/CAC</td><td>أعلى من 5x</td><td>3x - 5x</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="art-cta">
+      <h3>🤖 أنشئ دراسة جدوى كاملة لتطبيقك</h3>
+      <p>نموذج مالي دقيق يشمل تكاليف التطوير والتسويق، توقعات الإيرادات، CAC/LTV، وخطة النمو</p>
+      <button class="btn-hero" onclick="showPage('tool')" style="margin:0 auto;display:inline-flex;">✦ ابدأ دراستك مجاناً</button>
+    </div>
+    <div class="art-related">
+      <div class="art-related-title">مقالات ذات صلة</div>
+      <div class="art-related-grid">
+        <div class="art-related-card" onclick="showPage('article-1')"><div class="art-related-cat">📈 تحليل مالي</div><div class="art-related-h">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق</div></div>
+        <div class="art-related-card" onclick="showPage('article-5')"><div class="art-related-cat">🛒 التجارة الإلكترونية</div><div class="art-related-h">متجر إلكتروني بـ 50,000 ريال: هل يستحق؟</div></div>
+        <div class="art-related-card" onclick="showPage('article-2')"><div class="art-related-cat">🏗️ مقاولات</div><div class="art-related-h">جدوى شركة مقاولات صغيرة: الأرقام الحقيقية</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ARTICLE 4: جدوى عيادة طبية
+══════════════════════════════════════ -->
+<div class="page" id="page-article-4">
+<div class="art-page">
+  <button class="art-back-btn" onclick="showPage('blog')"><i class="fa-solid fa-arrow-right"></i> العودة للمقالات</button>
+  <nav class="art-breadcrumb" aria-label="breadcrumb">
+    <span onclick="showPage('home')">الرئيسية</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span onclick="showPage('blog')">المقالات</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span style="color:var(--text3);cursor:default;">جدوى عيادة طبية</span>
+  </nav>
+  <div class="art-hero">
+    <div class="art-cat-badge">🏥 الصحة</div>
+    <h1 class="art-h1">افتتاح عيادة طبية خاصة في السعودية: دراسة جدوى كاملة بالأرقام الحقيقية 2025</h1>
+    <div class="art-meta">
+      <div class="art-meta-item"><i class="fa-regular fa-clock"></i> 22 دقيقة قراءة</div>
+      <div class="art-meta-item"><i class="fa-regular fa-calendar"></i> مارس 2025</div>
+      <div class="art-meta-item"><i class="fa-solid fa-tag"></i> عيادة طبية — صحة — استثمار طبي — دراسة جدوى</div>
+    </div>
+  </div>
+  <div class="art-toc">
+    <div class="art-toc-title">📋 محتويات المقال</div>
+    <ol>
+      <li>فرص القطاع الصحي الخاص في السعودية</li>
+      <li>تكاليف الترخيص والتأسيس</li>
+      <li>تكاليف التجهيز والمعدات</li>
+      <li>التكاليف التشغيلية الشهرية</li>
+      <li>توقعات الإيرادات الواقعية</li>
+      <li>فترة استرداد رأس المال</li>
+      <li>أبرز التحديات والمخاطر</li>
+    </ol>
+  </div>
+  <div class="art-body">
+    <h2>فرص القطاع الصحي الخاص في السعودية</h2>
+    <p>يُمثّل القطاع الصحي الخاص في المملكة العربية السعودية فرصة استثمارية استثنائية، إذ تستهدف <strong>رؤية 2030</strong> رفع نسبة مشاركة القطاع الخاص في الرعاية الصحية من 40% إلى 65%. مع تزايد السكان وارتفاع الوعي الصحي وتنامي الأمراض المزمنة، يشهد الطلب على الخدمات الطبية الخاصة نمواً سنوياً يتجاوز <strong>9%</strong>.</p>
+    <div class="art-callout">
+      <strong>📊 إحصاءات السوق:</strong> حجم سوق الرعاية الصحية الخاصة في السعودية تجاوز 85 مليار ريال عام 2024، ومن المتوقع وصوله لـ 140 مليار ريال بحلول 2030.
+    </div>
+    <h2>تكاليف الترخيص والتأسيس للعيادة الطبية</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>رسوم الترخيص والتأسيس</th><th>التكلفة التقديرية</th></tr></thead>
+        <tbody>
+          <tr><td>رسوم ترخيص وزارة الصحة</td><td>5,000 – 15,000 ر.س</td></tr>
+          <tr><td>التسجيل في السجل التجاري</td><td>2,000 – 5,000 ر.س</td></tr>
+          <tr><td>شهادة مزاولة المهنة للطبيب</td><td>3,000 – 8,000 ر.س</td></tr>
+          <tr><td>رسوم البلدية والدفاع المدني</td><td>3,000 – 7,000 ر.س</td></tr>
+          <tr><td>التأمين المهني (سنوياً)</td><td>8,000 – 25,000 ر.س</td></tr>
+          <tr><td>إجمالي التأسيس</td><td>21,000 – 60,000 ر.س</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>تكاليف تجهيز العيادة والمعدات الطبية</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>بند التجهيز</th><th>عيادة عامة</th><th>عيادة متخصصة</th></tr></thead>
+        <tbody>
+          <tr><td>تجهيز المبنى والديكور</td><td>80,000 ر.س</td><td>150,000 ر.س</td></tr>
+          <tr><td>الأجهزة والمعدات الطبية</td><td>120,000 ر.س</td><td>350,000 ر.س</td></tr>
+          <tr><td>أثاث وتجهيزات غرف الانتظار</td><td>25,000 ر.س</td><td>50,000 ر.س</td></tr>
+          <tr><td>نظام إدارة العيادة (برمجيات)</td><td>10,000 ر.س</td><td>20,000 ر.س</td></tr>
+          <tr><td>الإجمالي</td><td>235,000 ر.س</td><td>570,000 ر.س</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>التكاليف التشغيلية الشهرية</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>البند</th><th>التكلفة الشهرية</th></tr></thead>
+        <tbody>
+          <tr><td>إيجار العيادة (موقع متوسط)</td><td>12,000 – 20,000 ر.س</td></tr>
+          <tr><td>راتب طبيب (إذا لم يكن مالك)</td><td>18,000 – 35,000 ر.س</td></tr>
+          <tr><td>رواتب الممرضين والموظفين (3-4 أشخاص)</td><td>12,000 – 18,000 ر.س</td></tr>
+          <tr><td>المستلزمات الطبية والأدوية</td><td>5,000 – 12,000 ر.س</td></tr>
+          <tr><td>فواتير + تسويق + إدارية</td><td>5,000 – 8,000 ر.س</td></tr>
+          <tr><td>إجمالي التكاليف الشهرية</td><td>52,000 – 93,000 ر.س</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>توقعات الإيرادات وفترة الاسترداد</h2>
+    <p>بافتراض عيادة تعمل 6 أيام أسبوعياً، بمعدل <strong>20-30 مريضاً يومياً</strong>، ورسوم كشف متوسطة <strong>200 ريال</strong>:</p>
+    <div class="art-formula">الإيراد الشهري = 25 مريض × 200 ريال × 26 يوم ≈ 130,000 ريال</div>
+    <p>صافي الربح الشهري (بعد تكاليف 70,000 ريال): <strong>~60,000 ريال = هامش 46%</strong></p>
+    <p>فترة استرداد رأس المال (إجمالي 400,000 ريال): <strong>400,000 ÷ 60,000 ≈ 7 أشهر</strong></p>
+    <div class="art-cta">
+      <h3>🤖 أنشئ دراسة جدوى دقيقة لعيادتك</h3>
+      <p>دراسة شاملة تشمل تحليل السوق الطبي في منطقتك، التكاليف الكاملة، والإيرادات المتوقعة بالتفصيل</p>
+      <button class="btn-hero" onclick="showPage('tool')" style="margin:0 auto;display:inline-flex;">✦ ابدأ دراستك مجاناً</button>
+    </div>
+    <div class="art-related">
+      <div class="art-related-title">مقالات ذات صلة</div>
+      <div class="art-related-grid">
+        <div class="art-related-card" onclick="showPage('article-1')"><div class="art-related-cat">📈 تحليل مالي</div><div class="art-related-h">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق</div></div>
+        <div class="art-related-card" onclick="showPage('article-2')"><div class="art-related-cat">🏗️ مقاولات</div><div class="art-related-h">جدوى شركة مقاولات صغيرة: الأرقام الحقيقية</div></div>
+        <div class="art-related-card" onclick="showPage('article-5')"><div class="art-related-cat">🛒 التجارة الإلكترونية</div><div class="art-related-h">متجر إلكتروني بـ 50,000 ريال: هل يستحق؟</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ARTICLE 5: جدوى متجر إلكتروني
+══════════════════════════════════════ -->
+<div class="page" id="page-article-5">
+<div class="art-page">
+  <button class="art-back-btn" onclick="showPage('blog')"><i class="fa-solid fa-arrow-right"></i> العودة للمقالات</button>
+  <nav class="art-breadcrumb" aria-label="breadcrumb">
+    <span onclick="showPage('home')">الرئيسية</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span onclick="showPage('blog')">المقالات</span>
+    <i class="fa-solid fa-chevron-left"></i>
+    <span style="color:var(--text3);cursor:default;">جدوى متجر إلكتروني</span>
+  </nav>
+  <div class="art-hero">
+    <div class="art-cat-badge">🛒 التجارة الإلكترونية</div>
+    <h1 class="art-h1">متجر إلكتروني بـ 50,000 ريال في السعودية: هل يستحق؟ — تحليل واقعي لـ 3 سنوات</h1>
+    <div class="art-meta">
+      <div class="art-meta-item"><i class="fa-regular fa-clock"></i> 14 دقيقة قراءة</div>
+      <div class="art-meta-item"><i class="fa-regular fa-calendar"></i> مارس 2025</div>
+      <div class="art-meta-item"><i class="fa-solid fa-tag"></i> تجارة إلكترونية — متجر أونلاين — دراسة جدوى</div>
+    </div>
+  </div>
+  <div class="art-toc">
+    <div class="art-toc-title">📋 محتويات المقال</div>
+    <ol>
+      <li>سوق التجارة الإلكترونية السعودي بالأرقام</li>
+      <li>توزيع ميزانية 50,000 ريال</li>
+      <li>التكاليف التشغيلية الشهرية</li>
+      <li>استراتيجيات الإيرادات والتسعير</li>
+      <li>الإسقاطات المالية لـ 3 سنوات</li>
+      <li>العوامل المحددة للنجاح</li>
+    </ol>
+  </div>
+  <div class="art-body">
+    <h2>سوق التجارة الإلكترونية السعودي: أرقام تُثير الشهية</h2>
+    <p>وصل حجم سوق التجارة الإلكترونية في السعودية إلى <strong>53 مليار ريال (14 مليار دولار)</strong> عام 2024، مع نمو سنوي يتجاوز 18%. المملكة تحتل المرتبة الأولى خليجياً والثالثة عربياً في معدلات اعتماد التسوق الرقمي، مع <strong>80% من الشعب يتسوق عبر الإنترنت</strong> بصفة منتظمة.</p>
+    <p>لكن — وهذا المهم — ليس كل الفرص متساوية. المتاجر الإلكترونية التي تفشل تفعل ذلك بسبب ضعف التخطيط المالي، لا بسبب غياب الطلب.</p>
+    <h2>كيف توزع ميزانية 50,000 ريال بذكاء؟</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>بند الإنفاق</th><th>المبلغ المقترح</th><th>النسبة</th><th>ملاحظات</th></tr></thead>
+        <tbody>
+          <tr><td>منصة المتجر (سنة أولى)</td><td>3,000 ر.س</td><td>6%</td><td>Salla أو Zid</td></tr>
+          <tr><td>بناء وتصميم المتجر</td><td>5,000 ر.س</td><td>10%</td><td>تصميم احترافي</td></tr>
+          <tr><td>المخزون الأولي</td><td>20,000 ر.س</td><td>40%</td><td>البند الأهم</td></tr>
+          <tr><td>التسويق الرقمي (3 أشهر)</td><td>12,000 ر.س</td><td>24%</td><td>إعلانات + محتوى</td></tr>
+          <tr><td>التصوير والمحتوى</td><td>4,000 ر.س</td><td>8%</td><td>صور احترافية</td></tr>
+          <tr><td>احتياطي طوارئ</td><td>6,000 ر.س</td><td>12%</td><td>لا تتجاوزه</td></tr>
+          <tr><td>الإجمالي</td><td>50,000 ر.س</td><td>100%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>التكاليف التشغيلية الشهرية للمتجر الإلكتروني</h2>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>البند الشهري</th><th>الحد الأدنى</th><th>الحد الأعلى</th></tr></thead>
+        <tbody>
+          <tr><td>اشتراك المنصة</td><td>250 ر.س</td><td>800 ر.س</td></tr>
+          <tr><td>التسويق الرقمي (إعلانات)</td><td>2,000 ر.س</td><td>8,000 ر.س</td></tr>
+          <tr><td>تكاليف الشحن والتوصيل</td><td>8% من المبيعات</td><td>15% من المبيعات</td></tr>
+          <tr><td>خدمة العملاء</td><td>0 (ذاتية)</td><td>3,000 ر.س</td></tr>
+          <tr><td>مصاريف إدارية وبرمجيات</td><td>500 ر.س</td><td>1,500 ر.س</td></tr>
+          <tr><td>إجمالي شهري (بدون مخزون)</td><td>2,750 ر.س</td><td>13,300 ر.س</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>الإسقاطات المالية الواقعية لـ 3 سنوات</h2>
+    <p>بافتراض متجر في مجال الأزياء أو الإكسسوارات، هامش ربح 45%، وميزانية تسويق 4,000 ريال شهرياً:</p>
+    <div class="art-table-wrap">
+      <table class="art-table">
+        <thead><tr><th>المؤشر</th><th>السنة الأولى</th><th>السنة الثانية</th><th>السنة الثالثة</th></tr></thead>
+        <tbody>
+          <tr><td>إجمالي الإيرادات</td><td>180,000 ر.س</td><td>380,000 ر.س</td><td>650,000 ر.س</td></tr>
+          <tr><td>تكلفة البضاعة (55%)</td><td>99,000 ر.س</td><td>209,000 ر.س</td><td>357,500 ر.س</td></tr>
+          <tr><td>مصاريف التشغيل</td><td>78,000 ر.س</td><td>90,000 ر.س</td><td>105,000 ر.س</td></tr>
+          <tr><td>صافي الربح</td><td>3,000 ر.س</td><td>81,000 ر.س</td><td>187,500 ر.س</td></tr>
+          <tr><td>هامش الربح الصافي</td><td>1.7%</td><td>21.3%</td><td>28.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="art-callout">
+      <strong>⚠️ الخلاصة الواقعية:</strong> السنة الأولى شبه تعادل — هذا طبيعي. الربح الحقيقي يبدأ من السنة الثانية مع بناء العلامة التجارية وقاعدة العملاء. من يتوقع ربحاً كبيراً من الشهر الأول محكوم عليه بالإحباط.
+    </div>
+    <h2>العوامل الحاسمة لنجاح متجرك الإلكتروني</h2>
+    <ul>
+      <li><strong>اختيار المنتج:</strong> تخصص في نيش محدد بدل بيع كل شيء — المتاجر المتخصصة تربح أكثر وتكلفها التسويق أقل.</li>
+      <li><strong>تجربة المستخدم:</strong> 70% من العملاء لن يعودوا إذا كانت تجربة التسوق سيئة — الموقع السريع والواضح ضروري.</li>
+      <li><strong>خدمة ما بعد البيع:</strong> سياسة إرجاع واضحة وسريعة تبني الثقة وترفع معدل التكرار.</li>
+      <li><strong>تحسين محركات البحث (SEO):</strong> الزيارات المجانية من جوجل هي أرخص مصدر للمبيعات على المدى البعيد.</li>
+    </ul>
+    <div class="art-cta">
+      <h3>🤖 أنشئ دراسة جدوى كاملة لمتجرك الإلكتروني</h3>
+      <p>تحليل دقيق يشمل دراسة المنافسين، توزيع الميزانية، الإسقاطات المالية لـ 5 سنوات، وخطة التسويق الرقمي</p>
+      <button class="btn-hero" onclick="showPage('tool')" style="margin:0 auto;display:inline-flex;">✦ ابدأ دراستك مجاناً</button>
+    </div>
+    <div class="art-related">
+      <div class="art-related-title">مقالات ذات صلة</div>
+      <div class="art-related-grid">
+        <div class="art-related-card" onclick="showPage('article-1')"><div class="art-related-cat">📈 تحليل مالي</div><div class="art-related-h">كيف تحسب نقطة التعادل لمشروعك في 10 دقائق</div></div>
+        <div class="art-related-card" onclick="showPage('article-3')"><div class="art-related-cat">💻 التقنية</div><div class="art-related-h">جدوى تطبيق الجوال: لماذا 90% تفشل مالياً</div></div>
+        <div class="art-related-card" onclick="showPage('article-4')"><div class="art-related-cat">🏥 الصحة</div><div class="art-related-h">افتتاح عيادة طبية خاصة: جدوى كاملة بالأرقام</div></div>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- ══════════════════════════════════════
