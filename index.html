@@ -3590,38 +3590,65 @@ function startPaymentForStudy(){
     font-family:'Cairo',sans-serif;
   `;
   overlay.innerHTML = `
-    <div style="background:linear-gradient(155deg,#0C1929,#101E30);border:1px solid rgba(59,130,246,0.18);border-radius:28px;padding:36px 42px;text-align:center;max-width:500px;width:92%;box-shadow:0 60px 120px rgba(0,0,0,0.85);margin:auto;">
+    <div style="background:linear-gradient(155deg,#0C1929,#101E30);border:1px solid rgba(59,130,246,0.18);border-radius:28px;padding:32px 38px;text-align:center;max-width:500px;width:92%;box-shadow:0 60px 120px rgba(0,0,0,0.85);margin:auto;">
 
-      <!-- أيقونة القسم الحالي -->
-      <div id="study-current-icon" style="width:76px;height:76px;margin:0 auto 16px;background:linear-gradient(135deg,rgba(59,130,246,0.14),rgba(59,130,246,0.04));border:1.5px solid rgba(59,130,246,0.28);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;animation:studyPulse 2s ease-in-out infinite;">📋</div>
+      <!-- أيقونة نابضة -->
+      <div id="study-current-icon" style="width:76px;height:76px;margin:0 auto 14px;background:linear-gradient(135deg,rgba(59,130,246,0.14),rgba(59,130,246,0.04));border:1.5px solid rgba(59,130,246,0.28);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;animation:studyPulse 2s ease-in-out infinite;">⚡</div>
 
       <!-- العنوان -->
-      <div style="font-size:1.08rem;font-weight:700;color:#E8EEFF;margin-bottom:4px;letter-spacing:-0.01em;">جاري إعداد الدراسة...</div>
+      <div style="font-size:1.08rem;font-weight:700;color:#E8EEFF;margin-bottom:2px;letter-spacing:-0.01em;">جاري إعداد الدراسة...</div>
+      <div id="study-current-section" style="font-size:0.82rem;color:#60A5FA;font-weight:600;margin-bottom:10px;direction:rtl;">يتم كتابة الأقسام في آنٍ واحد</div>
 
-      <!-- اسم القسم الحالي -->
-      <div id="study-current-section" style="font-size:0.88rem;color:#60A5FA;font-weight:600;margin-bottom:6px;min-height:22px;direction:rtl;transition:all 0.4s ease;">الملخص التنفيذي</div>
-
-      <!-- رسالة الحالة -->
-      <div id="study-status-msg" style="font-size:0.75rem;color:rgba(200,220,255,0.42);margin-bottom:20px;min-height:18px;direction:rtl;"></div>
-
-      <!-- شريط التقدم -->
-      <div style="background:rgba(255,255,255,0.05);border-radius:99px;height:7px;margin-bottom:6px;overflow:hidden;">
-        <div id="study-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8 55%,#34D399);border-radius:99px;transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>
+      <!-- نصائح متغيرة -->
+      <div id="study-tips-box" style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:10px 14px;margin-bottom:14px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;direction:rtl;">
+        <span id="study-tip-icon" style="font-size:1.2rem;flex-shrink:0;">💡</span>
+        <span id="study-tip-text" style="font-size:0.75rem;color:#94a3b8;line-height:1.6;text-align:right;"></span>
       </div>
 
-      <!-- عداد الأقسام -->
-      <div id="study-progress-text" style="font-size:0.7rem;color:rgba(200,220,255,0.28);text-align:right;margin-bottom:22px;direction:rtl;">0 / 10 أقسام</div>
+      <!-- رسالة الحالة -->
+      <div id="study-status-msg" style="font-size:0.72rem;color:rgba(200,220,255,0.38);margin-bottom:14px;min-height:16px;direction:rtl;"></div>
 
-      <!-- قائمة الأقسام المكتملة -->
+      <!-- شريط التقدم -->
+      <div style="background:rgba(255,255,255,0.05);border-radius:99px;height:8px;margin-bottom:5px;overflow:hidden;">
+        <div id="study-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8 55%,#34D399);border-radius:99px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);"></div>
+      </div>
+      <div id="study-progress-text" style="font-size:0.68rem;color:rgba(200,220,255,0.25);text-align:right;margin-bottom:18px;direction:rtl;">0 / 10 أقسام</div>
+
+      <!-- قائمة الأقسام -->
       <div id="study-completed-list" style="display:flex;flex-direction:column;gap:5px;direction:rtl;"></div>
     </div>
     <style>
       @keyframes studyPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(59,130,246,0);}50%{transform:scale(1.045);box-shadow:0 0 30px rgba(59,130,246,0.2);}}
       @keyframes fadeSlide{from{opacity:0;transform:translateY(-7px);}to{opacity:1;transform:translateY(0);}}
+      @keyframes tipFade{0%{opacity:0;transform:translateY(4px);}20%,80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-4px);}}
     </style>
   `;
   document.body.appendChild(overlay);
-  overlay._interval = null;
+
+  // ── نصائح تتغير كل 4 ثوانٍ لإبقاء المستخدم مُنتبهاً ──
+  const tips = [
+    { icon:'🧠', text:'يحلل الذكاء الاصطناعي بيانات السوق ويُعِد تحليلاً مالياً مخصصاً لمشروعك تحديداً.' },
+    { icon:'📊', text:'دراستك تحتوي على 10 أقسام تشمل: التحليل المالي، دراسة السوق، خطة التنفيذ والتوصيات.' },
+    { icon:'💰', text:'سيحسب لك IRR وNPV ونقطة التعادل بأرقام دقيقة تناسب رأس مالك ومنطقتك.' },
+    { icon:'⚡', text:'كل قسم يُكتب بالتوازي مع الآخر — هذا يختصر وقت الانتظار بشكل كبير.' },
+    { icon:'📋', text:'الدراسة الناتجة تعادل تقارير مكاتب الاستشارات التي تُكلِّف آلاف الريالات.' },
+    { icon:'🏦', text:'الدراسة جاهزة للتقديم للبنوك وصناديق التمويل وجهات الدعم الحكومي.' },
+    { icon:'🔍', text:'يتم تحليل المنافسين وحجم السوق واتجاهاته استناداً لبيانات القطاع والمنطقة.' },
+    { icon:'🌟', text:'أكثر من 4,200 رائد أعمال أعدوا دراساتهم بهذه الأداة — أنت في عهدة جيدة.' },
+    { icon:'🗓️', text:'ستحصل على خطة تنفيذية خطوة بخطوة مع جدول زمني ومؤشرات نجاح واضحة.' },
+    { icon:'🛡️', text:'تشمل الدراسة تحليل المخاطر وكيفية التعامل معها لحماية استثمارك.' },
+  ];
+  let tipIdx = 0;
+  const tipIcon = overlay.querySelector('#study-tip-icon');
+  const tipText = overlay.querySelector('#study-tip-text');
+  function showTip() {
+    const t = tips[tipIdx % tips.length];
+    tipIdx++;
+    if (tipIcon) tipIcon.textContent = t.icon;
+    if (tipText) { tipText.style.animation='none'; tipText.textContent = t.text; requestAnimationFrame(()=>{ tipText.style.animation='tipFade 4s ease'; }); }
+  }
+  showTip();
+  overlay._interval = setInterval(showTip, 4000);
   return overlay;
 }
 
