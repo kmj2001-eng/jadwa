@@ -3938,9 +3938,16 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
     });
 
     return run()
-      .catch(async () => {
+      .catch(async (err1) => {
+        // إعادة المحاولة مرة واحدة بعد ثانية ونصف
         await new Promise(r => setTimeout(r, 1500));
-        return run().catch(() => '');
+        return run().catch((err2) => {
+          // سجّل الخطأ للتشخيص
+          const msg = err2?.message || err1?.message || 'خطأ غير معروف';
+          console.error(`[Section ${s}] فشل:`, msg);
+          if (!window._firstSectionError) window._firstSectionError = msg;
+          return '';
+        });
       })
       .then(text => {
         sectionTexts[i] = text || '';
@@ -3959,19 +3966,25 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
     await Promise.all(sectionPromises);
     const fullText = sectionTexts.filter(t => t.trim()).join('\n\n');
     hideStudyLoader(studyLoader);
-    if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
+    if (!fullText.trim()) {
+      const apiErr = window._firstSectionError || 'لم يتم استلام محتوى';
+      throw new Error(apiErr);
+    }
     showResult(fullText);
   } catch(e) {
     hideStudyLoader(studyLoader);
     const partial = sectionTexts.filter(t => t.trim()).join('\n\n');
     if (partial && partial.split(/\s+/).length > 200) {
-      showToast('⚠️ الدراسة جزئية');
+      showToast('⚠️ الدراسة جزئية — جاري العرض');
       showResult(partial);
     } else {
       goStep(3);
-      showToast('❌ خطأ في التوليد: ' + (e.message || 'خطأ في الاتصال'), 8000);
+      const errMsg = e.message || 'خطأ في الاتصال';
+      showToast('❌ ' + errMsg, 12000);
+      console.error('[generateStudy] خطأ نهائي:', errMsg);
     }
   }
+  window._firstSectionError = null;
 }
 function showResult(text){
   window._fullStudyText = text;

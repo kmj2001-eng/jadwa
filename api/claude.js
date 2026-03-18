@@ -272,7 +272,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
         max_tokens: [3,4,6].includes(Number(section)) ? 20000 : 14000,
         temperature: 0,
         stream: true,
@@ -291,7 +291,7 @@ export default async function handler(req, res) {
     const streamOnce = async (apiRes) => {
       const reader = apiRes.body.getReader();
       const decoder = new TextDecoder();
-      let buf = '', text = '', stopReason = 'end_turn';
+      let buf = '', text = '', stopReason = 'end_turn', streamErr = null;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -304,17 +304,24 @@ export default async function handler(req, res) {
           if (raw === '[DONE]') continue;
           try {
             const ev = JSON.parse(raw);
+            // كشف خطأ في الـ stream
+            if (ev.type === 'error') {
+              streamErr = ev.error?.message || 'خطأ في Claude API';
+              break;
+            }
             if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
               text += ev.delta.text;
               sendEvent({ chunk: ev.delta.text });
             }
-            // ← كشف الاقتطاع
+            // كشف الاقتطاع
             if (ev.type === 'message_delta' && ev.delta?.stop_reason) {
               stopReason = ev.delta.stop_reason;
             }
           } catch (_) {}
         }
+        if (streamErr) break;
       }
+      if (streamErr) throw new Error(streamErr);
       return { text, stopReason };
     };
 
@@ -333,7 +340,7 @@ export default async function handler(req, res) {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
           max_tokens: 16000,
           temperature: 0,
           stream: true,
