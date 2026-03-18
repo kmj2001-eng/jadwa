@@ -275,7 +275,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
-        max_tokens: 8000,
+        max_tokens: 16000,
         temperature: 0,
         stream: true,
         system: systemPrompt,
@@ -346,14 +346,14 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
-          max_tokens: 8000,
+          max_tokens: 16000,
           temperature: 0,
           stream: true,
           system: systemPrompt,
           messages: [
             { role: 'user',      content: prompt },
             { role: 'assistant', content: fullText },
-            { role: 'user',      content: 'أكمل القسم من حيث توقفت تماماً — أكمل الجدول أو الفقرة دون تكرار ما كُتب.' },
+            { role: 'user',      content: 'أكمل من حيث توقفت فوراً — لا تكرر أي كلمة مما سبق، ابدأ مباشرةً من النقطة التي انقطع عندها النص.' },
           ],
         }),
       });

@@ -3805,8 +3805,11 @@ const currencyMap = {
   DJ: 'فرنك جيبوتي (ف.ج)',
 };
 // ─── AI STUDY GENERATION ───
+let _studyGenerating = false;
 async function generateStudy(){
-  // منع الضغط المتكرر
+  // منع أي تشغيل متزامن مطلقاً
+  if (_studyGenerating) return;
+  _studyGenerating = true;
   const genBtn = document.querySelector('.btn-next[onclick="generateStudy()"]');
   if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.5'; genBtn.style.pointerEvents = 'none'; }
   goStep(4);
@@ -3984,14 +3987,15 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
       showResult(partial);
     } else {
       goStep(3);
-      // إعادة تفعيل الزر عند الخطأ
       if (genBtn) { genBtn.disabled = false; genBtn.style.opacity = ''; genBtn.style.pointerEvents = ''; }
+      _studyGenerating = false;
       const errMsg = e.message || 'خطأ في الاتصال';
       showToast('❌ ' + errMsg, 7000);
       console.error('[generateStudy] خطأ نهائي:', errMsg);
     }
   }
   window._firstSectionError = null;
+  _studyGenerating = false;
 }
 function showResult(text){
   window._fullStudyText = text;
