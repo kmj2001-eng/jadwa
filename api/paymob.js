@@ -39,17 +39,19 @@ export default async function handler(req, res) {
     if (process.env.POSTGRES_URL && userId) {
       sql = neon(process.env.POSTGRES_URL);
 
-      // migration آمن — يضيف عمود plan إن لم يكن موجوداً
-      try {
-        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'`;
-      } catch (_) {}
-
+      // INSERT بدون عمود plan — يستخدم DEFAULT 'basic' تلقائياً حتى لو لم يكن العمود موجوداً بعد
       const dbRows = await sql`
-        INSERT INTO orders (user_id, amount, currency, status, plan)
-        VALUES (${userId}, ${amount}, ${currency}, 'pending', ${plan})
+        INSERT INTO orders (user_id, amount, currency, status)
+        VALUES (${userId}, ${amount}, ${currency}, 'pending')
         RETURNING id
       `;
       dbOrderId = dbRows[0]?.id;
+
+      // migration آمن — يضيف عمود plan ويُحدِّث السجل
+      try {
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'`;
+        await sql`UPDATE orders SET plan = ${plan} WHERE id = ${dbOrderId}`;
+      } catch (_) {}
     }
 
     // merchant_order_id يتضمن معرّف DB ليربطهما الـ webhook
