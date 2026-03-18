@@ -3947,99 +3947,157 @@ function openPDFTemplate(){
 }
 
 async function exportPDF(){
-  const title  = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
-  const bodyEl = document.getElementById('output-body');
+  const title = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
+  const markdown = window._fullStudyText;
 
-  if (!bodyEl || !bodyEl.innerHTML.trim()) {
+  if (!markdown || !markdown.trim()) {
     showToast('❌ لا يوجد محتوى للتحميل');
     return;
   }
 
   const loader = showPDFLoader();
-  showToast('⏳ جاري إنشاء ملف PDF...');
+  showToast('⏳ جاري تنسيق الدراسة احترافياً...');
+
+  const A4_W = 794;
+  const date = new Date().toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
 
   try {
-    const date = new Date().toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
+    // ── استخراج h2 headings لفهرس المحتويات ──
+    const headings = [];
+    markdown.split('\n').forEach(line => {
+      const m = line.match(/^## (.+)$/);
+      if (m) headings.push(m[1].trim());
+    });
 
-    // ── بناء صفحة HTML كاملة للطباعة (A4) ──
-    const A4_W = 794; // عرض A4 بـ 96dpi
+    // ── تحويل Markdown → HTML ──
+    const bodyHtml = mdToHtml(markdown);
+
+    // ── تحضير المحتوى: إزالة table-wrap، إصلاح th ──
+    const tmp = document.createElement('div');
+    tmp.innerHTML = bodyHtml;
+    tmp.querySelectorAll('th').forEach(th => {
+      th.style.background = '#1D4ED8';
+      th.style.color = '#ffffff';
+    });
+    const cleanBody = tmp.innerHTML;
+
+    // ── فهرس المحتويات ──
+    const tocHtml = headings.map((h, i) =>
+      `<div class="toc-item"><span class="toc-num">${i+1}</span><span class="toc-text">${h}</span></div>`
+    ).join('');
+
+    // ── بناء HTML احترافي ──
     const printHtml = `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head><meta charset="UTF-8">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:Arial,Tahoma,"Segoe UI",sans-serif;direction:rtl;
-  color:#111;background:#fff;font-size:12px;line-height:1.8;
-  padding:20px 28px;width:${A4_W}px;}
-.pdf-header{text-align:center;border-bottom:3px solid #1D4ED8;
-  padding-bottom:14px;margin-bottom:20px;}
-.pdf-header h1{font-size:20px;font-weight:800;color:#1D4ED8;margin-bottom:4px;}
-.pdf-header .sub{font-size:10px;color:#666;}
-h2{color:#1D4ED8;font-size:14px;font-weight:800;margin:20px 0 8px;
-  border-right:4px solid #1D4ED8;padding-right:8px;
-  page-break-before:always;page-break-after:avoid;}
-h2:first-of-type{page-break-before:avoid;}
-h3{color:#1e3a8a;font-size:12px;font-weight:700;margin:12px 0 5px;page-break-after:avoid;}
-p{margin-bottom:7px;color:#222;}
-ul,ol{padding-right:18px;margin-bottom:8px;}
-li{margin-bottom:3px;color:#222;}
-strong,b{font-weight:700;color:#111;}
-table{width:100%;border-collapse:collapse;margin:10px 0;
-  font-size:10.5px;table-layout:fixed;page-break-inside:avoid;}
-th{background:#1D4ED8;color:#fff;padding:7px 8px;border:1px solid #2563EB;
+  background:#fff;color:#111;font-size:12px;line-height:1.85;width:${A4_W}px;}
+
+/* ── صفحة الغلاف ── */
+.cover{width:${A4_W}px;min-height:1122px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;page-break-after:always;
+  padding:80px 60px;background:#fff;position:relative;text-align:center;}
+.cover-bar-top{position:absolute;top:0;right:0;left:0;height:10px;background:#1D4ED8;}
+.cover-bar-bot{position:absolute;bottom:0;right:0;left:0;height:10px;background:#1D4ED8;}
+.cover-brand{font-size:12px;color:#3B82F6;font-weight:700;letter-spacing:1px;
+  border:1px solid #BFDBFE;padding:6px 20px;border-radius:20px;margin-bottom:70px;}
+.cover-icon{font-size:48px;margin-bottom:20px;}
+.cover-title{font-size:26px;font-weight:800;color:#1D4ED8;line-height:1.4;margin-bottom:16px;}
+.cover-line{width:80px;height:4px;background:#1D4ED8;margin:18px auto;}
+.cover-desc{font-size:13px;color:#64748B;margin-bottom:70px;}
+.cover-meta{font-size:10px;color:#94A3B8;border-top:1px solid #E2E8F0;
+  padding-top:18px;width:100%;}
+
+/* ── فهرس المحتويات ── */
+.toc{padding:50px 56px;page-break-after:always;background:#fff;}
+.toc-title{font-size:17px;font-weight:800;color:#1D4ED8;
+  border-right:5px solid #1D4ED8;padding-right:12px;margin-bottom:26px;}
+.toc-item{display:flex;align-items:center;gap:12px;
+  padding:8px 4px;border-bottom:1px dotted #CBD5E1;font-size:12px;}
+.toc-num{background:#1D4ED8;color:#fff;font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:12px;min-width:28px;text-align:center;flex-shrink:0;}
+.toc-text{color:#1e3a8a;font-weight:600;}
+
+/* ── المحتوى ── */
+.content{padding:36px 56px 28px;}
+h2{color:#1D4ED8;font-size:15px;font-weight:800;
+  border-right:5px solid #1D4ED8;padding:10px 14px 10px 0;
+  margin:0 0 12px;page-break-before:always;page-break-after:avoid;
+  background:linear-gradient(to left,#EFF6FF,transparent);}
+h2:first-child{page-break-before:avoid;}
+h3{color:#1e3a8a;font-size:13px;font-weight:700;
+  margin:16px 0 6px;page-break-after:avoid;}
+p{margin-bottom:8px;color:#1e293b;}
+ul,ol{padding-right:22px;margin:6px 0 10px;}
+li{margin-bottom:4px;color:#1e293b;}
+strong,b{font-weight:700;color:#0f172a;}
+em,i{font-style:italic;color:#334155;}
+table{width:100%;border-collapse:collapse;margin:14px 0;
+  font-size:11px;table-layout:fixed;page-break-inside:avoid;}
+th{background:#1D4ED8!important;color:#fff!important;
+  padding:8px 10px;border:1px solid #2563EB;
   text-align:right;font-weight:700;word-break:break-word;}
-td{padding:6px 8px;border:1px solid #d1d5db;text-align:right;
-  color:#1e293b;word-break:break-word;vertical-align:top;}
-tr:nth-child(even) td{background:#f0f7ff;}
-.table-wrap{overflow:visible;}
-.pdf-footer{margin-top:24px;border-top:1px solid #e2e8f0;
-  padding-top:8px;text-align:center;color:#999;font-size:9px;}
+td{padding:7px 10px;border:1px solid #CBD5E1;
+  color:#1e293b;text-align:right;word-break:break-word;vertical-align:top;}
+tr:nth-child(even) td{background:#EFF6FF;}
+tr:first-child th{border-top:2px solid #1740a8;}
+
+/* ── تذييل ── */
+.pdf-footer{margin-top:36px;border-top:2px solid #E2E8F0;
+  padding:14px 56px;text-align:center;color:#94A3B8;font-size:10px;}
 </style></head>
 <body>
-<div class="pdf-header">
-  <h1>${title}</h1>
-  <div class="sub">أُعدَّت بواسطة منصة ذكاء الأعمال · ${date}</div>
+
+<!-- صفحة الغلاف -->
+<div class="cover">
+  <div class="cover-bar-top"></div>
+  <div class="cover-brand">منصة ذكاء الأعمال · eses.store</div>
+  <div class="cover-icon">📊</div>
+  <div class="cover-title">${title}</div>
+  <div class="cover-line"></div>
+  <div class="cover-desc">دراسة جدوى شاملة — مُعدَّة بتقنيات الذكاء الاصطناعي</div>
+  <div class="cover-meta">تاريخ الإصدار: ${date}</div>
+  <div class="cover-bar-bot"></div>
 </div>
-CONTENT_PLACEHOLDER
-<div class="pdf-footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي · eses.store</div>
+
+<!-- فهرس المحتويات -->
+<div class="toc">
+  <div class="toc-title">📋 فهرس المحتويات</div>
+  ${tocHtml}
+</div>
+
+<!-- المحتوى -->
+<div class="content">${cleanBody}</div>
+
+<!-- التذييل -->
+<div class="pdf-footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي &nbsp;·&nbsp; eses.store</div>
+
 </body></html>`;
 
-    // نسخ المحتوى وتنظيفه
-    const clone = bodyEl.cloneNode(true);
-    clone.querySelectorAll('.paywall-overlay,.paywall-blur,.section-blur').forEach(e => e.remove());
-    // إزالة table-wrap divs (غير ضرورية في PDF)
-    clone.querySelectorAll('.table-wrap').forEach(tw => {
-      while (tw.firstChild) tw.parentNode.insertBefore(tw.firstChild, tw);
-      tw.remove();
-    });
-    const contentHtml = printHtml.replace('CONTENT_PLACEHOLDER', clone.innerHTML);
-
-    // ── تركيب iframe مخفي في الـ DOM ──
+    // ── تركيب iframe مخفي ──
     const iframe = document.createElement('iframe');
     iframe.style.cssText = `position:fixed;top:0;left:-9999px;width:${A4_W}px;height:1px;border:0;visibility:hidden;`;
     document.body.appendChild(iframe);
     iframe.contentDocument.open();
-    iframe.contentDocument.write(contentHtml);
+    iframe.contentDocument.write(printHtml);
     iframe.contentDocument.close();
 
-    // انتظار تحميل iframe
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 700));
 
-    const iframeBody = iframe.contentDocument.body;
-
-    // ── توليد PDF من الـ iframe ──
     await html2pdf().set({
-      margin:      [12, 12, 12, 12],
+      margin:      [8, 8, 8, 8],
       filename:    title + '.pdf',
-      image:       { type: 'jpeg', quality: 0.90 },
+      image:       { type: 'jpeg', quality: 0.92 },
       html2canvas: {
         scale: 1.5, useCORS: true, letterRendering: true,
-        logging: false, scrollY: 0,
+        logging: false, scrollY: 0, backgroundColor: '#ffffff',
         windowWidth: A4_W, width: A4_W
       },
       jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:   { mode: ['css', 'legacy'], before: 'h2', avoid: ['tr','li','h3'] }
-    }).from(iframeBody).save();
+      pagebreak:   { mode: ['css','legacy'], before: ['.toc','.cover','h2'], avoid: ['tr','li','h3','.toc-item'] }
+    }).from(iframe.contentDocument.body).save();
 
     document.body.removeChild(iframe);
     hidePDFLoader(loader);
