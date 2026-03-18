@@ -3603,6 +3603,15 @@ footer {
         <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;">احصل على دراسة مجانية لكل صديق تُحيله.</div>
         <div onclick="showToast('🎉 تم نسخ رابط الإحالة!')" style="color:var(--gold);font-size:0.72rem;font-weight:700;cursor:pointer;margin-top:10px;display:inline-block;">انسخ رابطك ←</div>
       </div>
+
+      <!-- منطقة الخطر -->
+      <div style="margin-top:20px;border:1px solid rgba(248,113,113,0.25);border-radius:14px;padding:16px;background:rgba(248,113,113,0.04);">
+        <div style="font-size:0.65rem;font-weight:700;color:#F87171;margin-bottom:8px;letter-spacing:1px;">⚠️ منطقة الخطر</div>
+        <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;margin-bottom:12px;">حذف الحساب نهائي ولا يمكن التراجع عنه.</div>
+        <button onclick="openDeleteAccountModal()" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-family:'Cairo',sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(248,113,113,0.18)'" onmouseout="this.style.background='rgba(248,113,113,0.08)'">
+          🗑 حذف حسابي نهائياً
+        </button>
+      </div>
     </div>
     <div class="dash-main">
       <div class="dash-greeting">مرحباً بعودتك 👋</div>
@@ -3643,6 +3652,24 @@ footer {
   </div>
 </div>
 
+
+<!-- ══ نافذة حذف الحساب ══ -->
+<div id="delete-account-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--ink2);border:1px solid rgba(248,113,113,0.35);border-radius:24px;padding:40px 36px;max-width:420px;width:90%;text-align:center;font-family:'Cairo',sans-serif;">
+    <div style="font-size:2.5rem;margin-bottom:16px;">⚠️</div>
+    <h3 style="color:#F87171;font-size:1.2rem;margin-bottom:10px;">حذف الحساب نهائياً</h3>
+    <p style="color:var(--text3);font-size:0.85rem;line-height:1.8;margin-bottom:24px;">
+      سيتم حذف <strong style="color:var(--text2);">جميع دراساتك ونقاطك وبياناتك</strong> بشكل دائم.<br>هذا الإجراء <strong style="color:#F87171;">لا يمكن التراجع عنه.</strong>
+    </p>
+    <div style="text-align:right;margin-bottom:6px;font-size:0.82rem;color:var(--text3);">أدخل كلمة مرورك للتأكيد</div>
+    <input id="delete-account-password" type="password" placeholder="كلمة المرور"
+      style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--ink3);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;margin-bottom:20px;box-sizing:border-box;direction:rtl;">
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeDeleteAccountModal()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;">إلغاء</button>
+      <button id="delete-account-btn" onclick="confirmDeleteAccount()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#F87171;color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;">🗑 احذف حسابي</button>
+    </div>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -4147,6 +4174,49 @@ async function openReadyStudy(id) {
     } else {
       body.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">تعذّر تحميل الدراسة. يرجى المحاولة مجدداً.</div>';
     }
+  }
+}
+
+// ══ حذف الحساب ══
+function openDeleteAccountModal() {
+  const user = _getLoggedUser ? _getLoggedUser() : null;
+  if (!user) { showToast('⚠️ يرجى تسجيل الدخول أولاً'); return; }
+  const modal = document.getElementById('delete-account-modal');
+  if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  const inp = document.getElementById('delete-account-password');
+  if (inp) inp.value = '';
+}
+function closeDeleteAccountModal() {
+  const modal = document.getElementById('delete-account-modal');
+  if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+async function confirmDeleteAccount() {
+  const user = _getLoggedUser ? _getLoggedUser() : null;
+  if (!user) return;
+  const password = document.getElementById('delete-account-password')?.value?.trim();
+  if (!password) { showToast('⚠️ أدخل كلمة مرورك للتأكيد'); return; }
+
+  const btn = document.getElementById('delete-account-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'جاري الحذف...'; }
+
+  try {
+    const res = await fetch('/api/delete-account', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body   : JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'فشل الحذف');
+
+    // تنظيف كامل
+    localStorage.clear();
+    closeDeleteAccountModal();
+    showToast('✅ تم حذف حسابك بنجاح');
+    setTimeout(() => { showPage('home'); window.location.reload(); }, 1800);
+
+  } catch(e) {
+    showToast('❌ ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 احذف حسابي'; }
   }
 }
 
