@@ -4800,10 +4800,10 @@ async function generateStudy(){
 function showResult(text){
   window._fullStudyText = text;
   window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
-  // ── حفظ تلقائي في localStorage ──
+  // ── حفظ تلقائي في DB أو localStorage ──
   try {
     const studyTitle = (document.getElementById('output-title').textContent.trim()) || 'دراسة جدوى';
-    saveStudyToLocal(studyTitle, text);
+    saveStudy(studyTitle, text); // fire-and-forget — DB إن كان مسجلاً، localStorage كاحتياط
   } catch(e){}
 
   const html = mdToHtml(text);
@@ -5759,7 +5759,29 @@ function _getLoggedUser() {
 async function saveStudy(title, content) {
   const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
 
-  // حفظ محلي دائماً كنسخة احتياطية
+  // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
+  const user = _getLoggedUser();
+  if (user && user.id) {
+    try {
+      const res = await fetch('/api/studies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+        body: JSON.stringify({ title, content })
+      });
+      if (res.ok) {
+        showToast('✅ تم حفظ الدراسة في حسابك');
+        // تحديث لوحة التحكم إن كانت مفتوحة
+        if (document.getElementById('page-dashboard')?.classList.contains('active')) {
+          loadDashboardStudies();
+        }
+        return; // نجح الحفظ في DB — لا داعي لـ localStorage
+      }
+    } catch(e) { console.warn('saveStudy DB:', e); }
+    // فشل DB — احتياط بـ localStorage
+    showToast('⚠️ تعذّر الحفظ في الخادم، حُفظت محلياً');
+  }
+
+  // ── احتياط: حفظ في localStorage ──
   try {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     const idx = local.findIndex(s => s.title === title);
@@ -5767,18 +5789,10 @@ async function saveStudy(title, content) {
     local.unshift({ id: 'local_' + Date.now(), title, content, date });
     if (local.length > 30) local.splice(30);
     localStorage.setItem('saved_studies', JSON.stringify(local));
+    if (!user || !user.id) {
+      showToast('💾 حُفظت محلياً — سجّل دخولك لحفظها في حسابك');
+    }
   } catch(e) { console.warn('saveStudy local:', e); }
-
-  // حفظ في قاعدة البيانات إن كان المستخدم مسجلاً
-  const user = _getLoggedUser();
-  if (!user || !user.id) return;
-  try {
-    await fetch('/api/studies', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body: JSON.stringify({ title, content })
-    });
-  } catch(e) { console.warn('saveStudy DB:', e); }
 }
 
 // للتوافق مع الكود القديم
@@ -5809,9 +5823,12 @@ async function loadDashboardStudies() {
     } catch(e) { console.warn('loadDashboardStudies DB:', e); }
   }
 
-  // إن لم تكن هناك دراسات في DB، استخدم localStorage
+  // دمج مع localStorage (للمستخدمين غير المسجلين أو كنسخة احتياطية)
   if (studies.length === 0) {
-    try { studies = JSON.parse(localStorage.getItem('saved_studies') || '[]'); } catch(e) {}
+    try {
+      const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+      studies = local;
+    } catch(e) {}
   }
 
   if (studies.length === 0) {
