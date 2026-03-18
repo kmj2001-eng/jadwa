@@ -5820,6 +5820,39 @@ async function saveStudy(title, content) {
 // للتوافق مع الكود القديم
 function saveStudyToLocal(title, content) { saveStudy(title, content); }
 
+// ── ترحيل دراسات localStorage → DB عند أول تسجيل دخول ──
+async function migrateLocalStudiesToDB(user) {
+  if (!user || !user.id) return;
+  try {
+    const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
+    if (local.length === 0) return;
+    let migrated = 0;
+    for (const s of local) {
+      if (!s.title && !s.content) continue;
+      try {
+        const res = await fetch('/api/studies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+          body: JSON.stringify({
+            title     : s.title   || s.project_name || 'دراسة جدوى',
+            content   : s.content || s.ai_output    || '',
+            metadata  : s.metadata  || {},
+            input_data: s.input_data || null
+          })
+        });
+        if (res.ok) migrated++;
+      } catch(e) { /* تجاهل فشل دراسة واحدة */ }
+    }
+    if (migrated > 0) {
+      localStorage.removeItem('saved_studies'); // نظّف localStorage بعد الترحيل
+      showToast('✅ تم ترحيل ' + migrated + ' دراسة إلى حسابك');
+      if (document.getElementById('page-dashboard')?.classList.contains('active')) {
+        loadDashboardStudies();
+      }
+    }
+  } catch(e) { console.warn('migrateLocalStudiesToDB:', e); }
+}
+
 async function loadDashboardStudies() {
   const tbody = document.getElementById('user-studies-tbody');
   const noRow = document.getElementById('no-studies-row');
@@ -6210,6 +6243,7 @@ async function doLogin() {
     setAuthUI(data.user);
     closeAuthModal();
     showToast('مرحباً بعودتك ' + (data.user.name || '') + ' 👋');
+    migrateLocalStudiesToDB(data.user);
   } catch(e) {
     showAuthError(e.message);
     authBtnLoading('login-btn', false, 'right-to-bracket', 'دخول');
@@ -6235,6 +6269,7 @@ async function doRegister() {
     setAuthUI(data.user);
     closeAuthModal();
     showToast('تم إنشاء حسابك بنجاح! مرحباً ' + data.user.name + ' ✨');
+    migrateLocalStudiesToDB(data.user);
   } catch(e) {
     showAuthError(e.message);
     authBtnLoading('register-btn', false, 'user-plus', 'إنشاء الحساب');
