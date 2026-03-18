@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 
@@ -3671,431 +3671,53 @@ document.addEventListener('click', function(e){
   }
 });
 
-// ─── READY STUDIES DATA ───
-const READY_STUDIES = {
-  1: {
-    title: 'محل بيع وصيانة وتركيب كاميرات المراقبة وملحقاتها — الرياض',
-    html: `
-<h2>1. الملخص التنفيذي</h2>
-<p>يُقدّم هذا المشروع خدمات متكاملة في مجال أنظمة المراقبة والأمان بمدينة <strong>الرياض</strong>، ويشمل بيع كاميرات المراقبة وتركيبها وصيانتها الدورية، بمختلف الأنواع (IP، أنالوج، HDCVI)، وبيع الملحقات من كابلات وأجهزة تسجيل DVR/NVR. يستهدف المشروع الأفراد والشركات والمنشآت التجارية في الرياض.</p>
-<table class="output-table"><thead><tr><th>المؤشر المالي</th><th>القيمة</th><th>التقييم</th></tr></thead><tbody>
-<tr><td>رأس المال الإجمالي</td><td><strong>200,000 ر.س</strong></td><td>✅ مناسب</td></tr>
-<tr><td>معدل العائد الداخلي (IRR)</td><td><strong style="color:#34D399">26.4%</strong></td><td>✅ ممتاز</td></tr>
-<tr><td>صافي القيمة الحالية (NPV)</td><td><strong style="color:#34D399">382,000 ر.س</strong></td><td>✅ موجب</td></tr>
-<tr><td>فترة الاسترداد</td><td><strong>2.8 سنة</strong></td><td>✅ معقولة</td></tr>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>38,500 ر.س</strong></td><td>✅ قابلة للتحقيق</td></tr>
-<tr><td>هامش الربح الصافي السنة الأولى</td><td><strong>18.2%</strong></td><td>✅ جيد</td></tr>
-</tbody></table>
+// ─── READY STUDIES — يُحمَّل من /api/ready-studies (مُولَّد فعلياً بـ claude.js) ───
+let _readyStudiesData = null;
 
-<h2>2. الإطار الاستراتيجي</h2>
-<p>تشهد المملكة العربية السعودية طفرة في قطاع الأمن والمراقبة مدفوعةً بمتطلبات رؤية 2030 في التحول الرقمي، وتزايد الوعي الأمني لدى الأفراد والشركات، وتنامي المشاريع العقارية والتجارية في الرياض. يُتيح هذا التوجّه فرصاً واسعة للدخول إلى السوق بتكاليف معقولة.</p>
-
-<h3>2.1 تحليل حجم السوق (TAM / SAM / SOM)</h3>
-<table class="output-table"><thead><tr><th>مستوى السوق</th><th>الوصف</th><th>الحجم التقديري</th></tr></thead><tbody>
-<tr><td>TAM — السوق الكلي</td><td>سوق أنظمة الأمان والمراقبة في السعودية</td><td><strong>4.2 مليار ر.س</strong></td></tr>
-<tr><td>SAM — السوق المستهدف</td><td>سوق الرياض للأفراد والشركات الصغيرة والمتوسطة</td><td><strong>280 مليون ر.س</strong></td></tr>
-<tr><td>SOM — الحصة الواقعية</td><td>الحصة المستهدفة خلال 5 سنوات</td><td><strong>1.4 مليون ر.س (0.5%)</strong></td></tr>
-</tbody></table>
-
-<h3>2.2 اتجاهات السوق</h3>
-<ul>
-<li>نمو القطاع بمعدل <strong>14% سنوياً</strong> في السعودية (2024-2029)</li>
-<li>ارتفاع الطلب على كاميرات الجيل الجديد (4K، AI، Night Vision)</li>
-<li>تزايد عدد المجمعات السكنية والتجارية في الرياض</li>
-<li>تطور خدمات المراقبة السحابية (Cloud Surveillance)</li>
-</ul>
-
-<h3>2.3 تحليل المنافسين</h3>
-<table class="output-table"><thead><tr><th>المنافس</th><th>نقاط القوة</th><th>نقاط الضعف</th></tr></thead><tbody>
-<tr><td>شركات الأمن الكبرى (G4S، ADT)</td><td>ثقة العملاء، شمولية الخدمات</td><td>أسعار مرتفعة، بطء الاستجابة</td></tr>
-<tr><td>محلات التقنية المتخصصة</td><td>سعر تنافسي</td><td>خدمة ما بعد البيع ضعيفة</td></tr>
-<tr><td>متاجر إلكترونية (Noon، Amazon)</td><td>تنوع المنتجات، توصيل سريع</td><td>لا تقدم خدمة التركيب والصيانة</td></tr>
-<tr><td>المنافذ العشوائية في الأسواق</td><td>أسعار منخفضة جداً</td><td>منتجات رخيصة بدون ضمان</td></tr>
-</tbody></table>
-
-<h3>2.4 تحليل SWOT</h3>
-<table class="output-table"><thead><tr><th>نقاط القوة 💪</th><th>نقاط الضعف ⚠️</th></tr></thead><tbody>
-<tr><td>خدمة متكاملة (بيع+تركيب+صيانة) في مكان واحد</td><td>رأس المال محدود مقارنة بالشركات الكبرى</td></tr>
-<tr><td>فريق فني متخصص ومدرّب</td><td>الاعتماد على موردين محدودين</td></tr>
-<tr><td>سعر تنافسي مع جودة مضمونة</td><td>محدودية التغطية الجغرافية في البداية</td></tr>
-</tbody></table>
-<table class="output-table"><thead><tr><th>الفرص 🚀</th><th>التهديدات 🔴</th></tr></thead><tbody>
-<tr><td>نمو سوق الأمن في السعودية بشكل متسارع</td><td>دخول منافسين جدد بأسعار تنافسية</td></tr>
-<tr><td>الطلب المتزايد من المنشآت التجارية</td><td>تقلبات أسعار المنتجات التقنية</td></tr>
-<tr><td>توسع مشاريع البنية التحتية في الرياض</td><td>التغيرات التنظيمية في قطاع الأمن</td></tr>
-</tbody></table>
-
-<h2>3. الدراسة التسويقية</h2>
-<h3>3.1 شرائح العملاء المستهدفين</h3>
-<table class="output-table"><thead><tr><th>الشريحة</th><th>النسبة المستهدفة</th><th>متوسط قيمة الطلب</th></tr></thead><tbody>
-<tr><td>الأفراد والمنازل</td><td>40%</td><td>2,500 ر.س</td></tr>
-<tr><td>المحلات التجارية والمطاعم</td><td>35%</td><td>5,800 ر.س</td></tr>
-<tr><td>المكاتب والشركات</td><td>20%</td><td>12,000 ر.س</td></tr>
-<tr><td>المستودعات والمصانع</td><td>5%</td><td>28,000 ر.س</td></tr>
-</tbody></table>
-
-<h3>3.2 ميزانية التسويق — السنة الأولى (46,000 ر.س)</h3>
-<table class="output-table"><thead><tr><th>قناة التسويق</th><th>الميزانية</th><th>النسبة</th><th>الهدف</th></tr></thead><tbody>
-<tr><td>إعلانات سناب شات</td><td><strong>18,000 ر.س</strong></td><td>39%</td><td>استهداف سكان الرياض 18-45 سنة</td></tr>
-<tr><td>إعلانات جوجل (Google Ads)</td><td><strong>15,000 ر.س</strong></td><td>33%</td><td>ظهور عند بحث العميل عن "كاميرات مراقبة"</td></tr>
-<tr><td>إدارة منصات التواصل الاجتماعي</td><td><strong>8,000 ر.س</strong></td><td>17%</td><td>تحسين الوعي بالعلامة التجارية</td></tr>
-<tr><td>تحسين محركات البحث (SEO)</td><td><strong>5,000 ر.س</strong></td><td>11%</td><td>ظهور احترافي في نتائج جوجل</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>46,000 ر.س</strong></td><td>100%</td><td>—</td></tr>
-</tbody></table>
-
-<h2>4. الدراسة الفنية والتشغيلية</h2>
-<p>يقع المشروع في <strong>منطقة المصفح الصناعية بالرياض</strong>، مساحة المحل 40 م² بإيجار سنوي 36,000 ر.س، مع موقع استراتيجي يسهل الوصول إليه. يُخصّص 30 م² للمعرض و10 م² للتخزين والورشة.</p>
-<h3>4.1 المعدات والأصول المطلوبة</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>التكلفة</th></tr></thead><tbody>
-<tr><td>مخزون كاميرات أولي (Hikvision، Dahua)</td><td>55,000 ر.س</td></tr>
-<tr><td>أجهزة DVR/NVR وملحقات</td><td>18,000 ر.س</td></tr>
-<tr><td>أدوات تركيب وصيانة متخصصة</td><td>12,000 ر.س</td></tr>
-<tr><td>تجهيزات المحل (رفوف، عرض، كاونتر)</td><td>15,000 ر.س</td></tr>
-<tr><td>سيارة توصيل مُستأجرة (6 أشهر)</td><td>9,000 ر.س</td></tr>
-</tbody></table>
-<h3>4.2 الهيكل الوظيفي</h3>
-<table class="output-table"><thead><tr><th>المنصب</th><th>العدد</th><th>الراتب الشهري</th></tr></thead><tbody>
-<tr><td>مدير ومشرف المحل</td><td>1</td><td>6,000 ر.س</td></tr>
-<tr><td>فني تركيب وصيانة</td><td>2</td><td>4,500 ر.س لكل</td></tr>
-<tr><td>موظف مبيعات وإدارة</td><td>1</td><td>4,000 ر.س</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>4</strong></td><td><strong>19,000 ر.س/شهر</strong></td></tr>
-</tbody></table>
-
-<h2>5. الدراسة القانونية والتنظيمية</h2>
-<p>الشكل القانوني المُقترح: <strong>مؤسسة فردية</strong> لسهولة التأسيس والتكلفة المنخفضة. التراخيص المطلوبة: سجل تجاري (300 ر.س)، شهادة البلدية، ترخيص وزارة الداخلية لنشاط المراقبة الأمنية. المدة الإجمالية للتأسيس: <strong>2-3 أسابيع</strong>.</p>
-
-<h2>6. الدراسة المالية</h2>
-<h3>6.1 إجمالي الاستثمار المطلوب</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>المبلغ</th><th>النسبة</th></tr></thead><tbody>
-<tr><td>المخزون الأولي وقطع الغيار</td><td>55,000 ر.س</td><td>27.5%</td></tr>
-<tr><td>الأجهزة والمعدات</td><td>30,000 ر.س</td><td>15%</td></tr>
-<tr><td>تجهيزات المحل</td><td>15,000 ر.س</td><td>7.5%</td></tr>
-<tr><td>ضمان الإيجار (شهران)</td><td>6,000 ر.س</td><td>3%</td></tr>
-<tr><td>رأس المال التشغيلي (3 أشهر)</td><td>82,000 ر.س</td><td>41%</td></tr>
-<tr><td>مصاريف تأسيس وتراخيص</td><td>12,000 ر.س</td><td>6%</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>200,000 ر.س</strong></td><td>100%</td></tr>
-</tbody></table>
-
-<h3>6.2 الإسقاطات المالية الشهرية — السنة الأولى</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>شهر 1-3</th><th>شهر 4-6</th><th>شهر 7-9</th><th>شهر 10-12</th></tr></thead><tbody>
-<tr><td>الإيرادات</td><td>30,000</td><td>40,000</td><td>52,000</td><td>64,000</td></tr>
-<tr><td>تكلفة البضاعة (COGS)</td><td>15,000</td><td>20,000</td><td>25,000</td><td>31,000</td></tr>
-<tr><td>مجمل الربح</td><td>15,000</td><td>20,000</td><td>27,000</td><td>33,000</td></tr>
-<tr><td>المصاريف التشغيلية</td><td>23,500</td><td>23,500</td><td>24,000</td><td>24,500</td></tr>
-<tr><td><strong>صافي الربح</strong></td><td><strong style="color:#F87171">-8,500</strong></td><td><strong style="color:#FBB024">-3,500</strong></td><td><strong style="color:#34D399">+3,000</strong></td><td><strong style="color:#34D399">+8,500</strong></td></tr>
-</tbody></table>
-
-<h3>6.3 قائمة الدخل السنوية — 5 سنوات</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>السنة 1</th><th>السنة 2</th><th>السنة 3</th><th>السنة 4</th><th>السنة 5</th></tr></thead><tbody>
-<tr><td>الإيرادات</td><td>558,000</td><td>726,000</td><td>871,000</td><td>1,045,000</td><td>1,254,000</td></tr>
-<tr><td>تكلفة البضاعة</td><td>275,000</td><td>350,000</td><td>418,000</td><td>501,000</td><td>601,000</td></tr>
-<tr><td>مجمل الربح</td><td>283,000</td><td>376,000</td><td>453,000</td><td>544,000</td><td>653,000</td></tr>
-<tr><td>المصاريف التشغيلية</td><td>283,000</td><td>295,000</td><td>307,000</td><td>320,000</td><td>334,000</td></tr>
-<tr><td>الضرائب والزكاة (2.5%)</td><td>0</td><td>2,025</td><td>3,650</td><td>5,600</td><td>7,975</td></tr>
-<tr><td><strong>صافي الربح</strong></td><td><strong>0</strong></td><td><strong style="color:#34D399">79,000</strong></td><td><strong style="color:#34D399">142,350</strong></td><td><strong style="color:#34D399">218,400</strong></td><td><strong style="color:#34D399">311,025</strong></td></tr>
-</tbody></table>
-
-<h3>6.4 نقطة التعادل وتحليل الجدوى</h3>
-<table class="output-table"><thead><tr><th>المؤشر</th><th>القيمة</th><th>المعادلة / التفسير</th></tr></thead><tbody>
-<tr><td>التكاليف الثابتة الشهرية</td><td>23,000 ر.س</td><td>إيجار + رواتب + مصاريف ثابتة</td></tr>
-<tr><td>هامش المساهمة</td><td>49%</td><td>نسبة مجمل الربح إلى الإيرادات</td></tr>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>38,500 ر.س</strong></td><td>= التكاليف الثابتة ÷ هامش المساهمة</td></tr>
-<tr><td>IRR (معدل العائد الداخلي)</td><td><strong style="color:#34D399">26.4%</strong></td><td>يتجاوز معدل الخصم 10%</td></tr>
-<tr><td>NPV (صافي القيمة الحالية)</td><td><strong style="color:#34D399">382,000 ر.س</strong></td><td>قيمة موجبة تؤكد الجدوى</td></tr>
-<tr><td>مؤشر الربحية (PI)</td><td><strong>1.91</strong></td><td>كل ريال مستثمر يُعيد 1.91 ر.س</td></tr>
-</tbody></table>
-
-<h2>7. تحليل المخاطر وخطة التنفيذ</h2>
-<table class="output-table"><thead><tr><th>المخاطرة</th><th>الاحتمالية</th><th>الأثر</th><th>خطة المواجهة</th></tr></thead><tbody>
-<tr><td>ضعف المبيعات في الأشهر الأولى</td><td>متوسطة</td><td>عالٍ</td><td>رأس مال تشغيلي يغطي 3 أشهر</td></tr>
-<tr><td>تقلب أسعار المنتجات</td><td>متوسطة</td><td>متوسط</td><td>تنويع الموردين وعقود ثابتة السعر</td></tr>
-<tr><td>تصاعد المنافسة</td><td>عالية</td><td>متوسط</td><td>التميز بخدمة ما بعد البيع والضمان</td></tr>
-<tr><td>نقص الكوادر الفنية</td><td>منخفضة</td><td>عالٍ</td><td>اتفاقيات تدريب مسبق مع المعهد التقني</td></tr>
-<tr><td>تغيير اللوائح التنظيمية</td><td>منخفضة</td><td>متوسط</td><td>متابعة دورية للمستجدات التنظيمية</td></tr>
-</tbody></table>
-
-<h2>8. القرار الاستثماري</h2>
-<p>يُعتبر مشروع محل كاميرات المراقبة في الرياض <strong>مجدياً اقتصادياً بقوة</strong>. معدل العائد الداخلي 26.4% يتجاوز تكلفة رأس المال بأكثر من 16 نقطة مئوية، وصافي القيمة الحالية الموجب يؤكد أن المشروع يُضيف قيمة حقيقية للمستثمر. الطلب المتزايد على أنظمة الأمن في السعودية يجعل التوقيت مناسباً جداً للدخول إلى هذا القطاع.</p>
-<p style="background:rgba(52,211,153,0.08);border-right:4px solid #34D399;padding:16px;border-radius:8px;"><strong>✅ التوصية: الإقدام على المشروع فوراً</strong> — مع التأكد من تأمين موقع استراتيجي، وبناء شراكات مع موردين معتمدين، وتوظيف فنيين مؤهلين.</p>`
-  },
-  2: {
-    title: 'مطعم وجبات سريعة سحابي ومحلي — جدة',
-    html: `
-<h2>1. الملخص التنفيذي</h2>
-<p>يجمع هذا المشروع بين نموذجَي المطعم المحلي والمطبخ السحابي (Cloud Kitchen) في <strong>جدة</strong>، مما يُتيح استثمار قناتَي التوصيل (هنقرستيشن، جاهز) والاستقبال المباشر معاً. يُقدّم المطعم وجبات سريعة من برغر وبطاطس وعصائر بجودة عالية وسعر منافس.</p>
-<table class="output-table"><thead><tr><th>المؤشر المالي</th><th>القيمة</th><th>التقييم</th></tr></thead><tbody>
-<tr><td>رأس المال الإجمالي</td><td><strong>200,000 ر.س</strong></td><td>✅ مناسب</td></tr>
-<tr><td>معدل العائد الداخلي (IRR)</td><td><strong style="color:#34D399">32.1%</strong></td><td>✅ ممتاز</td></tr>
-<tr><td>صافي القيمة الحالية (NPV)</td><td><strong style="color:#34D399">468,000 ر.س</strong></td><td>✅ موجب قوي</td></tr>
-<tr><td>فترة الاسترداد</td><td><strong>2.2 سنة</strong></td><td>✅ سريع نسبياً</td></tr>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>42,000 ر.س</strong></td><td>✅ قابلة للتحقيق</td></tr>
-<tr><td>هامش الربح الصافي السنة الثانية</td><td><strong>22.5%</strong></td><td>✅ ممتاز</td></tr>
-</tbody></table>
-
-<h2>2. الإطار الاستراتيجي</h2>
-<p>تُعدّ جدة من أكثر مدن المملكة ازدحاماً وأنشطها غذائياً، مع أكثر من 4.5 مليون نسمة وتوافد سياحي مستمر. ينمو قطاع التوصيل الغذائي بمعدل <strong>22% سنوياً</strong> في المنطقة، وهو ما يُهيّئ الفرصة المثالية للدخول بنموذج مزدوج (سحابي + محلي).</p>
-
-<h3>2.1 تحليل حجم السوق (TAM / SAM / SOM)</h3>
-<table class="output-table"><thead><tr><th>مستوى السوق</th><th>الوصف</th><th>الحجم</th></tr></thead><tbody>
-<tr><td>TAM</td><td>قطاع المطاعم والخدمات الغذائية في جدة</td><td><strong>8.5 مليار ر.س</strong></td></tr>
-<tr><td>SAM</td><td>سوق الوجبات السريعة والتوصيل</td><td><strong>1.2 مليار ر.س</strong></td></tr>
-<tr><td>SOM</td><td>الحصة المستهدفة خلال 5 سنوات</td><td><strong>1.8 مليون ر.س (0.15%)</strong></td></tr>
-</tbody></table>
-
-<h3>2.2 تحليل المنافسين</h3>
-<table class="output-table"><thead><tr><th>المنافس</th><th>نقاط القوة</th><th>نقاط الضعف</th></tr></thead><tbody>
-<tr><td>ماكدونالدز، برغر كنج</td><td>علامة تجارية قوية</td><td>سعر مرتفع، جودة روتينية</td></tr>
-<tr><td>مطابخ سحابية محلية</td><td>تنوع القائمة</td><td>جودة غير منتظمة، تسويق ضعيف</td></tr>
-<tr><td>مطاعم الحي المحلية</td><td>سعر منخفض</td><td>بدون تسليم، مكان صغير</td></tr>
-</tbody></table>
-
-<h3>2.3 تحليل SWOT</h3>
-<table class="output-table"><thead><tr><th>نقاط القوة 💪</th><th>نقاط الضعف ⚠️</th></tr></thead><tbody>
-<tr><td>نموذج مزدوج يُعظّم الإيرادات</td><td>المنافسة الشديدة في قطاع البرغر</td></tr>
-<tr><td>الحضور على تطبيقات التوصيل (هنقرستيشن، جاهز)</td><td>الاعتماد على تقييمات التطبيقات في البداية</td></tr>
-</tbody></table>
-<table class="output-table"><thead><tr><th>الفرص 🚀</th><th>التهديدات 🔴</th></tr></thead><tbody>
-<tr><td>نمو سوق التوصيل بشكل متسارع</td><td>ارتفاع تكاليف الغاز والمواد الغذائية</td></tr>
-<tr><td>توسّع قاعدة العملاء الرقميين</td><td>عمولات تطبيقات التوصيل (15-25%)</td></tr>
-</tbody></table>
-
-<h2>3. الدراسة التسويقية</h2>
-<h3>3.1 ميزانية التسويق — السنة الأولى (52,000 ر.س)</h3>
-<table class="output-table"><thead><tr><th>القناة</th><th>الميزانية</th><th>الهدف</th></tr></thead><tbody>
-<tr><td>إعلانات سناب شات</td><td><strong>20,000 ر.س</strong></td><td>استهداف شباب جدة 16-35 سنة</td></tr>
-<tr><td>إعلانات جوجل</td><td><strong>12,000 ر.س</strong></td><td>كلمات مفتاحية "وجبات جدة، توصيل سريع"</td></tr>
-<tr><td>العروض على التطبيقات (هنقرستيشن)</td><td><strong>10,000 ر.س</strong></td><td>زيادة التقييمات والطلبات الأولى</td></tr>
-<tr><td>التصوير والمحتوى المرئي</td><td><strong>10,000 ر.س</strong></td><td>صور احترافية وفيديوهات للمنتجات</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>52,000 ر.س</strong></td><td>—</td></tr>
-</tbody></table>
-
-<h2>4. الدراسة الفنية والتشغيلية</h2>
-<p>يقع المطعم في حي <strong>الروضة / العزيزية</strong> بجدة، مساحة 60 م² (30 م² مطبخ + 30 م² صالة)، إيجار سنوي 48,000 ر.س. يعمل المطبخ السحابي بالتوازي مع استقبال العملاء مباشرة خلال فترة الذروة.</p>
-<h3>4.1 الهيكل الوظيفي</h3>
-<table class="output-table"><thead><tr><th>المنصب</th><th>العدد</th><th>الراتب</th></tr></thead><tbody>
-<tr><td>مدير ومسؤول التطبيقات</td><td>1</td><td>5,500 ر.س</td></tr>
-<tr><td>طاهي رئيسي</td><td>1</td><td>4,500 ر.س</td></tr>
-<tr><td>مساعد المطبخ وكاشير</td><td>2</td><td>3,500 ر.س لكل</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>4</strong></td><td><strong>17,000 ر.س/شهر</strong></td></tr>
-</tbody></table>
-
-<h2>5. الدراسة القانونية</h2>
-<p>الشكل القانوني: <strong>مؤسسة فردية</strong>. التراخيص: البلدية، وزارة الصحة (شهادة صحية للعاملين)، هيئة السياحة. الفترة الزمنية للتأسيس: <strong>3-4 أسابيع</strong>. رأس المال الأدنى مسجّل: 10,000 ر.س.</p>
-
-<h2>6. الدراسة المالية</h2>
-<h3>6.1 إجمالي الاستثمار المطلوب</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>المبلغ</th></tr></thead><tbody>
-<tr><td>تجهيزات المطبخ الكاملة</td><td>90,000 ر.س</td></tr>
-<tr><td>ضمان الإيجار (3 أشهر)</td><td>24,000 ر.س</td></tr>
-<tr><td>مخزون مواد غذائية أولي</td><td>30,000 ر.س</td></tr>
-<tr><td>تراخيص واشتراطات</td><td>12,000 ر.س</td></tr>
-<tr><td>رأس المال التشغيلي</td><td>44,000 ر.س</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>200,000 ر.س</strong></td></tr>
-</tbody></table>
-
-<h3>6.2 قائمة الدخل السنوية — 5 سنوات</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>السنة 1</th><th>السنة 2</th><th>السنة 3</th><th>السنة 4</th><th>السنة 5</th></tr></thead><tbody>
-<tr><td>الإيرادات</td><td>660,000</td><td>900,000</td><td>1,080,000</td><td>1,296,000</td><td>1,555,000</td></tr>
-<tr><td>تكلفة المواد الغذائية (32%)</td><td>211,000</td><td>288,000</td><td>346,000</td><td>415,000</td><td>498,000</td></tr>
-<tr><td>المصاريف التشغيلية</td><td>348,000</td><td>375,000</td><td>396,000</td><td>420,000</td><td>446,000</td></tr>
-<tr><td><strong>صافي الربح</strong></td><td><strong style="color:#FBB024">101,000</strong></td><td><strong style="color:#34D399">237,000</strong></td><td><strong style="color:#34D399">338,000</strong></td><td><strong style="color:#34D399">461,000</strong></td><td><strong style="color:#34D399">611,000</strong></td></tr>
-</tbody></table>
-
-<h3>6.3 نقطة التعادل وتحليل الجدوى</h3>
-<table class="output-table"><thead><tr><th>المؤشر</th><th>القيمة</th></tr></thead><tbody>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>42,000 ر.س</strong> (قابلة للتحقيق من الشهر 6)</td></tr>
-<tr><td>IRR</td><td><strong style="color:#34D399">32.1%</strong></td></tr>
-<tr><td>NPV (بمعدل خصم 10%)</td><td><strong style="color:#34D399">468,000 ر.س</strong></td></tr>
-<tr><td>فترة الاسترداد</td><td><strong>2.2 سنة</strong></td></tr>
-<tr><td>مؤشر الربحية</td><td><strong>3.34</strong></td></tr>
-</tbody></table>
-
-<h2>7. تحليل المخاطر</h2>
-<table class="output-table"><thead><tr><th>المخاطرة</th><th>الاحتمالية</th><th>خطة المواجهة</th></tr></thead><tbody>
-<tr><td>ضعف التقييمات الأولى على التطبيقات</td><td>عالية</td><td>تحفيز العملاء الأوائل بعروض خاصة</td></tr>
-<tr><td>ارتفاع تكلفة المواد الغذائية</td><td>متوسطة</td><td>عقود توريد ثابتة السعر مع موردين</td></tr>
-<tr><td>تقلب حجم الطلبات موسمياً</td><td>متوسطة</td><td>تقليص ساعات العمل في فترات الركود</td></tr>
-</tbody></table>
-
-<h2>8. القرار الاستثماري</h2>
-<p style="background:rgba(52,211,153,0.08);border-right:4px solid #34D399;padding:16px;border-radius:8px;"><strong>✅ التوصية: مشروع مجدٍ جداً ويُوصى بالتنفيذ الفوري</strong> — النموذج المزدوج يُقلّل المخاطر ويُعظّم الإيرادات. IRR 32.1% يُعدّ من أعلى المعدلات في قطاع المطاعم. ضع الأولوية للحصول على تقييمات عالية في التطبيقات خلال الشهرين الأولين.</p>`
-  },
-  3: {
-    title: 'ورشة صيانة وإصلاح المواتير والدينموهات الكهربائية — بريدة',
-    html: `
-<h2>1. الملخص التنفيذي</h2>
-<p>تتخصص هذه الورشة في صيانة وإصلاح المواتير الكهربائية والدينموهات والمضخات في <strong>بريدة، منطقة القصيم</strong>، وهو نشاط ذو طلب صناعي متواصل مع منافسة محدودة في المنطقة. يخدم المشروع المصانع والمزارع والشركات الصناعية في القصيم.</p>
-<table class="output-table"><thead><tr><th>المؤشر المالي</th><th>القيمة</th><th>التقييم</th></tr></thead><tbody>
-<tr><td>رأس المال الإجمالي</td><td><strong>60,000 ر.س</strong></td><td>✅ منخفض ومناسب</td></tr>
-<tr><td>معدل العائد الداخلي (IRR)</td><td><strong style="color:#34D399">28.3%</strong></td><td>✅ ممتاز</td></tr>
-<tr><td>صافي القيمة الحالية (NPV)</td><td><strong style="color:#34D399">127,000 ر.س</strong></td><td>✅ موجب</td></tr>
-<tr><td>فترة الاسترداد</td><td><strong>2.5 سنة</strong></td><td>✅ جيد</td></tr>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>12,500 ر.س</strong></td><td>✅ قابلة للتحقيق</td></tr>
-<tr><td>هامش الربح الصافي السنة الثانية</td><td><strong>26%</strong></td><td>✅ ممتاز لورشة متخصصة</td></tr>
-</tbody></table>
-
-<h2>2. الإطار الاستراتيجي</h2>
-<p>تُعدّ منطقة القصيم من أهم المناطق الصناعية والزراعية في المملكة، وتضم آلاف المزارع والمصانع التي تعتمد بشكل كبير على المواتير والمضخات الكهربائية. ندرة ورش الصيانة المتخصصة في بريدة تُعني طلباً محتجزاً وهامش ربح أعلى.</p>
-
-<h3>2.1 تحليل حجم السوق (TAM / SAM / SOM)</h3>
-<table class="output-table"><thead><tr><th>مستوى السوق</th><th>الوصف</th><th>الحجم</th></tr></thead><tbody>
-<tr><td>TAM</td><td>سوق صيانة المعدات الصناعية في القصيم</td><td><strong>1.8 مليار ر.س</strong></td></tr>
-<tr><td>SAM</td><td>ورش صيانة المواتير والكهرباء في بريدة</td><td><strong>85 مليون ر.س</strong></td></tr>
-<tr><td>SOM</td><td>الحصة المستهدفة خلال 5 سنوات</td><td><strong>850,000 ر.س (1%)</strong></td></tr>
-</tbody></table>
-
-<h3>2.2 تحليل المنافسين</h3>
-<table class="output-table"><thead><tr><th>المنافس</th><th>نقاط القوة</th><th>نقاط الضعف</th></tr></thead><tbody>
-<tr><td>ورش عامة غير متخصصة</td><td>قرب جغرافي</td><td>تفتقر للخبرة والمعدات المتخصصة</td></tr>
-<tr><td>الشركات الصناعية الكبرى</td><td>فرق صيانة داخلية</td><td>لا تخدم العملاء الخارجيين</td></tr>
-<tr><td>ورش متخصصة في الرياض</td><td>كفاءة عالية</td><td>بعيدة جغرافياً، تكلفة نقل عالية</td></tr>
-</tbody></table>
-
-<h3>2.3 تحليل SWOT</h3>
-<table class="output-table"><thead><tr><th>نقاط القوة 💪</th><th>نقاط الضعف ⚠️</th></tr></thead><tbody>
-<tr><td>تخصص دقيق في سوق يفتقر للمتخصصين</td><td>رأس مال محدود</td></tr>
-<tr><td>طلب مستمر لا يتوقف مع تعطّل الآلات</td><td>بطء نمو قاعدة العملاء في البداية</td></tr>
-</tbody></table>
-<table class="output-table"><thead><tr><th>الفرص 🚀</th><th>التهديدات 🔴</th></tr></thead><tbody>
-<tr><td>التوسع في خدمة مزارع القصيم</td><td>دخول منافس متخصص جديد</td></tr>
-<tr><td>عقود صيانة دورية مع المصانع</td><td>صعوبة الحصول على قطع الغيار النادرة</td></tr>
-</tbody></table>
-
-<h2>3. الدراسة التسويقية</h2>
-<h3>3.1 شرائح العملاء المستهدفين</h3>
-<table class="output-table"><thead><tr><th>الشريحة</th><th>النسبة</th><th>متوسط قيمة الطلب</th></tr></thead><tbody>
-<tr><td>مزارع ومضخات الري</td><td>45%</td><td>1,800 ر.س</td></tr>
-<tr><td>المصانع والمنشآت الصناعية</td><td>30%</td><td>4,500 ر.س</td></tr>
-<tr><td>محطات الضخ والمرافق</td><td>15%</td><td>8,000 ر.س</td></tr>
-<tr><td>الأفراد والورش الأخرى</td><td>10%</td><td>600 ر.س</td></tr>
-</tbody></table>
-
-<h3>3.2 ميزانية التسويق — السنة الأولى (14,000 ر.س)</h3>
-<table class="output-table"><thead><tr><th>القناة</th><th>الميزانية</th><th>الهدف</th></tr></thead><tbody>
-<tr><td>بطاقات عمل وكتيبات للمزارع والمصانع</td><td><strong>3,000 ر.س</strong></td><td>التسويق المباشر للعملاء الصناعيين</td></tr>
-<tr><td>إعلانات جوجل (صيانة مواتير بريدة)</td><td><strong>5,000 ر.س</strong></td><td>الظهور عند بحث العملاء</td></tr>
-<tr><td>تواصل اجتماعي (واتساب، توتير)</td><td><strong>4,000 ر.س</strong></td><td>بناء شبكة إحالة محلية</td></tr>
-<tr><td>زيارات ميدانية للمصانع</td><td><strong>2,000 ر.س</strong></td><td>اكتساب عقود صيانة دورية</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>14,000 ر.س</strong></td><td>—</td></tr>
-</tbody></table>
-
-<h2>4. الدراسة الفنية والتشغيلية</h2>
-<p>تقع الورشة في <strong>المنطقة الصناعية في بريدة</strong>، مساحة 80 م² (60 م² ورشة + 20 م² استقبال)، إيجار شهري 2,000 ر.س. الموقع الاستراتيجي يُسهّل وصول العملاء الصناعيين.</p>
-<h3>4.1 المعدات والأدوات المطلوبة</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>التكلفة</th></tr></thead><tbody>
-<tr><td>معدات اختبار المواتير (Motor Tester)</td><td>12,000 ر.س</td></tr>
-<tr><td>أدوات اللف والتبديل والصيانة</td><td>10,000 ر.س</td></tr>
-<tr><td>معدات اللحام والتشخيص الكهربائي</td><td>8,000 ر.س</td></tr>
-<tr><td>مخزون قطع غيار أولي</td><td>12,000 ر.س</td></tr>
-</tbody></table>
-<h3>4.2 الهيكل الوظيفي</h3>
-<table class="output-table"><thead><tr><th>المنصب</th><th>العدد</th><th>الراتب</th></tr></thead><tbody>
-<tr><td>كهربائي متخصص (صاحب الورشة)</td><td>1</td><td>—</td></tr>
-<tr><td>مساعد فني</td><td>1</td><td>3,500 ر.س</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>2</strong></td><td>—</td></tr>
-</tbody></table>
-
-<h2>5. الدراسة القانونية</h2>
-<p>الشكل القانوني: <strong>مؤسسة فردية</strong>. التراخيص: سجل تجاري (نشاط صيانة معدات كهربائية)، ترخيص البلدية. الفترة: <strong>أسبوعان</strong>. التكلفة الإجمالية للتأسيس: حوالي 2,500 ر.س.</p>
-
-<h2>6. الدراسة المالية</h2>
-<h3>6.1 إجمالي الاستثمار المطلوب</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>المبلغ</th></tr></thead><tbody>
-<tr><td>المعدات والأدوات المتخصصة</td><td>30,000 ر.س</td></tr>
-<tr><td>ضمان الإيجار (3 أشهر)</td><td>9,000 ر.س</td></tr>
-<tr><td>مخزون قطع غيار أولي</td><td>12,000 ر.س</td></tr>
-<tr><td>رأس المال التشغيلي</td><td>9,000 ر.س</td></tr>
-<tr><td><strong>الإجمالي</strong></td><td><strong>60,000 ر.س</strong></td></tr>
-</tbody></table>
-
-<h3>6.2 الإسقاطات المالية الشهرية</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>شهر 1-3</th><th>شهر 4-6</th><th>شهر 7-12</th></tr></thead><tbody>
-<tr><td>الإيرادات</td><td>8,000</td><td>14,000</td><td>20,000</td></tr>
-<tr><td>تكلفة قطع الغيار (30%)</td><td>2,400</td><td>4,200</td><td>6,000</td></tr>
-<tr><td>الراتب والإيجار والمصاريف</td><td>7,500</td><td>7,500</td><td>7,800</td></tr>
-<tr><td><strong>صافي الربح</strong></td><td><strong style="color:#F87171">-1,900</strong></td><td><strong style="color:#FBB024">+2,300</strong></td><td><strong style="color:#34D399">+6,200</strong></td></tr>
-</tbody></table>
-
-<h3>6.3 قائمة الدخل السنوية — 5 سنوات</h3>
-<table class="output-table"><thead><tr><th>البند</th><th>السنة 1</th><th>السنة 2</th><th>السنة 3</th><th>السنة 4</th><th>السنة 5</th></tr></thead><tbody>
-<tr><td>الإيرادات</td><td>180,000</td><td>270,000</td><td>336,000</td><td>396,000</td><td>432,000</td></tr>
-<tr><td>التكلفة المباشرة (30%)</td><td>54,000</td><td>81,000</td><td>101,000</td><td>119,000</td><td>130,000</td></tr>
-<tr><td>المصاريف التشغيلية</td><td>96,000</td><td>105,000</td><td>112,000</td><td>118,000</td><td>123,000</td></tr>
-<tr><td><strong>صافي الربح</strong></td><td><strong style="color:#FBB024">30,000</strong></td><td><strong style="color:#34D399">84,000</strong></td><td><strong style="color:#34D399">123,000</strong></td><td><strong style="color:#34D399">159,000</strong></td><td><strong style="color:#34D399">179,000</strong></td></tr>
-</tbody></table>
-
-<h3>6.4 نقطة التعادل وتحليل الجدوى</h3>
-<table class="output-table"><thead><tr><th>المؤشر</th><th>القيمة</th></tr></thead><tbody>
-<tr><td>نقطة التعادل الشهرية</td><td><strong>12,500 ر.س</strong></td></tr>
-<tr><td>IRR</td><td><strong style="color:#34D399">28.3%</strong></td></tr>
-<tr><td>NPV (بمعدل خصم 10%)</td><td><strong style="color:#34D399">127,000 ر.س</strong></td></tr>
-<tr><td>فترة الاسترداد البسيطة</td><td><strong>2.5 سنة</strong></td></tr>
-<tr><td>مؤشر الربحية (PI)</td><td><strong>3.12</strong></td></tr>
-</tbody></table>
-
-<h2>7. تحليل المخاطر</h2>
-<table class="output-table"><thead><tr><th>المخاطرة</th><th>الاحتمالية</th><th>خطة المواجهة</th></tr></thead><tbody>
-<tr><td>بطء تكوين قاعدة العملاء</td><td>متوسطة</td><td>زيارات ميدانية للمزارع والمصانع في الأشهر الأولى</td></tr>
-<tr><td>صعوبة الحصول على قطع الغيار</td><td>متوسطة</td><td>تنويع الموردين والطلب المسبق للقطع الحيوية</td></tr>
-<tr><td>المنافسة من ورش مماثلة</td><td>منخفضة</td><td>بناء سمعة قائمة على السرعة والضمان</td></tr>
-</tbody></table>
-
-<h2>8. القرار الاستثماري</h2>
-<p>يُعدّ هذا المشروع <strong>فرصة استثمارية نادرة</strong> برأس مال منخفض (60,000 ر.س) وعائد استثماري مرتفع (28.3% IRR). الطلب الصناعي المتواصل في القصيم وندرة المتخصصين يُهيّئان بيئة تنافسية مواتية تماماً لهذا النشاط.</p>
-<p style="background:rgba(52,211,153,0.08);border-right:4px solid #34D399;padding:16px;border-radius:8px;"><strong>✅ التوصية: انطلق فوراً</strong> — المخاطر منخفضة، رأس المال قليل، والعائد مرتفع. ركّز في البداية على اكتساب عقود صيانة دورية مع المزارع والمصانع لضمان دخل ثابت منذ الشهر الأول.</p>`
+async function loadReadyStudies() {
+  if (_readyStudiesData) return _readyStudiesData;
+  try {
+    const res = await fetch('/api/ready-studies');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    _readyStudiesData = await res.json();
+    return _readyStudiesData;
+  } catch (e) {
+    console.error('تعذّر تحميل الدراسات الجاهزة:', e.message);
+    return null;
   }
-};
+}
 
-function openReadyStudy(id) {
-  const study = READY_STUDIES[id];
-  if(!study) return;
-  const overlay = document.getElementById('study-viewer-overlay');
-  const body = document.getElementById('study-viewer-body');
-  const title = document.getElementById('study-viewer-title');
-  if(!overlay || !body) return;
-  title.textContent = study.title;
-  body.innerHTML = study.html;
+async function openReadyStudy(id) {
+  const overlay  = document.getElementById('study-viewer-overlay');
+  const viewBody = document.getElementById('study-viewer-body');
+  const titleEl  = document.getElementById('study-viewer-title');
+  if (!overlay || !viewBody) return;
+
+  titleEl.textContent = 'جاري تحميل الدراسة...';
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
   overlay.scrollTop = 0;
+  viewBody.innerHTML = '<div style="text-align:center;padding:80px 24px;"><div class="typing-dots" style="justify-content:center;"><span></span><span></span><span></span></div><p style="color:var(--text3);margin-top:18px;">جاري تحميل الدراسة...</p></div>';
+
+  const data = await loadReadyStudies();
+  if (!data || !data[id]) {
+    viewBody.innerHTML = '<div style="text-align:center;padding:60px;color:var(--rose);"><p style="font-size:2rem;">⚠️</p><p>تعذّر تحميل الدراسة. يُرجى المحاولة لاحقاً.</p></div>';
+    return;
+  }
+
+  const study = data[id];
+  titleEl.textContent = study.title;
+  const html = typeof mdToHtml === 'function' ? mdToHtml(study.text) : study.text;
+  viewBody.innerHTML = '<div class="output-body">' + html + '</div>';
 }
 
 function closeStudyViewer() {
   const overlay = document.getElementById('study-viewer-overlay');
-  if(overlay) overlay.style.display = 'none';
+  if (overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
 }
 
-function printReadyStudy() {
-  const body = document.getElementById('study-viewer-body');
-  const title = document.getElementById('study-viewer-title');
-  if(!body) return;
-  const pw = window.open('','_blank','width=900,height=700');
-  if(!pw) { showToast('❌ السماح بالنوافذ المنبثقة مطلوب'); return; }
-  pw.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
-  <meta charset="UTF-8"><title>${title ? title.textContent : 'دراسة الجدوى'}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;padding:24mm 20mm;font-size:11pt;line-height:1.8;}
-    h2{color:#1D4ED8;border-bottom:2px solid #1D4ED8;padding-bottom:6px;margin-top:28px;font-size:14pt;}
-    h3{color:#1e3a8a;margin-top:20px;font-size:12pt;}
-    table{width:100%;border-collapse:collapse;margin:16px 0;}
-    th{background:#1D4ED8;color:#fff;padding:9px 12px;text-align:right;font-size:9.5pt;}
-    td{padding:8px 12px;border:1px solid #ddd;font-size:9.5pt;}
-    tr:nth-child(even) td{background:#f8faff;}
-    p{margin:10px 0;color:#333;}
-    ul{padding-right:20px;color:#333;}
-  </style></head><body>
-  <h1 style="color:#1D4ED8;font-size:16pt;text-align:center;margin-bottom:8px;">${title ? title.textContent : ''}</h1>
-  <p style="text-align:center;color:#888;font-size:9pt;margin-bottom:32px;">إعداد: منصة ذكاء الأعمال لدراسات الجدوى الاقتصادية</p>
-  ${body.innerHTML}
-  </body></html>`);
-  pw.document.close();
-  pw.focus();
-  setTimeout(()=>pw.print(), 600);
-}
-
-// ─── PAGE SYSTEM ───
+// \u2500\u2500\u2500 PAGE SYSTEM ───
 function showPage(id, pushState){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const target = document.getElementById('page-'+id);
