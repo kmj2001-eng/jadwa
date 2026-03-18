@@ -4075,8 +4075,8 @@ function printReadyStudy() {
   if(!body) return;
   const pw = window.open('','_blank','width=900,height=700');
   if(!pw) { showToast('❌ السماح بالنوافذ المنبثقة مطلوب'); return; }
-  pw.document.write(\`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
-  <meta charset="UTF-8"><title>\${title ? title.textContent : 'دراسة الجدوى'}</title>
+  pw.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
+  <meta charset="UTF-8"><title>${title ? title.textContent : 'دراسة الجدوى'}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;padding:24mm 20mm;font-size:11pt;line-height:1.8;}
@@ -4089,10 +4089,10 @@ function printReadyStudy() {
     p{margin:10px 0;color:#333;}
     ul{padding-right:20px;color:#333;}
   </style></head><body>
-  <h1 style="color:#1D4ED8;font-size:16pt;text-align:center;margin-bottom:8px;">\${title ? title.textContent : ''}</h1>
+  <h1 style="color:#1D4ED8;font-size:16pt;text-align:center;margin-bottom:8px;">${title ? title.textContent : ''}</h1>
   <p style="text-align:center;color:#888;font-size:9pt;margin-bottom:32px;">إعداد: منصة ذكاء الأعمال لدراسات الجدوى الاقتصادية</p>
-  \${body.innerHTML}
-  </body></html>\`);
+  ${body.innerHTML}
+  </body></html>`);
   pw.document.close();
   pw.focus();
   setTimeout(()=>pw.print(), 600);
