@@ -3757,23 +3757,8 @@ footer {
       <div class="dmenu-item" onclick="showPage('tool')"><span class="dicon">✨</span> دراسة جديدة</div>
       <div class="dmenu-item" onclick="document.querySelector('.studies-panel')?.scrollIntoView({behavior:'smooth'})"><span class="dicon">📂</span> دراساتي</div>
       <div class="dmenu-item" onclick="showPage('ready')"><span class="dicon">📁</span> دراسات جاهزة</div>
-      <div class="dmenu-item"><span class="dicon">👥</span> الإحالة</div>
       <div class="dmenu-item" onclick="showPage('pricing')"><span class="dicon">⬆️</span> ترقية الباقة</div>
-      <div class="dmenu-item"><span class="dicon">⚙️</span> الإعدادات</div>
-      <div style="margin-top:24px;background:var(--gold-dim);border:1px solid var(--border);border-radius:14px;padding:16px;">
-        <div style="font-size:0.65rem;font-weight:700;color:#60A5FA;margin-bottom:8px;letter-spacing:1px;">💡 أحسن صديقاً</div>
-        <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;">احصل على دراسة مجانية لكل صديق تُحيله.</div>
-        <div onclick="showToast('🎉 تم نسخ رابط الإحالة!')" style="color:var(--gold);font-size:0.72rem;font-weight:700;cursor:pointer;margin-top:10px;display:inline-block;">انسخ رابطك ←</div>
-      </div>
-
-      <!-- منطقة الخطر -->
-      <div style="margin-top:20px;border:1px solid rgba(248,113,113,0.25);border-radius:14px;padding:16px;background:rgba(248,113,113,0.04);">
-        <div style="font-size:0.65rem;font-weight:700;color:#F87171;margin-bottom:8px;letter-spacing:1px;">⚠️ منطقة الخطر</div>
-        <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;margin-bottom:12px;">حذف الحساب نهائي ولا يمكن التراجع عنه.</div>
-        <button onclick="openDeleteAccountModal()" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-family:'Cairo',sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(248,113,113,0.18)'" onmouseout="this.style.background='rgba(248,113,113,0.08)'">
-          🗑 حذف حسابي نهائياً
-        </button>
-      </div>
+      <div class="dmenu-item" onclick="openDeleteAccountModal()" style="color:#F87171;"><span class="dicon">🗑</span> حذف حسابي</div>
     </div>
     <div class="dash-main">
       <div class="dash-greeting">مرحباً بعودتك 👋</div>
