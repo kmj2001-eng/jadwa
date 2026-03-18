@@ -3370,36 +3370,72 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
   let doneCount = 0;
   const sectionTexts = new Array(10);
 
+  // عداد وهمي يُشغَّل كل 2 ثانية لإظهار الحركة أثناء الانتظار
+  let fakeBar = 3;
+  const fakeTimer = setInterval(() => {
+    fakeBar = Math.min(fakeBar + 2, doneCount * 10 + 5);
+    if (barEl && doneCount === 0) barEl.style.width = fakeBar + '%';
+  }, 2000);
+
+  // دالة تُنفّذ قسمًا مع إعادة محاولة واحدة عند الفشل
+  async function runSection(idx) {
+    const meta = sectionMeta[idx];
+    const secNum = idx + 1;
+    try {
+      return await streamSection(secNum);
+    } catch(e1) {
+      // إعادة محاولة واحدة بعد ثانيتين
+      await new Promise(r => setTimeout(r, 2000));
+      try { return await streamSection(secNum); } catch(e2) { return ''; }
+    }
+  }
+
   try {
-    await Promise.all(sectionMeta.map((meta, idx) =>
-      streamSection(idx + 1).then(text => {
-        sectionTexts[idx] = text;
+    // تشغيل دفعتين متوازيتين: 1-5 ثم 6-10
+    const batch1 = [0,1,2,3,4].map(idx => runSection(idx).then(text => {
+      sectionTexts[idx] = text;
+      if (text) {
         doneCount++;
-
-        // تحويل عنصر القائمة إلى أخضر فور اكتماله
-        // عند اكتمال أول قسم: حدّث رسالة الحالة
         if (doneCount === 1 && statusEl) statusEl.textContent = '✍️ جاري كتابة الأقسام...';
-
         const item = listItems[idx];
         if (item) {
           item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;direction:rtl;animation:fadeSlide 0.4s ease;';
           item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
         }
-
-        if (barEl)  barEl.style.width     = `${Math.max(doneCount * 10, 5)}%`;
-        if (textEl) textEl.textContent    = `${doneCount} / 10 أقسام مكتملة`;
+        if (barEl)  barEl.style.width  = `${Math.max(doneCount * 10, fakeBar)}%`;
+        if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
         if (statusEl && doneCount > 1) statusEl.textContent = `✅ ${doneCount} / 10 أقسام مكتملة`;
-      })
-    ));
+      }
+    }));
+
+    const batch2 = [5,6,7,8,9].map(idx => runSection(idx).then(text => {
+      sectionTexts[idx] = text;
+      const meta2 = sectionMeta[idx];
+      if (text) {
+        doneCount++;
+        const item = listItems[idx];
+        if (item) {
+          item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;direction:rtl;animation:fadeSlide 0.4s ease;';
+          item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta2.icon} ${meta2.label}</span>`;
+        }
+        if (barEl)  barEl.style.width  = `${Math.max(doneCount * 10, fakeBar)}%`;
+        if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
+        if (statusEl) statusEl.textContent = `✅ ${doneCount} / 10 أقسام مكتملة`;
+      }
+    }));
+
+    await Promise.all([...batch1, ...batch2]);
+    clearInterval(fakeTimer);
 
     hideStudyLoader(studyLoader);
-    const fullText = sectionTexts.join('\n\n');
+    const fullText = sectionTexts.filter(Boolean).join('\n\n');
     if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
     showResult(fullText);
 
   } catch(e) {
+    clearInterval(fakeTimer);
     hideStudyLoader(studyLoader);
-    const errMsg    = e.message || 'خطأ في الاتصال';
+    const errMsg = e.message || 'خطأ في الاتصال';
     const partialText = sectionTexts.filter(Boolean).join('\n\n');
     if (partialText && partialText.split(/\s+/).length > 200) {
       showToast('⚠️ الدراسة جزئية: ' + errMsg);
@@ -3934,71 +3970,87 @@ async function exportPDF(){
   try {
     const date = new Date().toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
 
-    // ── بناء wrapper بتنسيق أبيض للطباعة ──
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'font-family:Arial,Tahoma,"Segoe UI",sans-serif;direction:rtl;color:#111;background:#fff;padding:10px;';
+    // ── بناء صفحة HTML كاملة للطباعة (A4) ──
+    const A4_W = 794; // عرض A4 بـ 96dpi
+    const printHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Tahoma,"Segoe UI",sans-serif;direction:rtl;
+  color:#111;background:#fff;font-size:12px;line-height:1.8;
+  padding:20px 28px;width:${A4_W}px;}
+.pdf-header{text-align:center;border-bottom:3px solid #1D4ED8;
+  padding-bottom:14px;margin-bottom:20px;}
+.pdf-header h1{font-size:20px;font-weight:800;color:#1D4ED8;margin-bottom:4px;}
+.pdf-header .sub{font-size:10px;color:#666;}
+h2{color:#1D4ED8;font-size:14px;font-weight:800;margin:20px 0 8px;
+  border-right:4px solid #1D4ED8;padding-right:8px;
+  page-break-before:always;page-break-after:avoid;}
+h2:first-of-type{page-break-before:avoid;}
+h3{color:#1e3a8a;font-size:12px;font-weight:700;margin:12px 0 5px;page-break-after:avoid;}
+p{margin-bottom:7px;color:#222;}
+ul,ol{padding-right:18px;margin-bottom:8px;}
+li{margin-bottom:3px;color:#222;}
+strong,b{font-weight:700;color:#111;}
+table{width:100%;border-collapse:collapse;margin:10px 0;
+  font-size:10.5px;table-layout:fixed;page-break-inside:avoid;}
+th{background:#1D4ED8;color:#fff;padding:7px 8px;border:1px solid #2563EB;
+  text-align:right;font-weight:700;word-break:break-word;}
+td{padding:6px 8px;border:1px solid #d1d5db;text-align:right;
+  color:#1e293b;word-break:break-word;vertical-align:top;}
+tr:nth-child(even) td{background:#f0f7ff;}
+.table-wrap{overflow:visible;}
+.pdf-footer{margin-top:24px;border-top:1px solid #e2e8f0;
+  padding-top:8px;text-align:center;color:#999;font-size:9px;}
+</style></head>
+<body>
+<div class="pdf-header">
+  <h1>${title}</h1>
+  <div class="sub">أُعدَّت بواسطة منصة ذكاء الأعمال · ${date}</div>
+</div>
+CONTENT_PLACEHOLDER
+<div class="pdf-footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي · eses.store</div>
+</body></html>`;
 
-    // رأسية الدراسة
-    wrap.innerHTML = `
-      <div style="text-align:center;border-bottom:3px solid #1D4ED8;padding-bottom:16px;margin-bottom:24px;">
-        <div style="font-size:20px;font-weight:800;color:#1D4ED8;margin-bottom:4px;">${title}</div>
-        <div style="font-size:11px;color:#666;">أُعدَّت بواسطة منصة ذكاء الأعمال · ${date}</div>
-      </div>
-      <div id="pdf-content-inner"></div>
-      <div style="margin-top:30px;border-top:1px solid #e2e8f0;padding-top:10px;text-align:center;color:#999;font-size:10px;">
-        منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي · eses.store
-      </div>`;
-
-    // نسخ المحتوى وإزالة عناصر الـ paywall
+    // نسخ المحتوى وتنظيفه
     const clone = bodyEl.cloneNode(true);
     clone.querySelectorAll('.paywall-overlay,.paywall-blur,.section-blur').forEach(e => e.remove());
-    wrap.querySelector('#pdf-content-inner').replaceWith(clone);
+    // إزالة table-wrap divs (غير ضرورية في PDF)
+    clone.querySelectorAll('.table-wrap').forEach(tw => {
+      while (tw.firstChild) tw.parentNode.insertBefore(tw.firstChild, tw);
+      tw.remove();
+    });
+    const contentHtml = printHtml.replace('CONTENT_PLACEHOLDER', clone.innerHTML);
 
-    // تطبيق ألوان الطباعة على كل العناصر
-    wrap.querySelectorAll('*').forEach(el => {
-      el.style.background      = '';
-      el.style.backgroundColor = '';
-      el.style.boxShadow       = '';
-      el.style.textShadow      = '';
-      el.style.filter          = '';
-      el.style.backdropFilter  = '';
-      el.style.borderColor     = el.style.borderColor || '';
-      if (!el.style.color || el.style.color === 'white' || el.style.color === 'rgb(255,255,255)') {
-        el.style.color = '#111';
-      }
-    });
-    wrap.querySelectorAll('h2').forEach((h, i) => {
-      h.style.cssText = 'color:#1D4ED8;font-size:15px;font-weight:800;margin:22px 0 8px;border-right:4px solid #1D4ED8;padding-right:10px;page-break-after:avoid;' + (i > 0 ? 'page-break-before:always;' : '');
-    });
-    wrap.querySelectorAll('h3').forEach(h => {
-      h.style.cssText = 'color:#1e3a8a;font-size:13px;font-weight:700;margin:14px 0 6px;page-break-after:avoid;';
-    });
-    wrap.querySelectorAll('p,li').forEach(el => { el.style.color = '#222'; el.style.lineHeight = '1.8'; });
-    // إزالة table-wrap divs من نسخة الـ PDF واستبدالها بالجداول مباشرة
-    wrap.querySelectorAll('.table-wrap').forEach(tw => {
-      tw.replaceWith(...tw.childNodes);
-    });
-    wrap.querySelectorAll('table').forEach(t => {
-      t.style.cssText = 'width:100%;border-collapse:collapse;margin:10px 0;font-size:11px;';
-    });
-    wrap.querySelectorAll('th').forEach(th => {
-      th.setAttribute('style','background:#1D4ED8!important;color:#fff!important;padding:7px 10px;border:1px solid #93c5fd;text-align:right;font-weight:700;');
-    });
-    wrap.querySelectorAll('td').forEach(td => {
-      td.style.cssText = 'padding:6px 10px;border:1px solid #ddd;text-align:right;color:#222;';
-    });
-    wrap.querySelectorAll('strong,b').forEach(s => { s.style.color = '#111'; });
+    // ── تركيب iframe مخفي في الـ DOM ──
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = `position:fixed;top:0;left:-9999px;width:${A4_W}px;height:1px;border:0;visibility:hidden;`;
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(contentHtml);
+    iframe.contentDocument.close();
 
-    // ── توليد PDF وتنزيله مباشرة ──
+    // انتظار تحميل iframe
+    await new Promise(r => setTimeout(r, 600));
+
+    const iframeBody = iframe.contentDocument.body;
+
+    // ── توليد PDF من الـ iframe ──
     await html2pdf().set({
       margin:      [12, 12, 12, 12],
       filename:    title + '.pdf',
-      image:       { type: 'jpeg', quality: 0.88 },
-      html2canvas: { scale: 1.5, useCORS: true, letterRendering: true, logging: false, scrollY: 0 },
+      image:       { type: 'jpeg', quality: 0.90 },
+      html2canvas: {
+        scale: 1.5, useCORS: true, letterRendering: true,
+        logging: false, scrollY: 0,
+        windowWidth: A4_W, width: A4_W
+      },
       jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:   { mode: ['css', 'legacy'], before: 'h2', avoid: ['tr', 'h3'] }
-    }).from(wrap).save();
+      pagebreak:   { mode: ['css', 'legacy'], before: 'h2', avoid: ['tr','li','h3'] }
+    }).from(iframeBody).save();
 
+    document.body.removeChild(iframe);
     hidePDFLoader(loader);
     showToast('✅ تم تحميل الدراسة كـ PDF بنجاح!');
 
