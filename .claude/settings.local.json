@@ -2,37 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(gh repo list --limit 5)",
-      "Bash(git --version)",
-      "Bash(where node:*)",
-      "Bash(where python3:*)",
-      "Bash(where python:*)",
-      "Bash(where py:*)",
-      "Bash(powershell -Command \"Get-Command node,python,python3 -ErrorAction SilentlyContinue | Select-Object Name,Source\")",
-      "Bash(powershell -Command \":*)",
-      "Bash(awk 'NR>=4359 && NR<=4594' index.html)",
-      "Bash(grep -n \"caption\\\\|backtick\\\\|\\\\\\\\\\\\`\" \"C:/Users/dell/Desktop/jadwa-project/api/claude.js\")",
-      "Bash(python -c \":*)",
-      "Bash(python3 -c \":*)",
-      "Bash(git add:*)",
-      "Bash(git commit -m \"fix: prevent content duplication in continuation by removing overlap at junction:*)",
-      "Bash(git push:*)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" add api/claude.js)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" commit -m \"refactor: merge form data with section instructions for better analysis:*)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" push)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" add api/claude.js index.html)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" commit -m \"feat: send all form fields to claude.js for data-driven study generation:*)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" add index.html)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" commit -m \"fix: update cover page - remove confidential label, update platform branding:*)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" commit -m \"fix: update cover badge text to ''ذكاء الأعمال لدراسات الجدوى الاقتصادية'':*)",
-      "Bash(git -C \"C:\\\\Users\\\\dell\\\\Desktop\\\\jadwa-project\" commit -m \"fix: replace emoji with favicon in cover badge:*)",
-      "Bash(git commit:*)",
-      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text'''']\\)\")",
-      "Read(//tmp/**)",
-      "Bash(node -e \":*)",
-      "Bash(node scripts/patch-index.mjs)",
-      "Bash(powershell -Command \"node scripts/patch-index.mjs\")",
-      "Bash(powershell -Command \"python --version\")",
-      "Bash(powershell -Command \"python3 --version\")"
+      "Bash(git --version)"
     ]
   }
 }
