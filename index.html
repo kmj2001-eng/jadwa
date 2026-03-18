@@ -5366,22 +5366,28 @@ async function downloadWord(){
 }
 
 function startPaymentForStudy(){
-  // بناء بيانات المستخدم من localStorage
-  let customer = { firstName:'عميل', lastName:'جديد', email:'guest@eses.store', phone:'+966500000000' };
-  const stored = localStorage.getItem('user_data');
-  if (stored) {
-    try {
-      const u = JSON.parse(stored);
-      const parts = (u.name || 'عميل جديد').trim().split(/\s+/);
-      customer = {
-        firstName: parts[0]  || 'عميل',
-        lastName:  parts[1]  || 'جديد',
-        email:     u.email   || 'guest@eses.store',
-        phone:    (u.phone   || '+966500000000').replace(/\s/g, ''),
-      };
-    } catch(e) {}
+  console.log('[Jadwa] startPaymentForStudy called');
+  try {
+    // بناء بيانات المستخدم من localStorage
+    let customer = { firstName:'عميل', lastName:'جديد', email:'guest@eses.store', phone:'+966500000000' };
+    const stored = localStorage.getItem('user_data');
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        const parts = (u.name || 'عميل جديد').trim().split(/\s+/);
+        customer = {
+          firstName: parts[0]  || 'عميل',
+          lastName:  parts[1]  || 'جديد',
+          email:     u.email   || 'guest@eses.store',
+          phone:    (u.phone   || '+966500000000').replace(/\s/g, ''),
+        };
+      } catch(e) { console.warn('[Jadwa] parse user_data error:', e); }
+    }
+    startPayment(customer);
+  } catch(err) {
+    console.error('[Jadwa] startPaymentForStudy error:', err);
+    alert('خطأ: ' + err.message);
   }
-  startPayment(customer);
 }
   function showStudyLoader() {
   const overlay = document.createElement('div');
@@ -6382,13 +6388,18 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
 //  PAYMOB PAYMENT LOGIC — نُعرِّفها هنا لضمان الوصول من startPaymentForStudy
 // ═══════════════════════════════════════════════════════
 async function startPayment(customer) {
+  console.log('[Jadwa] startPayment called', customer);
+
   const modal   = document.getElementById('payment-modal');
   const iframe  = document.getElementById('payment-iframe');
   const loading = document.getElementById('payment-loading');
   const summary = document.getElementById('pm-summary');
   const errDiv  = document.getElementById('payment-error');
 
-  if (!modal) { console.error('payment-modal element not found'); return; }
+  // ── التحقق من وجود عناصر الـ DOM ──
+  if (!modal)   { console.error('[Jadwa] #payment-modal not found'); alert('خطأ: عنصر نافذة الدفع غير موجود'); return; }
+  if (!iframe)  { console.error('[Jadwa] #payment-iframe not found'); return; }
+  if (!loading) { console.error('[Jadwa] #payment-loading not found'); return; }
 
   // إظهار الـ modal + إعادة تهيئة الحالة
   modal.style.display   = 'flex';
@@ -6398,23 +6409,34 @@ async function startPayment(customer) {
   if (summary) summary.style.display = '';
   if (errDiv)  errDiv.style.display  = 'none';
 
-  // يجب أن يكون المستخدم مسجلاً
+  // ── التحقق من تسجيل الدخول ──
   const user = _getLoggedUser();
+  console.log('[Jadwa] logged user:', user);
   if (!user || !user.id) {
+    // إغلاق مودال الدفع وفتح مودال تسجيل الدخول
     modal.style.display = 'none';
-    showToast('💡 يرجى تسجيل الدخول أولاً لإتمام الشراء');
-    if (typeof openAuthModal === 'function') openAuthModal('login');
+    if (typeof showToast === 'function') showToast('💡 يرجى تسجيل الدخول أولاً لإتمام الشراء');
+    if (typeof openAuthModal === 'function') {
+      // بعد تسجيل الدخول سنعيد فتح مودال الدفع تلقائياً
+      window._pendingPaymentAfterLogin = true;
+      openAuthModal('login');
+    } else {
+      alert('يرجى تسجيل الدخول أولاً ثم المحاولة مجدداً');
+    }
     return;
   }
 
   try {
+    console.log('[Jadwa] calling /api/paymob ...');
     const res = await fetch('/api/paymob', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
       body:    JSON.stringify({ customer }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'خطأ في بوابة الدفع');
+    let data = {};
+    try { data = await res.json(); } catch(_) {}
+    console.log('[Jadwa] /api/paymob response:', res.status, data);
+    if (!res.ok) throw new Error(data.error || `خطأ ${res.status} في بوابة الدفع`);
 
     if (summary) summary.style.display = 'none';
     loading.style.display = 'none';
@@ -6426,9 +6448,10 @@ async function startPayment(customer) {
     loading.style.display = 'none';
     if (summary) summary.style.display = 'none';
     const errText = document.getElementById('pm-error-text');
-    if (errText) errText.textContent = err.message || 'حدث خطأ أثناء تحضير الدفع';
-    if (errDiv)  errDiv.style.display  = 'block';
-    console.error('startPayment error:', err.message);
+    const msg = err.message || 'حدث خطأ أثناء تحضير الدفع';
+    if (errText) errText.textContent = msg;
+    if (errDiv)  errDiv.style.display = 'block';
+    console.error('[Jadwa] startPayment error:', msg);
   }
 }
 
@@ -6701,6 +6724,13 @@ function setAuthUI(user) {
   if (window._pendingReadyPdfAfterLogin) {
     window._pendingReadyPdfAfterLogin = false;
     setTimeout(()=>{ exportReadyStudyPDF(); }, 600);
+  }
+  // ── إعادة فتح مودال الدفع بعد تسجيل الدخول ──
+  if (window._pendingPaymentAfterLogin) {
+    window._pendingPaymentAfterLogin = false;
+    setTimeout(()=>{
+      if (typeof startPaymentForStudy === 'function') startPaymentForStudy();
+    }, 600);
   }
 }
 
