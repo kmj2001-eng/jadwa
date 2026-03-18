@@ -286,14 +286,9 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const error = await response.json();
       const rawMsg = error?.error?.message || '';
-      // ترجمة رسائل Anthropic التقنية إلى رسائل مهذبة للمستخدم
-      let friendlyMsg;
-      if (/credit|billing|balance|quota|rate.?limit|too many|overloaded|capacity/i.test(rawMsg)) {
-        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة الجدوى في الوقت الحالي نرجو المحاولة بعد 24 ساعة';
-      } else {
-        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة الجدوى في الوقت الحالي نرجو المحاولة بعد 24 ساعة';
-      }
-      sendEvent({ error: friendlyMsg });
+      const httpStatus = response.status;
+      console.error(`[Anthropic Error] HTTP ${httpStatus}: ${rawMsg}`);
+      sendEvent({ error: 'نأسف، لا تستطيع توليد دراسة الجدوى في الوقت الحالي نرجو المحاولة بعد 24 ساعة' });
       return res.end();
     }
 
