@@ -1243,6 +1243,12 @@ input[type=range]::-webkit-slider-thumb {
 .output-body p { margin-bottom:10px; }
 .output-body ul { padding-right:20px; margin-bottom:10px; }
 .output-body li { margin-bottom:6px; }
+.output-body hr { border:none; border-top:1.5px solid var(--border); margin:18px 0; clear:both; }
+/* كل study-section يأخذ عرض كامل في عمود واحد */
+.output-body .study-section {
+  display:block; width:100%; clear:both;
+  margin-bottom:8px;
+}
 .output-body .table-wrap {
   display:block; width:100%; clear:both;
   overflow-x:auto; margin:18px 0; border-radius:10px;
@@ -3689,19 +3695,27 @@ function mdToHtml(md){
       continue;
     }
 
-    // ── Markdown table ──
-    if(line.match(/^\|/) && lines[i+1] && lines[i+1].match(/^\|[-| :]+\|/)){
-      var hcells = line.trim().replace(/^\||\|$/g,'').split('|');
+    // ── خط أفقي --- أو *** أو ___ ──
+    if(line.match(/^([-*_])\1{2,}\s*$/)){ out.push('<hr>'); i++; continue; }
+
+    // ── Markdown table (مع أو بدون | في البداية والنهاية) ──
+    var isTableLine = line.match(/^\|/) || (line.includes('|') && !line.match(/^[#\-*0-9]/));
+    var nextIsSep   = lines[i+1] && lines[i+1].match(/^\|?\s*[-:]+[-| :]*\s*\|?\s*$/);
+    if(isTableLine && nextIsSep){
+      // استخراج الخلايا مع تنظيف | الزائدة
+      var hcells = line.trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim();}).filter(function(c){return c!=='';});
       var colCount = hcells.length;
-      var thead = '<thead><tr>'+hcells.map(function(c){return '<th>'+c.trim()+'</th>';}).join('')+'</tr></thead>';
-      i += 2; // تخطّى سطر الفصل
+      if(colCount === 0){ out.push('<p>'+line+'</p>'); i++; continue; }
+      var thead = '<thead><tr>'+hcells.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead>';
+      i += 2; // تخطّى صف الرأس + صف الفاصل
       var tbody = [];
-      while(i < lines.length && lines[i].match(/^\|/)){
-        var rcells = lines[i].trim().replace(/^\||\|$/g,'').split('|');
-        // إصلاح: اقتطع الأعمدة الزائدة وأضف فارغة إن نقصت
+      while(i < lines.length){
+        var tl = lines[i];
+        if(!tl.match(/^\|/) && !tl.includes('|')) break;
+        var rcells = tl.trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim();});
         while(rcells.length > colCount) rcells.pop();
         while(rcells.length < colCount) rcells.push('');
-        tbody.push('<tr>'+rcells.map(function(c){return '<td>'+c.trim()+'</td>';}).join('')+'</tr>');
+        tbody.push('<tr>'+rcells.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>');
         i++;
       }
       out.push('<table>'+thead+(tbody.length?'<tbody>'+tbody.join('')+'</tbody>':'')+'</table>');
@@ -4174,6 +4188,7 @@ strong,b{ font-weight:800; color:#0f172a; }
 em,i{ font-style:italic; color:#334155; }
 
 /* ════ جداول ════ */
+hr{ border:none; border-top:1.5px solid #CBD5E1; margin:16px 0; }
 table{
   width:100%; border-collapse:collapse;
   margin:14px 0 18px;
@@ -4189,10 +4204,11 @@ th{
   -webkit-print-color-adjust:exact; print-color-adjust:exact;
 }
 td{
-  padding:7.5px 11px;
+  padding:7px 10px;
   border:1px solid #CBD5E1;
   color:#1e293b; text-align:right;
-  font-size:9.5pt; vertical-align:top;
+  font-size:9pt; vertical-align:top;
+  min-width:55px; word-break:break-word;
 }
 tr:nth-child(even) td{
   background:#F0F7FF!important;
