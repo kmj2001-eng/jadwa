@@ -345,6 +345,18 @@ export default async function handler(req, res) {
       sr1 = sr2;
     }
 
+    // ── إغلاق أي وسوم HTML مفتوحة بعد الاقتطاع ──
+    const openTags = (fullText.match(/<(table|tbody|thead|tr|td|th)\b/gi) || []).length;
+    const closeTags = (fullText.match(/<\/(table|tbody|thead|tr|td|th)>/gi) || []).length;
+    if (openTags > closeTags) {
+      // أغلق الوسوم المفتوحة بالترتيب
+      const needed = openTags - closeTags;
+      const closeSeq = ['</td>','</tr>','</tbody>','</table>'];
+      let closing = '';
+      for (let i = 0; i < Math.min(needed, closeSeq.length); i++) closing += closeSeq[i];
+      fullText += closing;
+    }
+
     sendEvent({ done: true, text: fullText });
     res.end();
 

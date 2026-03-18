@@ -1250,22 +1250,20 @@ input[type=range]::-webkit-slider-thumb {
 }
 .output-body table {
   display:table; width:100%; max-width:100%;
-  table-layout:fixed; border-collapse:collapse;
+  table-layout:auto; border-collapse:collapse;
   font-size:0.78rem; background:#ffffff;
 }
 .output-body th {
   background:#1D4ED8 !important; color:#ffffff !important;
   padding:10px 12px; text-align:right;
   border:1px solid #2563EB; font-weight:700; font-size:0.78rem;
-  word-break:break-word; overflow-wrap:anywhere;
-  white-space:normal;
+  min-width:80px; white-space:normal;
 }
 .output-body td {
   padding:9px 12px; border:1px solid #e2e8f0;
   color:#1e293b !important; background:#ffffff !important;
-  font-size:0.78rem; word-break:break-word;
-  overflow-wrap:anywhere; white-space:normal;
-  vertical-align:top;
+  font-size:0.78rem; min-width:70px;
+  white-space:normal; vertical-align:top;
 }
 .output-body tr:nth-child(even) td { background:#f0f7ff !important; color:#1e293b !important; }
 .output-body tr:hover td { background:#dbeafe; transition:background 0.15s; }
@@ -3486,10 +3484,30 @@ function showResult(text){
     t.parentNode.insertBefore(wrap, t);
     wrap.appendChild(t);
 
-    // عنصر clear بعد كل جدول لمنع تداخل العناصر اللاحقة
+    // عنصر clear بعد كل جدول
     const clr = document.createElement('div');
     clr.style.cssText = 'clear:both;display:block;width:100%;';
     wrap.after(clr);
+  });
+
+  // ── منظّف الخلايا: أخرج أي محتوى بلوك تسرّب داخل td/th ──
+  outputBody.querySelectorAll('td, th').forEach(cell => {
+    // عناصر لا يجوز أن تكون داخل خلية جدول
+    const escaped = cell.querySelectorAll('h1,h2,h3,h4,div,section,article,header,footer');
+    escaped.forEach(el => {
+      const tbl = cell.closest('table');
+      if (tbl && tbl.parentNode) {
+        // أدرجها مباشرة بعد الجدول
+        tbl.parentNode.insertBefore(el, tbl.nextSibling);
+      } else {
+        el.remove();
+      }
+    });
+  });
+
+  // ── تنظيف صفوف الجداول الناقصة: احذف <tr> لا يحتوي <td> أو <th> ──
+  outputBody.querySelectorAll('tr').forEach(row => {
+    if (!row.querySelector('td, th')) row.remove();
   });
 
   document.getElementById('typing-state').style.display='none';
