@@ -1154,18 +1154,15 @@ input[type=range]::-webkit-slider-thumb {
 
 /* زر PDF الاحترافي */
 .btn-pdf {
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:center; gap:8px;
   background:linear-gradient(135deg,#1D4ED8,#2563EB);
   border:1px solid rgba(99,155,255,0.4);
-  border-radius:12px; padding:10px 18px;
+  border-radius:12px; padding:10px 16px;
   cursor:pointer; color:white; transition:all 0.2s;
+  font-size:0.78rem; font-weight:700; font-family:'Cairo',sans-serif;
   box-shadow:0 4px 16px rgba(37,99,235,0.35);
 }
 .btn-pdf:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(37,99,235,0.5); }
-.btn-pdf-icon { font-size:1.4rem; line-height:1; }
-.btn-pdf-text { display:flex; flex-direction:column; text-align:right; }
-.btn-pdf-label { font-size:0.82rem; font-weight:800; letter-spacing:0.3px; }
-.btn-pdf-sub { font-size:0.68rem; color:rgba(255,255,255,0.65); margin-top:1px; }
 
 /* زر تحميل Word */
 .btn-word {
@@ -2853,11 +2850,8 @@ footer {
               <h3 id="output-title">دراسة الجدوى</h3>
               <div class="output-actions">
                 <button class="btn-pdf" onclick="downloadPDF()">
-                  <span class="btn-pdf-icon">📄</span>
-                  <span class="btn-pdf-text">
-                    <span class="btn-pdf-label">تحميل PDF</span>
-                    <span class="btn-pdf-sub">تصميم احترافي</span>
-                  </span>
+                  <i class="fa-solid fa-file-pdf"></i>
+                  <span>تحميل PDF</span>
                 </button>
                 <button class="btn-new" onclick="goStep(1)">
                   <span>🔄</span>
@@ -4798,7 +4792,7 @@ function showResult(text){
   let current = null;
 
   Array.from(tempDiv.childNodes).forEach(node => {
-    if(node.nodeType === 1 && node.tagName === 'H2'){
+    if(node.nodeType === 1 && (node.tagName === 'H1' || node.tagName === 'H2')){
       current = document.createElement('div');
       current.className = 'study-section';
       current.appendChild(node.cloneNode(true));
@@ -4806,7 +4800,7 @@ function showResult(text){
     } else if(current){
       current.appendChild(node.cloneNode(true));
     } else {
-      // محتوى قبل أول H2
+      // محتوى قبل أول عنوان
       current = document.createElement('div');
       current.className = 'study-section';
       current.appendChild(node.cloneNode(true));
@@ -4820,7 +4814,7 @@ function showResult(text){
   // ── بناء فهرس المحتويات ──
   const headings = [];
   sections.forEach(sec => {
-    const h2 = sec.querySelector('h2');
+    const h2 = sec.querySelector('h1, h2');
     if (h2) headings.push(h2.textContent.trim());
   });
 
