@@ -1240,6 +1240,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .output-body h2:first-child { margin-top:0; }
 .output-body h3 { font-size:0.9rem; color:var(--gold2); margin:18px 0 8px; font-weight:700; }
+.output-body h4 { font-size:0.82rem; color:var(--text2); margin:12px 0 6px; font-weight:600; }
 .output-body p { margin-bottom:10px; }
 .output-body ul { padding-right:20px; margin-bottom:10px; }
 .output-body li { margin-bottom:6px; }
@@ -3408,57 +3409,63 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
   try {
     await Promise.all(sectionPromises);
-    const fullText = sectionTexts.filter(t => t.trim()).join('\n\n');
     hideStudyLoader(studyLoader);
-    if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
-    showResult(fullText);
+    const hasContent = sectionTexts.some(t => t.trim());
+    if (!hasContent) throw new Error('لم يتم استلام محتوى');
+    showResult(sectionTexts);          // مصفوفة مرتبة 0→9
   } catch(e) {
     hideStudyLoader(studyLoader);
-    const partial = sectionTexts.filter(t => t.trim()).join('\n\n');
-    if (partial && partial.split(/\s+/).length > 200) {
+    const hasPartial = sectionTexts.some(t => t.trim());
+    const wordCount  = sectionTexts.join(' ').trim().split(/\s+/).length;
+    if (hasPartial && wordCount > 200) {
       showToast('⚠️ الدراسة جزئية');
-      showResult(partial);
+      showResult(sectionTexts);        // نفس المصفوفة — ما توفر يُعرض بالترتيب
     } else {
       goStep(3);
       showToast('❌ خطأ في التوليد: ' + (e.message || 'خطأ في الاتصال'), 8000);
     }
   }
 }
-function showResult(text){
-  window._fullStudyText = text;
-  window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
-
-  const html = mdToHtml(text);
-
-  // تقسيم المحتوى إلى أقسام بناءً على H2
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
-
-  const sections = [];
-  let current = null;
-
-  Array.from(tempDiv.childNodes).forEach(node => {
-    if(node.nodeType === 1 && node.tagName === 'H2'){
-      current = document.createElement('div');
-      current.className = 'study-section';
-      current.appendChild(node.cloneNode(true));
-      sections.push(current);
-    } else if(current){
-      current.appendChild(node.cloneNode(true));
-    } else {
-      // محتوى قبل أول H2
-      current = document.createElement('div');
-      current.className = 'study-section';
-      current.appendChild(node.cloneNode(true));
-      sections.push(current);
+// ── إزالة أي تكرار داخل نص قسم واحد ─────────────────────────
+// إذا كتب Claude أكثر من قسم رئيسي (## N.) داخل نص القسم،
+// نبقي فقط المحتوى حتى بداية القسم الثاني (H2 ثانٍ)
+function removeDuplicateSections(text) {
+  if (!text) return text;
+  const lines = text.split('\n');
+  const result = [];
+  let h2Count = 0;
+  for (const line of lines) {
+    if (/^##\s+\d+[\.\s]/.test(line)) {
+      h2Count++;
+      if (h2Count > 1) break;  // توقف عند بداية قسم رئيسي ثانٍ
     }
-  });
+    result.push(line);
+  }
+  return result.join('\n');
+}
+
+function showResult(input){
+  // يقبل مصفوفة أقسام (sectionTexts) أو نص مدمج
+  const textsArr = Array.isArray(input) ? input : [input];
+  window._fullStudyText = textsArr.join('\n\n');
+  window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
 
   const outputBody = document.getElementById('output-body');
   outputBody.innerHTML = '';
 
-  // عرض جميع الأقسام بدون تقييد
-  sections.forEach(sec => {
+  // ── عرض كل قسم بالترتيب (index 0→9) بشكل مستقل ──────────────
+  // هذا يضمن الترتيب الصحيح ويمنع التكرار بين الأقسام
+  textsArr.forEach((secText, idx) => {
+    if (!secText || !secText.trim()) return;
+
+    // استخرج أول ## heading من النص لمنع التكرار داخل القسم
+    // خذ المحتوى حتى أول ## heading جديد غير المتوقع
+    const cleaned = removeDuplicateSections(secText);
+
+    const html = mdToHtml(cleaned);
+    const sec = document.createElement('div');
+    sec.className = 'study-section';
+    sec.innerHTML = html;
     outputBody.appendChild(sec);
   });
 
@@ -3722,8 +3729,8 @@ function mdToHtml(md){
       continue;
     }
 
-    var hm = line.match(/^(#{1,4}) (.+)$/);
-    if(hm){ var lvl=Math.min(hm[1].length+1,4); out.push('<h'+lvl+'>'+hm[2]+'</h'+lvl+'>'); i++; continue; }
+    var hm = line.match(/^(#{1,6}) (.+)$/);
+    if(hm){ var lvl=Math.min(hm[1].length,4); out.push('<h'+lvl+'>'+hm[2]+'</h'+lvl+'>'); i++; continue; }
     if(line.match(/^[-*] /)){
       var ulItems=[];
       while(i<lines.length && lines[i].match(/^[-*] /)){
