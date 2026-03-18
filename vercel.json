@@ -9,7 +9,8 @@
     "api/auth.js":          { "maxDuration": 15 },
     "api/ready-studies.js": { "maxDuration": 10 },
     "api/studies.js":         { "maxDuration": 15 },
-    "api/delete-account.js":  { "maxDuration": 15 }
+    "api/delete-account.js":  { "maxDuration": 15 },
+    "api/points.js":          { "maxDuration": 15 }
   },
   "routes": [
     { "src": "/api/ready-studies", "dest": "/api/ready-studies.js" },
@@ -21,6 +22,7 @@
     { "src": "/api/setup-db",      "dest": "/api/setup-db.js" },
     { "src": "/api/paymob",        "dest": "/api/paymob.js" },
     { "src": "/api/claude",          "dest": "/api/claude.js" },
-    { "src": "/api/delete-account",  "dest": "/api/delete-account.js" }
+    { "src": "/api/delete-account",  "dest": "/api/delete-account.js" },
+    { "src": "/api/points",          "dest": "/api/points.js" }
   ]
 }

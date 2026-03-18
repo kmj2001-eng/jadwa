@@ -66,7 +66,7 @@ export async function setupTables() {
   await sql`CREATE TABLE IF NOT EXISTS user_points (
     id            SERIAL PRIMARY KEY,
     user_id       INTEGER REFERENCES users(id),
-    order_id      INTEGER REFERENCES orders(id),
+    order_id      INTEGER UNIQUE REFERENCES orders(id),
     total_points  INTEGER DEFAULT 5,
     used_points   INTEGER DEFAULT 0,
     expires_at    TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '6 months'),
@@ -116,6 +116,11 @@ export async function migrateUsersTable() {
       )
     `;
   } catch (_) { /* جدول studies قد لا يوجد */ }
+
+  // إضافة unique constraint على user_points.order_id إن لم يكن موجوداً
+  try {
+    await sql`ALTER TABLE user_points ADD CONSTRAINT user_points_order_id_unique UNIQUE (order_id)`;
+  } catch (_) { /* قد يكون موجوداً بالفعل */ }
 
   return { success: true, message: 'تم تحديث قاعدة البيانات بنجاح' };
 }

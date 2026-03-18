@@ -1212,6 +1212,168 @@ input[type=range]::-webkit-slider-thumb {
 .paywall-btn:hover { transform:translateY(-3px); box-shadow:0 14px 36px var(--gold-glow); }
 .paywall-note { font-size:0.72rem; color:var(--text3); margin-top:14px; line-height:1.8; }
 
+/* ── بطاقة Paywall النقاط (داخل viewer) ── */
+.study-paywall-card {
+  background: linear-gradient(135deg, rgba(59,130,246,0.07) 0%, rgba(99,102,241,0.05) 100%);
+  border: 1.5px solid rgba(59,130,246,0.28);
+  border-radius: 20px;
+  padding: 40px 28px 36px;
+  text-align: center;
+  margin: 36px 0 20px;
+  position: relative;
+}
+.study-paywall-card::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 20px;
+  background: linear-gradient(180deg, transparent 0%, rgba(11,17,32,0.6) 100%);
+  pointer-events: none;
+}
+.paywall-lock-icon { font-size: 2.8rem; margin-bottom: 14px; line-height: 1; }
+.paywall-title {
+  font-family:'Cairo',sans-serif; font-size: 1.3rem;
+  color: var(--gold); margin-bottom: 10px; font-weight: 700;
+}
+.paywall-subtitle {
+  color: var(--text2); font-size: 0.88rem;
+  line-height: 1.8; margin-bottom: 22px; max-width: 400px; margin-inline: auto;
+}
+.paywall-features {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; margin-bottom: 26px;
+}
+.paywall-features span {
+  background: rgba(59,130,246,0.09); border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 8px; padding: 6px 14px;
+  font-size: 0.78rem; color: var(--text);
+}
+.paywall-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.paywall-btn-primary {
+  background: linear-gradient(135deg,#3B82F6,#1D4ED8);
+  color: #fff; border: none; padding: 14px 32px;
+  border-radius: 12px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family:'Cairo',sans-serif;
+  transition: all 0.25s; box-shadow: 0 8px 24px rgba(59,130,246,0.3);
+}
+.paywall-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(59,130,246,0.45); }
+.paywall-btn-secondary {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border); padding: 14px 28px;
+  border-radius: 12px; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; font-family:'Cairo',sans-serif; transition: all 0.2s;
+}
+.paywall-btn-secondary:hover { border-color: rgba(59,130,246,0.5); color: var(--text); }
+/* شريط التحذير أعلى viewer للمستخدم بلا نقاط */
+.points-warning-bar {
+  background: rgba(251,191,36,0.08); border-bottom: 1px solid rgba(251,191,36,0.2);
+  padding: 9px 20px; text-align: center;
+  font-size: 0.82rem; color: #FBBF24; direction: rtl;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.points-warning-bar button {
+  background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4);
+  color: #FBBF24; padding: 5px 16px; border-radius: 8px;
+  cursor: pointer; font-size: 0.78rem; font-family:'Cairo',sans-serif;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════
+   صفحة نجاح الدفع — page-payment-success
+══════════════════════════════════════ */
+.pay-success-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 60px 20px; direction: rtl;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(52,211,153,0.07) 0%, transparent 70%);
+}
+.pay-success-card {
+  max-width: 560px; width: 100%; text-align: center;
+}
+/* دائرة الاختيار المتحركة */
+.pay-check-circle {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: rgba(52,211,153,0.12); border: 2.5px solid #34D399;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 32px; position: relative;
+  animation: checkPop 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes checkPop {
+  0%   { transform:scale(0); opacity:0; }
+  60%  { transform:scale(1.12); }
+  100% { transform:scale(1); opacity:1; }
+}
+.pay-check-svg { width:48px; height:48px; stroke:#34D399; stroke-width:3; fill:none;
+  stroke-dasharray:60; stroke-dashoffset:60; animation:drawCheck 0.5s 0.3s ease forwards; }
+@keyframes drawCheck { to { stroke-dashoffset:0; } }
+.pay-success-title {
+  font-family:'Cairo',sans-serif; font-size:2rem; font-weight:800;
+  color:#fff; margin-bottom:10px; line-height:1.3;
+}
+.pay-success-sub {
+  color:#94A3B8; font-size:1rem; margin-bottom:32px; line-height:1.8;
+}
+/* بطاقة النقاط */
+.pay-points-card {
+  background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.07));
+  border: 1.5px solid rgba(59,130,246,0.25);
+  border-radius: 18px; padding: 28px 24px; margin-bottom: 28px;
+}
+.pay-points-number {
+  font-family:'Cairo',sans-serif; font-size: 3.5rem; font-weight: 900;
+  color: #3B82F6; line-height: 1; margin-bottom: 6px;
+  animation: countUp 0.8s 0.5s ease both;
+}
+@keyframes countUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+.pay-points-label { color:#94A3B8; font-size:0.88rem; margin-bottom:20px; }
+.pay-perks {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;
+}
+.pay-perk {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; color: var(--text2);
+}
+.pay-perk-icon { font-size: 1.1rem; flex-shrink: 0; }
+/* أزرار الإجراء */
+.pay-actions { display: flex; flex-direction: column; gap: 12px; }
+.pay-btn-primary {
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: #fff; border: none; padding: 18px 32px;
+  border-radius: 14px; font-size: 1.05rem; font-weight: 700;
+  cursor: pointer; font-family:'Cairo',sans-serif;
+  transition: all 0.25s; box-shadow: 0 10px 32px rgba(59,130,246,0.35);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.pay-btn-primary:hover { transform:translateY(-3px); box-shadow: 0 16px 40px rgba(59,130,246,0.5); }
+.pay-btn-secondary {
+  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.22);
+  color: #60A5FA; padding: 16px 32px; border-radius: 14px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  font-family:'Cairo',sans-serif; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.pay-btn-secondary:hover { background: rgba(59,130,246,0.14); }
+/* شريط الأمان */
+.pay-security-bar {
+  margin-top: 24px; display: flex; align-items: center;
+  justify-content: center; gap: 16px; flex-wrap: wrap;
+  color: #475569; font-size: 0.72rem;
+}
+.pay-security-bar span { display:flex; align-items:center; gap:4px; }
+/* صفحة فشل الدفع */
+.pay-fail-circle {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: rgba(248,113,113,0.1); border: 2.5px solid #F87171;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 32px;
+  font-size: 3rem; line-height: 1;
+  animation: checkPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@media(max-width:480px) {
+  .pay-success-title { font-size:1.6rem; }
+  .pay-perks { grid-template-columns:1fr; }
+}
+
 /* زر دراسة جديدة */
 .btn-new {
   display:flex; align-items:center; gap:7px;
@@ -4743,6 +4905,25 @@ async function generateStudy(){
     { id:10, icon:'🏆', label:'الخلاصة والتوصيات النهائية'         },
   ];
 
+  // ── فحص النقاط قبل التوليد ─────────────────────────────────────
+  window._hasPoints = false;
+  const _authUser = _getLoggedUser();
+  if (_authUser && _authUser.id) {
+    try {
+      const ptsRes = await fetch('/api/points', {
+        headers: { 'x-user-id': String(_authUser.id) }
+      });
+      if (ptsRes.ok) {
+        const pts = await ptsRes.json();
+        window._userPointsBalance = pts;
+        window._hasPoints = (parseInt(pts.remaining) >= 1);
+      }
+    } catch(_) {}
+  }
+  // المستخدمون غير المسجلين أو بلا نقاط → معاينة مجانية (قسمان فقط)
+  const _sectionsToGenerate = window._hasPoints ? sectionMeta : sectionMeta.slice(0, 2);
+  const _totalSec = _sectionsToGenerate.length;
+
   // ── streaming قسم واحد مع callback للكلمات الفورية ──────────
   async function streamSection(secNum, onChunk) {
     const res = await fetch('/api/claude', {
@@ -4801,21 +4982,28 @@ async function generateStudy(){
   });
 
   // ── التشغيل المتوازي — كل الأقسام تبدأ في نفس الوقت ──────
-  const sectionTexts = new Array(10).fill('');
+  const sectionTexts = new Array(_totalSec).fill('');
   let doneCount = 0;
 
   // تشغيل كل الأقسام نشطة فوراً
   if (iconEl)    iconEl.textContent    = '⚡';
-  if (sectionEl) sectionEl.textContent = 'جميع الأقسام تُكتب الآن';
+  if (sectionEl) sectionEl.textContent = window._hasPoints ? 'جميع الأقسام تُكتب الآن' : 'توليد معاينة — قسمان مجانيان';
   if (statusEl)  statusEl.textContent  = '✍️ جاري التوليد المتوازي...';
 
+  const LOCKED_STYLE = 'display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:6px 12px;font-size:0.75rem;color:#475569;direction:rtl;';
   listItems.forEach((item, i) => {
     const m = sectionMeta[i];
-    item.style.cssText = ACTIVE_STYLE;
-    item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
+    if (!window._hasPoints && i >= 2) {
+      // أقسام محجوبة
+      item.style.cssText = LOCKED_STYLE;
+      item.innerHTML = `<span style="font-size:0.8rem;">🔒</span><span style="opacity:0.4;">${m.icon} ${m.label}</span>`;
+    } else {
+      item.style.cssText = ACTIVE_STYLE;
+      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
+    }
   });
 
-  const sectionPromises = sectionMeta.map((meta, i) => {
+  const sectionPromises = _sectionsToGenerate.map((meta, i) => {
     const s = i + 1;
     const item = listItems[i];
 
@@ -4841,10 +5029,10 @@ async function generateStudy(){
         doneCount++;
         item.style.cssText = DONE_STYLE;
         item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
-        if (barEl)  barEl.style.width  = `${doneCount * 10}%`;
-        if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
-        if (statusEl) statusEl.textContent = doneCount < 10
-          ? `✍️ جاري إنهاء ${10 - doneCount} أقسام متبقية...`
+        if (barEl)  barEl.style.width  = `${Math.round(doneCount * 100 / _totalSec)}%`;
+        if (textEl) textEl.textContent = `${doneCount} / ${_totalSec} أقسام مكتملة`;
+        if (statusEl) statusEl.textContent = doneCount < _totalSec
+          ? `✍️ جاري إنهاء ${_totalSec - doneCount} أقسام متبقية...`
           : '✅ اكتملت جميع الأقسام!';
       });
   });
@@ -4858,6 +5046,20 @@ async function generateStudy(){
       throw new Error(apiErr);
     }
     showResult(fullText);
+    // ── استهلاك نقطة بعد التوليد الكامل الناجح ──
+    if (window._hasPoints && _authUser && _authUser.id) {
+      fetch('/api/points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': String(_authUser.id) },
+        body: JSON.stringify({ action: 'consume' })
+      }).then(r => {
+        if (r.ok) r.json().then(d => {
+          if (typeof d.remaining === 'number') {
+            showToast(`✅ تم استخدام نقطة — متبقٍ: ${d.remaining} نقاط`);
+          }
+        });
+      }).catch(() => {});
+    }
   } catch(e) {
     hideStudyLoader(studyLoader);
     const partial = sectionTexts.filter(t => t.trim()).join('\n\n');
@@ -4878,7 +5080,7 @@ async function generateStudy(){
 }
 function showResult(text){
   window._fullStudyText = text;
-  window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
+  window._studyUnlocked = (window._hasPoints === true); // فعّال فقط إن كان لديه نقاط
   // ── استخراج IRR من نص الدراسة ──
   try {
     const irrMatch = text.match(/IRR[^%\d]*?([\d.]+)\s*%/i)
@@ -4955,11 +5157,67 @@ function showResult(text){
     outputBody.appendChild(tocEl);
   }
 
-  // عرض جميع الأقسام بدون تقييد
+  // ── عرض الأقسام — كاملة إن كان لديه نقاط، وإلا قسمان + Paywall ──
+  const _freeSections = 2;
+  const _loggedUser = _getLoggedUser();
+
+  // شريط تحذير في أعلى الـ viewer إن لم تكن نقاط
+  const existingWarnBar = document.getElementById('points-warning-bar');
+  if (existingWarnBar) existingWarnBar.remove();
+  if (!window._hasPoints) {
+    const warnBar = document.createElement('div');
+    warnBar.id = 'points-warning-bar';
+    warnBar.className = 'points-warning-bar';
+    warnBar.innerHTML = _loggedUser
+      ? `⚠️ نقاطك انتهت — هذه معاينة مجانية (قسمان من 10)
+         <button onclick="closeStudyViewer();showPage('pricing')">اشترِ باقة</button>`
+      : `⚠️ معاينة مجانية — سجّل دخولك للحصول على الدراسة كاملة
+         <button onclick="closeStudyViewer();openAuthModal('register')">إنشاء حساب مجاني</button>`;
+    const overlayTopbar = document.querySelector('#study-viewer-overlay .study-viewer-topbar');
+    if (overlayTopbar && overlayTopbar.parentNode) {
+      overlayTopbar.parentNode.insertBefore(warnBar, outputBody);
+    } else {
+      outputBody.parentNode ? outputBody.parentNode.insertBefore(warnBar, outputBody) : outputBody.prepend(warnBar);
+    }
+  }
+
   sections.forEach((sec, idx) => {
     sec.setAttribute('data-section-idx', idx);
+    if (!window._hasPoints && idx >= _freeSections) return; // تخطّ الأقسام المدفوعة
     outputBody.appendChild(sec);
   });
+
+  // ── بطاقة Paywall للأقسام المحجوبة ──
+  if (!window._hasPoints) {
+    const lockedCount = Math.max(0, sections.length + (window._hasPoints ? 0 : 8) - _freeSections);
+    const paywallCard = document.createElement('div');
+    paywallCard.id = 'study-paywall-card';
+    paywallCard.className = 'study-paywall-card';
+    paywallCard.innerHTML = `
+      <div class="paywall-lock-icon">🔒</div>
+      <div class="paywall-title">${_loggedUser ? '8 أقسام محجوبة' : 'سجّل دخولك لتوليد الدراسة كاملة'}</div>
+      <div class="paywall-subtitle">
+        ${_loggedUser
+          ? 'نقاطك انتهت — اشترِ باقة واحصل على 5 دراسات جدوى كاملة صالحة 6 أشهر'
+          : 'أنشئ حساباً مجانياً أو سجّل دخولك واشترِ باقة للحصول على 5 دراسات جدوى كاملة'
+        }
+      </div>
+      <div class="paywall-features">
+        <span>✦ 10 أقسام متكاملة</span>
+        <span>✦ تحليل مالي شامل</span>
+        <span>✦ تصدير PDF و Word</span>
+        <span>✦ حفظ في الحساب</span>
+      </div>
+      <div class="paywall-actions">
+        ${_loggedUser
+          ? `<button class="paywall-btn-primary" onclick="closeStudyViewer();showPage('pricing')">اشترِ الآن — 49.99 ر.س</button>`
+          : `<button class="paywall-btn-primary" onclick="closeStudyViewer();openAuthModal('register')">إنشاء حساب مجاني</button>
+             <button class="paywall-btn-secondary" onclick="closeStudyViewer();openAuthModal('login')">تسجيل الدخول</button>`
+        }
+      </div>
+    `;
+    outputBody.appendChild(paywallCard);
+  }
 
   // لف كل جدول بـ wrapper للتمرير الأفقي + فرض ألوان الرؤوس + منع التداخل
   outputBody.querySelectorAll('table').forEach(t => {
@@ -5046,8 +5304,9 @@ function downloadPDF(){
     return;
   }
   if(!window._studyUnlocked){
-    document.getElementById('study-paywall')?.scrollIntoView({behavior:'smooth'});
-    showToast('⚠️ أكمل الاشتراك لتحميل الدراسة كاملة');
+    const pw = document.getElementById('study-paywall-card') || document.getElementById('study-paywall');
+    if (pw) pw.scrollIntoView({behavior:'smooth'});
+    showToast('⚠️ اشترِ باقة لتحميل الدراسة كاملة');
     return;
   }
   exportPDF();
@@ -5107,10 +5366,22 @@ async function downloadWord(){
 }
 
 function startPaymentForStudy(){
-  startPayment(4999, 'SAR', 'study_' + Date.now(), {
-    firstName: 'عميل', lastName: 'جديد',
-    email: 'user@example.com', phone: '+966500000000'
-  });
+  // بناء بيانات المستخدم من localStorage
+  let customer = { firstName:'عميل', lastName:'جديد', email:'guest@eses.store', phone:'+966500000000' };
+  const stored = localStorage.getItem('user_data');
+  if (stored) {
+    try {
+      const u = JSON.parse(stored);
+      const parts = (u.name || 'عميل جديد').trim().split(/\s+/);
+      customer = {
+        firstName: parts[0]  || 'عميل',
+        lastName:  parts[1]  || 'جديد',
+        email:     u.email   || 'guest@eses.store',
+        phone:    (u.phone   || '+966500000000').replace(/\s/g, ''),
+      };
+    } catch(e) {}
+  }
+  startPayment(customer);
 }
   function showStudyLoader() {
   const overlay = document.createElement('div');
@@ -6107,66 +6378,269 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
   showToast('✅ ستُفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم "حفظ"');
 }
 
-// ─── PAYMOB / PAYMENT REMOVED ───
+// ═══════════════════════════════════════════════════════
+//  PAYMOB PAYMENT LOGIC — نُعرِّفها هنا لضمان الوصول من startPaymentForStudy
+// ═══════════════════════════════════════════════════════
+async function startPayment(customer) {
+  const modal   = document.getElementById('payment-modal');
+  const iframe  = document.getElementById('payment-iframe');
+  const loading = document.getElementById('payment-loading');
+  const summary = document.getElementById('pm-summary');
+  const errDiv  = document.getElementById('payment-error');
+
+  if (!modal) { console.error('payment-modal element not found'); return; }
+
+  // إظهار الـ modal + إعادة تهيئة الحالة
+  modal.style.display   = 'flex';
+  iframe.style.display  = 'none';
+  iframe.src            = '';
+  loading.style.display = 'block';
+  if (summary) summary.style.display = '';
+  if (errDiv)  errDiv.style.display  = 'none';
+
+  // يجب أن يكون المستخدم مسجلاً
+  const user = _getLoggedUser();
+  if (!user || !user.id) {
+    modal.style.display = 'none';
+    showToast('💡 يرجى تسجيل الدخول أولاً لإتمام الشراء');
+    if (typeof openAuthModal === 'function') openAuthModal('login');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/paymob', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body:    JSON.stringify({ customer }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'خطأ في بوابة الدفع');
+
+    if (summary) summary.style.display = 'none';
+    loading.style.display = 'none';
+    iframe.src = data.iframeUrl;
+    iframe.style.display = 'block';
+    window._pendingOrderId = data.ourOrderId;
+
+  } catch (err) {
+    loading.style.display = 'none';
+    if (summary) summary.style.display = 'none';
+    const errText = document.getElementById('pm-error-text');
+    if (errText) errText.textContent = err.message || 'حدث خطأ أثناء تحضير الدفع';
+    if (errDiv)  errDiv.style.display  = 'block';
+    console.error('startPayment error:', err.message);
+  }
+}
+
+function closePayment() {
+  const modal   = document.getElementById('payment-modal');
+  const iframe  = document.getElementById('payment-iframe');
+  const loading = document.getElementById('payment-loading');
+  const summary = document.getElementById('pm-summary');
+  const errDiv  = document.getElementById('payment-error');
+  if (modal)   modal.style.display   = 'none';
+  if (iframe)  { iframe.src = ''; iframe.style.display = 'none'; }
+  if (loading) loading.style.display = 'block';
+  if (summary) summary.style.display = '';
+  if (errDiv)  errDiv.style.display  = 'none';
+}
 </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
       
 
 <!-- مودال الدفع Paymob -->
-<div id="payment-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);align-items:center;justify-content:center;">
-  <div style="position:relative;width:92%;max-width:500px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5);">
-    <div style="background:#1D4ED8;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="color:#fff;font-family:'Tajawal',sans-serif;font-weight:700;">💳 إتمام الدفع الآمن</span>
-      <button onclick="closePayment()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:'Tajawal',sans-serif;">✕ إغلاق</button>
+<!-- ════════════════════════════════════════
+     PAYMENT MODAL — Paymob SA
+════════════════════════════════════════ -->
+<style>
+#payment-modal { display:none; position:fixed; inset:0; z-index:99999;
+  background:rgba(0,0,0,0.92); backdrop-filter:blur(16px);
+  align-items:center; justify-content:center; font-family:'Cairo',sans-serif; }
+.pm-box {
+  position:relative; width:94%; max-width:520px;
+  background:#0F1729; border:1px solid rgba(59,130,246,0.25);
+  border-radius:20px; overflow:hidden;
+  box-shadow:0 48px 96px rgba(0,0,0,0.7), 0 0 0 1px rgba(59,130,246,0.1);
+  animation:fadeInUp 0.3s ease;
+}
+.pm-header {
+  background:linear-gradient(135deg,#1D4ED8,#1e40af);
+  padding:16px 20px; display:flex; align-items:center;
+  justify-content:space-between; gap:12px;
+}
+.pm-header-title { color:#fff; font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:8px; }
+.pm-header-badge { background:rgba(255,255,255,0.15); color:#fff; font-size:0.7rem;
+  padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.25); }
+.pm-close-btn { background:rgba(255,255,255,0.15); color:#fff; border:none;
+  border-radius:8px; padding:6px 14px; cursor:pointer; font-size:0.8rem;
+  font-family:'Cairo',sans-serif; transition:background 0.2s; }
+.pm-close-btn:hover { background:rgba(255,255,255,0.28); }
+/* قسم عرض المنتج قبل تحميل iframe */
+.pm-summary {
+  padding:28px 24px 24px; border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.pm-plan-row { display:flex; align-items:center; justify-content:space-between;
+  background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2);
+  border-radius:12px; padding:16px 20px; margin-bottom:16px; }
+.pm-plan-name { font-weight:700; color:#fff; font-size:1rem; }
+.pm-plan-desc { color:#94A3B8; font-size:0.78rem; margin-top:3px; }
+.pm-plan-price { font-size:1.5rem; font-weight:800; color:#3B82F6; white-space:nowrap; }
+.pm-plan-price small { font-size:0.7rem; color:#64748B; display:block; text-align:center; }
+.pm-features-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.pm-feat { background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.18);
+  color:#34D399; border-radius:8px; padding:5px 12px; font-size:0.75rem; }
+.pm-security { display:flex; align-items:center; justify-content:center; gap:8px;
+  color:#475569; font-size:0.72rem; }
+.pm-security span { display:flex; align-items:center; gap:4px; }
+/* حالة التحميل */
+#payment-loading {
+  padding:56px 24px; text-align:center; direction:rtl;
+}
+.pm-spinner {
+  width:44px; height:44px; border:3px solid rgba(59,130,246,0.2);
+  border-top-color:#3B82F6; border-radius:50%;
+  animation:spin 0.8s linear infinite; margin:0 auto 18px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.pm-loading-title { font-weight:700; color:#fff; font-size:1rem; margin-bottom:6px; }
+.pm-loading-sub { color:#64748B; font-size:0.82rem; }
+/* الـ iframe */
+#payment-iframe { width:100%; height:600px; border:none; display:none; }
+/* خطأ */
+#payment-error { display:none; padding:40px 24px; text-align:center; direction:rtl; }
+.pm-error-icon { font-size:2.5rem; margin-bottom:14px; }
+.pm-error-msg { color:#F87171; font-size:0.9rem; margin-bottom:20px; line-height:1.7; }
+.pm-retry-btn { background:#1D4ED8; color:#fff; border:none; padding:12px 28px;
+  border-radius:10px; font-size:0.9rem; font-weight:700;
+  cursor:pointer; font-family:'Cairo',sans-serif; }
+</style>
+
+<div id="payment-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);backdrop-filter:blur(16px);align-items:center;justify-content:center;">
+  <div class="pm-box">
+
+    <!-- Header -->
+    <div class="pm-header">
+      <div class="pm-header-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        إتمام الدفع الآمن
+        <span class="pm-header-badge">🔒 SSL مشفّر</span>
+      </div>
+      <button class="pm-close-btn" onclick="closePayment()">✕ إغلاق</button>
     </div>
-    <div id="payment-loading" style="padding:48px;text-align:center;font-family:'Tajawal',sans-serif;color:#1D4ED8;">
-      <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
-      <div style="font-weight:700;">جاري تحضير صفحة الدفع...</div>
+
+    <!-- ملخص المنتج (يظهر أثناء التحميل) -->
+    <div class="pm-summary" id="pm-summary">
+      <div class="pm-plan-row">
+        <div>
+          <div class="pm-plan-name">✦ باقة دراسات الجدوى</div>
+          <div class="pm-plan-desc">5 دراسات كاملة • صالحة 6 أشهر</div>
+        </div>
+        <div>
+          <div class="pm-plan-price">49.99 <sup style="font-size:0.6em">ر.س</sup></div>
+          <small>دفعة واحدة</small>
+        </div>
+      </div>
+      <div class="pm-features-row">
+        <span class="pm-feat">✓ 10 أقسام لكل دراسة</span>
+        <span class="pm-feat">✓ تحليل مالي + IRR</span>
+        <span class="pm-feat">✓ تصدير PDF و Word</span>
+        <span class="pm-feat">✓ حفظ تلقائي</span>
+      </div>
+      <div class="pm-security">
+        <span>🔒 SSL 256-bit</span>
+        <span>•</span>
+        <span>💳 Paymob SA</span>
+        <span>•</span>
+        <span>🛡️ مدفوعات آمنة</span>
+      </div>
     </div>
-    <iframe id="payment-iframe" style="width:100%;height:580px;border:none;display:none;" src="" allow="payment"></iframe>
+
+    <!-- حالة التحميل -->
+    <div id="payment-loading" style="padding:56px 24px;text-align:center;direction:rtl;">
+      <div class="pm-spinner"></div>
+      <div class="pm-loading-title">جاري تحضير بوابة الدفع...</div>
+      <div class="pm-loading-sub">يُرجى الانتظار — لا تغلق هذه النافذة</div>
+    </div>
+
+    <!-- خطأ -->
+    <div id="payment-error" style="display:none;padding:40px 24px;text-align:center;direction:rtl;">
+      <div class="pm-error-icon">⚠️</div>
+      <div class="pm-error-msg" id="pm-error-text">حدث خطأ أثناء تحضير الدفع</div>
+      <button class="pm-retry-btn" onclick="closePayment();startPaymentForStudy()">إعادة المحاولة</button>
+    </div>
+
+    <!-- iframe الدفع -->
+    <iframe id="payment-iframe" style="width:100%;height:600px;border:none;display:none;"
+      src="" allow="payment *" sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"></iframe>
+
   </div>
 </div>
+
 <script>
-async function startPayment(amount, currency, orderId, customer){
-  var modal=document.getElementById('payment-modal');
-  var iframe=document.getElementById('payment-iframe');
-  var loading=document.getElementById('payment-loading');
-  modal.style.display='flex';
-  iframe.style.display='none';
-  iframe.src='';
-  loading.style.display='block';
-  try{
-    var res=await fetch('/api/paymob',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amount,currency,orderId,customer})
-    });
-    var data=await res.json();
-    if(!res.ok) throw new Error(data.error||'خطأ في الدفع');
-    iframe.src=data.iframeUrl;
-    iframe.onload=function(){loading.style.display='none';iframe.style.display='block';};
-  }catch(err){
-    modal.style.display='none';
-    alert('خطأ في الدفع: '+err.message);
+// startPayment و closePayment معرّفتان في script أعلى (الـ block الرئيسي)
+
+// ── استماع لرسالة Paymob من الـ iframe ────────────────────────
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  const d = typeof e.data === 'string' ? (() => { try { return JSON.parse(e.data); } catch(_) { return {}; } })() : e.data;
+
+  // تنسيقات Paymob المختلفة
+  const isPaymob = d.type === 'paymob' || d.type === 'PAYMOB' ||
+    d.msg_klass === 'Transaction' || typeof d.success !== 'undefined' ||
+    (d.obj && typeof d.obj.success !== 'undefined');
+
+  if (!isPaymob) return;
+
+  const success = d.success === true  || d.success  === 'true' ||
+                  d.obj?.success === true || d.obj?.success === 'true';
+  const pending  = d.pending  === true  || d.obj?.pending  === true;
+
+  closePayment();
+
+  if (success && !pending) {
+    // ── دفع ناجح: تحديث UI فوراً (الـ webhook يُحدّث DB تلقائياً) ──
+    window._hasPoints     = true;
+    window._studyUnlocked = true;
+    showPage('payment-success');
+  } else if (d.success === false || d.success === 'false' ||
+             d.obj?.success === false || d.obj?.success === 'false') {
+    showPage('payment-failed');
   }
-}
-function closePayment(){
-  document.getElementById('payment-modal').style.display='none';
-  document.getElementById('payment-iframe').src='';
-  document.getElementById('payment-iframe').style.display='none';
-  document.getElementById('payment-loading').style.display='block';
-}
-window.addEventListener('message',function(e){
-  if(e.data&&(e.data.type==='paymob'||e.data.success!==undefined)){
-    closePayment();
-    if(e.data.success !== false){
-      unlockStudy();
-    } else {
-      showToast('⚠️ لم يتم الدفع، يرجى المحاولة مجدداً');
-    }
-  }
+  // pending → لا نفعل شيئاً، الـ webhook سيُعالجه
 });
+
+// ── التحقق من redirect_url بعد الدفع (Paymob يعيد التوجيه هنا) ──
+(function checkPaymentRedirect() {
+  const params  = new URLSearchParams(window.location.search);
+  const isDone  = params.get('payment') === 'done';
+  // Paymob قد يُعيد التوجيه مباشرةً لـ /?success=true&... بدون payment=done
+  const hasSuccessParam = params.has('success') && params.has('id');
+
+  if (!isDone && !hasSuccessParam) return;
+
+  // نظّف الـ URL فوراً
+  history.replaceState(null, '', window.location.pathname);
+
+  const success = params.get('success');
+  const pending = params.get('pending');
+
+  if ((success === 'true' || (isDone && success === null)) && pending !== 'true') {
+    window._hasPoints     = true;
+    window._studyUnlocked = true;
+    // نُظهر الصفحة بعد اكتمال تحميل الـ DOM
+    window.addEventListener('DOMContentLoaded', function() {
+      showPage('payment-success', false);
+    }, { once: true });
+    // إن كان الـ DOM محمّلاً بالفعل
+    if (document.readyState !== 'loading') showPage('payment-success', false);
+  } else if (success === 'false') {
+    window.addEventListener('DOMContentLoaded', function() {
+      showPage('payment-failed', false);
+    }, { once: true });
+    if (document.readyState !== 'loading') showPage('payment-failed', false);
+  }
+})();
 </script>
 
 <!-- ════════════════════════════════════════
@@ -6423,19 +6897,7 @@ function authLogout() {
   showToast('تم تسجيل الخروج بنجاح 👋');
 }
 
-// ── تحديث startPaymentForStudy لاستخدام بيانات المستخدم ────
-function startPaymentForStudy() {
-  let customer = { firstName:'عميل', lastName:'جديد', email:'user@example.com', phone:'+966500000000' };
-  const stored = localStorage.getItem('user_data');
-  if (stored) {
-    try {
-      const u = JSON.parse(stored);
-      const parts = (u.name || 'عميل جديد').split(' ');
-      customer = { firstName: parts[0]||'عميل', lastName: parts[1]||'جديد', email: u.email||'user@example.com', phone: u.phone||'+966500000000' };
-    } catch(e) {}
-  }
-  startPayment(4999, 'SAR', 'study_' + Date.now(), customer);
-}
+// startPaymentForStudy معرّفة في script أعلى
 </script>
 
 
@@ -6562,6 +7024,110 @@ function startPaymentForStudy() {
 
   </div><!-- /about-wrap -->
 </div><!-- /page-about -->
+
+
+<!-- ============================================================
+     PAGE: نجاح الدفع  |  id="page-payment-success"
+============================================================ -->
+<div class="page" id="page-payment-success">
+  <div class="pay-success-wrap">
+    <div class="pay-success-card">
+
+      <!-- أيقونة النجاح -->
+      <div class="pay-check-circle">
+        <svg class="pay-check-svg" viewBox="0 0 52 52">
+          <polyline points="14,28 22,36 38,20"/>
+        </svg>
+      </div>
+
+      <h1 class="pay-success-title">🎉 تم الدفع بنجاح!</h1>
+      <p class="pay-success-sub">
+        شكراً لك — لقد أضفنا <strong style="color:#34D399">5 دراسات جدوى</strong>
+        بالذكاء الاصطناعي إلى حسابك، صالحة لمدة <strong style="color:#3B82F6">6 أشهر</strong>.
+      </p>
+
+      <!-- بطاقة النقاط -->
+      <div class="pay-points-card">
+        <div class="pay-points-number">5</div>
+        <div class="pay-points-label">دراسة جدوى متاحة في حسابك الآن</div>
+        <div class="pay-perks">
+          <div class="pay-perk">
+            <span class="pay-perk-icon">📋</span>
+            <span>10 أقسام متكاملة لكل دراسة</span>
+          </div>
+          <div class="pay-perk">
+            <span class="pay-perk-icon">📊</span>
+            <span>تحليل مالي شامل + IRR</span>
+          </div>
+          <div class="pay-perk">
+            <span class="pay-perk-icon">📄</span>
+            <span>تصدير PDF و Word</span>
+          </div>
+          <div class="pay-perk">
+            <span class="pay-perk-icon">💾</span>
+            <span>حفظ تلقائي في حسابك</span>
+          </div>
+          <div class="pay-perk">
+            <span class="pay-perk-icon">🌍</span>
+            <span>جميع القطاعات والدول</span>
+          </div>
+          <div class="pay-perk">
+            <span class="pay-perk-icon">⏳</span>
+            <span>صالحة 6 أشهر من الآن</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- أزرار الإجراء -->
+      <div class="pay-actions">
+        <button class="pay-btn-primary" onclick="showPage('dashboard');">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          انتقل إلى لوحتي
+        </button>
+        <button class="pay-btn-secondary" onclick="showPage('tool'); goStep(1);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          ابدأ دراسة جدوى الآن
+        </button>
+      </div>
+
+      <!-- شريط الأمان -->
+      <div class="pay-security-bar">
+        <span>🔒 دفع مشفّر</span>
+        <span>•</span>
+        <span>💳 Paymob SA</span>
+        <span>•</span>
+        <span>🧾 فاتورة محفوظة في حسابك</span>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /page-payment-success -->
+
+
+<!-- ============================================================
+     PAGE: فشل الدفع  |  id="page-payment-failed"
+============================================================ -->
+<div class="page" id="page-payment-failed">
+  <div class="pay-success-wrap">
+    <div class="pay-success-card">
+      <div class="pay-fail-circle">❌</div>
+      <h1 class="pay-success-title" style="color:#F87171;">تعذّر إتمام الدفع</h1>
+      <p class="pay-success-sub">
+        لم تُكتمل عملية الدفع — لم يُخصم أي مبلغ من حسابك.
+        يُرجى التحقق من بيانات بطاقتك والمحاولة مرة أخرى.
+      </p>
+      <div class="pay-actions">
+        <button class="pay-btn-primary" style="background:linear-gradient(135deg,#F87171,#dc2626);" onclick="startPaymentForStudy()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 4h22M4 4v16M20 4v16M8 10h8M8 14h8"/></svg>
+          إعادة المحاولة
+        </button>
+        <button class="pay-btn-secondary" onclick="showPage('home')">
+          العودة للرئيسية
+        </button>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-payment-failed -->
 
 
 <!-- ============================================================

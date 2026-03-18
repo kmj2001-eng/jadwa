@@ -55,48 +55,60 @@ export default async function handler(req, res) {
 
   if (success && !isPending) {
     try {
-      // محاولة تحديث DB
       if (process.env.POSTGRES_URL) {
         const { neon } = await import('@neondatabase/serverless');
         const sql = neon(process.env.POSTGRES_URL);
 
-        // تحديث حالة الطلب
-        await sql`
+        // ── تحديث حالة الطلب بـ paymob_order_id ──
+        const updated = await sql`
           UPDATE orders
           SET status = 'paid', updated_at = NOW()
           WHERE paymob_order_id = ${paymobOrderId}
+            AND status != 'paid'
+          RETURNING *
         `;
 
-        // جلب بيانات الطلب
-        const { rows } = await sql`
-          SELECT o.*, u.email FROM orders o
-          LEFT JOIN users u ON u.id = o.user_id
-          WHERE o.paymob_order_id = ${paymobOrderId}
-        `;
+        // التحقق من merchant_order_id بديلاً (jadwa_{dbId}_timestamp)
+        const merchantOrderId = obj?.order?.merchant_order_id?.toString() || '';
+        const dbIdFromMerchant = merchantOrderId.match(/^jadwa_(\d+)_/)?.[1];
 
-        if (rows.length > 0) {
-          const order = rows[0];
+        let order = updated[0];
+
+        // إن لم يُعثر على الطلب بـ paymob_order_id → ابحث بـ merchant_order_id
+        if (!order && dbIdFromMerchant) {
+          const fallback = await sql`
+            UPDATE orders SET status = 'paid', paymob_order_id = ${paymobOrderId}, updated_at = NOW()
+            WHERE id = ${parseInt(dbIdFromMerchant)} AND status != 'paid'
+            RETURNING *
+          `;
+          order = fallback[0];
+        }
+
+        if (order) {
           const invoiceNumber = 'INV-' + Date.now();
 
-          // إنشاء فاتورة
+          // ── إنشاء فاتورة (مرة واحدة) ──
           await sql`
             INSERT INTO invoices (order_id, user_id, amount, currency, status, invoice_number)
             VALUES (${order.id}, ${order.user_id}, ${order.amount}, ${order.currency}, 'paid', ${invoiceNumber})
             ON CONFLICT DO NOTHING
           `;
 
-          // منح النقاط (5 دراسات لكل اشتراك)
+          // ── منح 5 نقاط للمستخدم (مرة واحدة لكل طلب) ──
           await sql`
             INSERT INTO user_points (user_id, order_id, total_points, used_points)
             VALUES (${order.user_id}, ${order.id}, 5, 0)
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (order_id) DO NOTHING
           `;
 
-          console.log(`Order ${paymobOrderId} paid. Invoice: ${invoiceNumber}`);
+          console.log(`✅ Webhook: Order ${order.id} paid | user ${order.user_id} | invoice ${invoiceNumber}`);
+        } else {
+          // لم يُعثر على الطلب — سجّل للمراجعة اليدوية
+          console.warn(`⚠️ Webhook: paymobOrderId=${paymobOrderId} not found in DB | merchant=${merchantOrderId}`);
         }
       }
     } catch (dbErr) {
-      // لا نفشل الـ webhook بسبب خطأ في DB
+      // لا نفشل الـ webhook بسبب خطأ في DB — Paymob يعيد المحاولة إن لم يحصل على 200
       console.error('Webhook DB Error:', dbErr.message);
     }
   }
