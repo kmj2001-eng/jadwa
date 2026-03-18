@@ -3632,21 +3632,37 @@ function mdToHtml(md){
   var lines = md.split('\n');
   var out = [];
   var i = 0;
+  // وسوم HTML مباشرة — تمريرها بدون لف بـ <p>
+  var HTML_TAG = /^<\/?(?:table|thead|tbody|tfoot|tr|th|td|caption|colgroup|col)[\s>/]/i;
   while(i < lines.length){
     var line = lines[i];
+
+    // ── HTML table tags: pass through as-is ──
+    if(HTML_TAG.test(line.trim())){
+      out.push(line);
+      i++;
+      continue;
+    }
+
+    // ── Markdown table ──
     if(line.match(/^\|/) && lines[i+1] && lines[i+1].match(/^\|[-| :]+\|/)){
       var hcells = line.trim().replace(/^\||\|$/g,'').split('|');
+      var colCount = hcells.length;
       var thead = '<thead><tr>'+hcells.map(function(c){return '<th>'+c.trim()+'</th>';}).join('')+'</tr></thead>';
-      i += 2;
+      i += 2; // تخطّى سطر الفصل
       var tbody = [];
       while(i < lines.length && lines[i].match(/^\|/)){
         var rcells = lines[i].trim().replace(/^\||\|$/g,'').split('|');
+        // إصلاح: اقتطع الأعمدة الزائدة وأضف فارغة إن نقصت
+        while(rcells.length > colCount) rcells.pop();
+        while(rcells.length < colCount) rcells.push('');
         tbody.push('<tr>'+rcells.map(function(c){return '<td>'+c.trim()+'</td>';}).join('')+'</tr>');
         i++;
       }
       out.push('<table>'+thead+(tbody.length?'<tbody>'+tbody.join('')+'</tbody>':'')+'</table>');
       continue;
     }
+
     var hm = line.match(/^(#{1,4}) (.+)$/);
     if(hm){ var lvl=Math.min(hm[1].length+1,4); out.push('<h'+lvl+'>'+hm[2]+'</h'+lvl+'>'); i++; continue; }
     if(line.match(/^[-*] /)){

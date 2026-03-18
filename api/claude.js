@@ -260,7 +260,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        max_tokens: [3,4,6,7].includes(Number(section)) ? 16000 : 10000,
         temperature: 0,
         stream: true,
         system: systemPrompt,
