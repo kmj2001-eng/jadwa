@@ -4808,6 +4808,17 @@ async function generateStudy(){
 function showResult(text){
   window._fullStudyText = text;
   window._studyUnlocked = true; // مؤقتاً: عرض الدراسة كاملة بدون paywall
+  // ── استخراج IRR من نص الدراسة ──
+  try {
+    const irrMatch = text.match(/IRR[^%\d]*?([\d.]+)\s*%/i)
+      || text.match(/معدل العائد الداخلي[^%\d]*?([\d.]+)\s*%/)
+      || text.match(/Internal Rate[^%\d]*?([\d.]+)\s*%/i);
+    if (irrMatch) {
+      if (!window._currentStudyMeta) window._currentStudyMeta = {};
+      window._currentStudyMeta.irr = irrMatch[1] + '%';
+    }
+  } catch(e){}
+
   // ── حفظ تلقائي في DB أو localStorage ──
   try {
     const studyTitle = (document.getElementById('output-title').textContent.trim()) || 'دراسة جدوى';
