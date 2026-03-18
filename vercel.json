@@ -6,9 +6,11 @@
     "api/paymob.js":        { "maxDuration": 30 },
     "api/webhook.js":       { "maxDuration": 30 },
     "api/setup-db.js":      { "maxDuration": 30 },
-    "api/auth.js":          { "maxDuration": 15 }
+    "api/auth.js":          { "maxDuration": 15 },
+    "api/ready-studies.js": { "maxDuration": 10 }
   },
   "routes": [
+    { "src": "/api/ready-studies", "dest": "/api/ready-studies.js" },
     { "src": "/api/auth",          "dest": "/api/auth.js" },
     { "src": "/api/webhook",       "dest": "/api/webhook.js" },
     { "src": "/api/generate-docx", "dest": "/api/generate-docx.js" },
