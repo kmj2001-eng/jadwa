@@ -38,6 +38,12 @@ export default async function handler(req, res) {
     // ── 0. حفظ الطلب في قاعدة البيانات (pending) ─────────────
     if (process.env.POSTGRES_URL && userId) {
       sql = neon(process.env.POSTGRES_URL);
+
+      // migration آمن — يضيف عمود plan إن لم يكن موجوداً
+      try {
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'`;
+      } catch (_) {}
+
       const dbRows = await sql`
         INSERT INTO orders (user_id, amount, currency, status, plan)
         VALUES (${userId}, ${amount}, ${currency}, 'pending', ${plan})
