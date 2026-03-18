@@ -207,7 +207,7 @@ export default async function handler(req, res) {
       const expiresAt  = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // ساعة
       await setResetToken(user.email, resetToken, expiresAt);
 
-      const siteUrl   = process.env.SITE_URL || 'https://thakaa-alabmal.com';
+      const siteUrl   = process.env.SITE_URL || 'https://eses.store';
       const resetLink = `${siteUrl}/#reset?token=${resetToken}`;
 
       // ── إرسال الإيميل إذا تم ضبط RESEND_API_KEY ──────────

@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://thakaa-alabmal.com/sitemap.xml
+Sitemap: https://eses.store/sitemap.xml

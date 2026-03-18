@@ -60,7 +60,7 @@ export default async function handler(req, res) {
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: 'منصة ذكاء الأعمال  ·  thakaa-alabmal.com',
+                      text: 'منصة ذكاء الأعمال  ·  eses.store',
                       size: 16,
                       color: '999999',
                       font: 'Arial',
