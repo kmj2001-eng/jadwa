@@ -285,7 +285,19 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const error = await response.json();
-      sendEvent({ error: error?.error?.message || 'خطأ من Claude API' });
+      const rawMsg = error?.error?.message || '';
+      // ترجمة رسائل Anthropic التقنية إلى رسائل مهذبة للمستخدم
+      let friendlyMsg;
+      if (/credit|billing|balance|quota/i.test(rawMsg)) {
+        friendlyMsg = 'نأسف، لا تستطيع توليد دراسة جدوى جديدة لعدم توفر رصيد كافٍ من النقاط';
+      } else if (/rate.?limit|too many requests/i.test(rawMsg)) {
+        friendlyMsg = 'الخدمة مشغولة حالياً، يرجى المحاولة بعد دقيقة';
+      } else if (/overloaded|capacity/i.test(rawMsg)) {
+        friendlyMsg = 'الخوادم مُثقَّلة حالياً، يرجى المحاولة مجدداً بعد لحظات';
+      } else {
+        friendlyMsg = rawMsg || 'خطأ من Claude API';
+      }
+      sendEvent({ error: friendlyMsg });
       return res.end();
     }
 
