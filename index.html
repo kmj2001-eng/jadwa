@@ -5422,41 +5422,6 @@ async function exportPDF(){
   const loader = showPDFLoader();
   showToast('⏳ جاري تجهيز ملف PDF...');
 
-  // ── محاولة التحميل التلقائي عبر html2pdf.js ──
-  if (typeof html2pdf === 'function') {
-    try {
-      const tmp2 = document.createElement('div');
-      tmp2.innerHTML = mdToHtml(markdown);
-      tmp2.querySelectorAll('th').forEach(th=>{
-        th.style.setProperty('background','#1D4ED8','important');
-        th.style.setProperty('color','#ffffff','important');
-      });
-      tmp2.querySelectorAll('.table-wrap').forEach(w=>{const t=w.querySelector('table');if(t)w.replaceWith(t);});
-
-      const wrapper = document.createElement('div');
-      wrapper.dir = 'rtl';
-      wrapper.style.cssText = 'font-family:Cairo,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.85;background:#fff;padding:18px 22px;';
-      wrapper.appendChild(tmp2);
-      wrapper.style.position='fixed'; wrapper.style.top='-99999px'; wrapper.style.left='0'; wrapper.style.width='210mm';
-      document.body.appendChild(wrapper);
-
-      const opt = {
-        margin:[15,12,20,12], filename: title+'.pdf',
-        image:{type:'jpeg',quality:0.97},
-        html2canvas:{scale:2,useCORS:true,letterRendering:true,logging:false,
-          onclone:(doc)=>{doc.documentElement.dir='rtl';}},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-      };
-      await html2pdf().set(opt).from(wrapper).save();
-      document.body.removeChild(wrapper);
-      hidePDFLoader(loader);
-      showToast('✅ تم تحميل الدراسة PDF! تحقق من مجلد التنزيلات.');
-      return;
-    } catch(e2) {
-      console.warn('html2pdf fallback to print:', e2);
-    }
-  }
-
   const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
 
   try {
@@ -5718,8 +5683,8 @@ document.fonts.ready.then(function(){
 </body></html>`);
     pw.document.close();
     hidePDFLoader(loader);
-    showToast('✅ اختر "حفظ كـ PDF" من نافذة الطباعة');
-    return; // ← نهاية المسار الجديد
+    showToast('✅ ستفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم انقر حفظ');
+    return;
 
   } catch(err) {
     hidePDFLoader(loader);
@@ -5811,32 +5776,6 @@ function exportReadyStudyPDF() {
   const titleEl = document.getElementById('study-viewer-title');
   const title   = (titleEl && titleEl.textContent.trim()) || 'دراسة الجدوى';
   if (!body || !body.innerHTML.trim()) { showToast('❌ لا يوجد محتوى'); return; }
-
-  // محاولة html2pdf.js أولاً
-  if (typeof html2pdf === 'function') {
-    const wrapper = document.createElement('div');
-    wrapper.dir = 'rtl';
-    wrapper.style.cssText = 'font-family:Cairo,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.85;background:#fff;padding:18px 22px;';
-    wrapper.innerHTML = body.innerHTML;
-    wrapper.querySelectorAll('th').forEach(th=>{th.style.setProperty('background','#1D4ED8','important');th.style.setProperty('color','#fff','important');});
-    wrapper.style.position='fixed'; wrapper.style.top='-99999px'; wrapper.style.left='0'; wrapper.style.width='210mm';
-    document.body.appendChild(wrapper);
-    const opt = {
-      margin:[15,12,20,12], filename: title+'.pdf',
-      image:{type:'jpeg',quality:0.97},
-      html2canvas:{scale:2,useCORS:true,letterRendering:true,logging:false,onclone:(doc)=>{doc.documentElement.dir='rtl';}},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    };
-    showToast('⏳ جاري إعداد ملف PDF...');
-    html2pdf().set(opt).from(wrapper).save().then(()=>{
-      document.body.removeChild(wrapper);
-      showToast('✅ تم تحميل PDF! تحقق من مجلد التنزيلات.');
-    }).catch(err=>{
-      document.body.removeChild(wrapper);
-      _exportReadyStudyPDFPrint(title, body);
-    });
-    return;
-  }
   _exportReadyStudyPDFPrint(title, body);
 }
 
