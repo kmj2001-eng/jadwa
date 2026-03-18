@@ -1235,7 +1235,7 @@ input[type=range]::-webkit-slider-thumb {
 .oaction:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
 .output-body {
   padding:36px; line-height:1.9; font-size:0.85rem;
-  color:var(--text2); max-height:80vh; overflow-y:auto;
+  color:var(--text2);
   scroll-behavior:smooth;
 }
 .output-body h2 {
@@ -1292,13 +1292,13 @@ input[type=range]::-webkit-slider-thumb {
 }
 .study-toc-row {
   display:flex; align-items:center; gap:8px;
-  padding:8px 6px; border-bottom:1px dashed var(--border);
-  font-size:0.82rem; cursor:pointer; transition:background 0.15s;
-  border-radius:6px; direction:rtl;
+  padding:10px 6px; border-bottom:1px dashed var(--border);
+  font-size:0.85rem; cursor:pointer; transition:background 0.15s;
+  border-radius:6px; direction:rtl; flex-wrap:nowrap;
 }
 .study-toc-row:last-child { border-bottom:none; }
 .study-toc-row:hover { background:rgba(59,130,246,0.07); }
-.study-toc-title { color:#1e3a8a; font-weight:700; flex-shrink:0; white-space:nowrap; }
+.study-toc-title { color:var(--text); font-weight:700; flex-shrink:1; white-space:normal; word-break:break-word; }
 .study-toc-dots {
   flex:1; border-bottom:1.5px dotted #94A3B8;
   margin:0 6px; min-width:20px; height:1px; align-self:center;
