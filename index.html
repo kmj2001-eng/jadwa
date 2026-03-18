@@ -6453,7 +6453,7 @@ async function startPayment(customer) {
     console.log('[Jadwa] /api/paymob response:', res.status, data);
     if (!res.ok) throw new Error(data.error || `خطأ ${res.status} في بوابة الدفع`);
 
-    if (summary) summary.style.display = 'none';
+    if (summary) summary.classList.add('compact');
     loading.style.display = 'none';
     iframe.src = data.iframeUrl;
     iframe.style.display = 'block';
@@ -6479,7 +6479,7 @@ function closePayment() {
   if (modal)   modal.style.display   = 'none';
   if (iframe)  { iframe.src = ''; iframe.style.display = 'none'; }
   if (loading) loading.style.display = 'block';
-  if (summary) summary.style.display = '';
+  if (summary) { summary.style.display = ''; summary.classList.remove('compact'); }
   if (errDiv)  errDiv.style.display  = 'none';
 }
 
@@ -6570,8 +6570,16 @@ document.addEventListener('DOMContentLoaded', function() {
 @keyframes spin { to { transform:rotate(360deg); } }
 .pm-loading-title { font-weight:700; color:#fff; font-size:1rem; margin-bottom:6px; }
 .pm-loading-sub { color:#64748B; font-size:0.82rem; }
+/* شريط المبلغ المضغوط فوق الـ iframe */
+.pm-summary.compact { padding:10px 20px; }
+.pm-summary.compact .pm-features-row,
+.pm-summary.compact .pm-security,
+.pm-summary.compact .pm-plan-desc { display:none; }
+.pm-summary.compact .pm-plan-row { padding:10px 16px; margin-bottom:0; }
+.pm-summary.compact .pm-plan-name { font-size:0.85rem; }
+.pm-summary.compact .pm-plan-price { font-size:1.1rem; }
 /* الـ iframe */
-#payment-iframe { width:100%; height:600px; border:none; display:none; }
+#payment-iframe { width:100%; height:520px; border:none; display:none; }
 /* خطأ */
 #payment-error { display:none; padding:40px 24px; text-align:center; direction:rtl; }
 .pm-error-icon { font-size:2.5rem; margin-bottom:14px; }
