@@ -3826,8 +3826,11 @@ async function generateStudy(){
   const funding   = document.getElementById('f-funding').value;
   const period    = document.getElementById('f-period').value;
   const target    = document.getElementById('f-target').value;
-  const advantage = document.getElementById('f-advantage').value || 'الجودة والخدمة';
-  const details   = document.getElementById('f-details').value;
+  const advantage    = document.getElementById('f-advantage').value || 'الجودة والخدمة';
+  const details      = document.getElementById('f-details').value   || '';
+  const competition  = document.getElementById('f-competition')?.value || '';
+  const returnRate   = document.getElementById('f-return')?.value    || '';
+  const capacity     = document.getElementById('f-capacity')?.value  || '';
 
   document.getElementById('output-title').textContent     = 'دراسة جدوى: ' + name;
   document.getElementById('study-subtitle').textContent   = 'جاري إنشاء دراسة الجدوى لـ: ' + name;
@@ -3836,19 +3839,15 @@ async function generateStudy(){
 
   const studyLoader = showStudyLoader();
 
-  const prompt = `اسم النشاط: ${name}
-القطاع: ${selSector || 'تجارة عامة'}
-الدولة والمدينة: ${location}
-رأس المال المتاح: ${capital} (${currency})
-مصدر التمويل: ${funding}
-حجم المشروع: ${size}
-عدد الموظفين المتوقع: ${workers}
-مدة الدراسة: ${period}
-الجمهور المستهدف: ${target}
-الميزة التنافسية: ${advantage}
-${details ? 'تفاصيل إضافية: ' + details : ''}
-
-أنشئ دراسة الجدوى الكاملة الآن بجميع أقسامها مع جداول HTML دقيقة للأرقام المالية.`;
+  // بيانات النموذج — تُرسل كـ JSON منظم لـ claude.js ليبني عليها الدراسة
+  const formData = {
+    name, sector: selSector || 'تجارة عامة',
+    location, currency,
+    capital, funding, size, workers,
+    period, target, advantage,
+    competition, returnRate, capacity,
+    details,
+  };
 
   // ── بيانات الأقسام العشرة ────────────────────────────────
   const sectionMeta = [
@@ -3869,7 +3868,7 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, section: secNum }),
+      body: JSON.stringify({ ...formData, section: secNum }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

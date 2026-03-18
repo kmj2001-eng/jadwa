@@ -3,8 +3,52 @@ export default async function handler(req, res) {
 
   // حماية من body غير مُعالَج
   const body = req.body || {};
-  const { prompt, section = 1 } = body;
-  if (!prompt) return res.status(400).json({ error: 'الحقل prompt مطلوب' });
+  const {
+    section     = 1,
+    name        = '',
+    sector      = 'تجارة عامة',
+    location    = 'السعودية',
+    currency    = 'ريال سعودي (ر.س)',
+    capital     = 'غير محدد',
+    funding     = 'غير محدد',
+    size        = 'مشروع صغير',
+    workers     = '5 موظفين',
+    period      = '5 سنوات',
+    target      = 'غير محدد',
+    advantage   = 'الجودة والخدمة',
+    competition = '',
+    returnRate  = '',
+    capacity    = '',
+    details     = '',
+  } = body;
+
+  if (!name) return res.status(400).json({ error: 'يرجى إدخال اسم المشروع' });
+
+  // ── بناء ملف المشروع الكامل من جميع حقول النموذج ─────────
+  const projectProfile = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 ملف المشروع — البيانات الكاملة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• اسم المشروع / النشاط : ${name}
+• القطاع الاقتصادي     : ${sector}
+• الموقع الجغرافي      : ${location}
+• العملة المحلية       : ${currency}
+
+💰 البيانات المالية:
+• رأس المال المتاح     : ${capital} ${currency}
+• مصدر التمويل         : ${funding}
+• العائد المتوقع       : ${returnRate || 'يُحدد بناءً على التحليل'}
+• مدة الدراسة          : ${period}
+
+🏗️ التشغيل والموارد:
+• حجم المشروع          : ${size}
+• عدد الموظفين         : ${workers}
+• الطاقة الإنتاجية     : ${capacity || 'يُحدد بناءً على حجم المشروع'}
+
+🎯 السوق والتنافسية:
+• الجمهور المستهدف     : ${target}
+• حدة المنافسة         : ${competition || 'متوسطة'}
+• الميزة التنافسية     : ${advantage}${details ? `\n\n📝 تفاصيل إضافية من صاحب المشروع:\n${details}` : ''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
   // ── الدور الثابت (system) ─────────────────────────────────
   const ROLE = `أنت خبير استثماري واقتصادي متخصص في إعداد دراسات الجدوى الاستثمارية المتكاملة باللغة العربية الفصحى.
@@ -249,12 +293,13 @@ export default async function handler(req, res) {
   const sectionNum = Number(section) || 1;
   const sectionInstructions = SECTIONS[sectionNum] || SECTIONS[1];
 
-  // ── دمج بيانات النموذج مع تعليمات القسم في رسالة واحدة ──
-  const userMessage = `═══ بيانات المشروع التي يجب البناء عليها ═══
-${prompt}
-══════════════════════════════════════════════
+  // ── دمج ملف المشروع مع تعليمات القسم في رسالة واحدة ─────
+  const userMessage = `${projectProfile}
 
-بناءً على بيانات المشروع أعلاه بالضبط، حلّل كل رقم وبنِ عليه الدراسة:
+بناءً على بيانات المشروع أعلاه بالضبط:
+— اشتق جميع الأرقام المالية من رأس المال المُدخل: ${capital} ${currency}
+— خصّص كل جدول ووصف لقطاع "${sector}" في موقع "${location}"
+— استخدم عدد الموظفين (${workers}) والطاقة الإنتاجية (${capacity || 'حسب حجم المشروع'}) في حسابات التكاليف
 
 ${sectionInstructions}`;
 
