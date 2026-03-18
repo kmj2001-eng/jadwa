@@ -3718,7 +3718,7 @@ footer {
           <li><span class="check">✓</span>الدراسة القانونية والبيئية والتشغيلية</li>
           <li><span class="check">✓</span>خريطة طريق حتى السنة الثالثة</li>
         </ul>
-        <button id="pricing-cta-btn" type="button" class="btn-plan primary" style="width:100%;padding:18px;font-size:1.05rem;">
+        <button id="pricing-cta-btn" type="button" class="btn-plan primary" style="width:100%;padding:18px;font-size:1.05rem;cursor:pointer;pointer-events:auto;position:relative;z-index:10;">
           💳 احصل على الباقة — 49.99 ر.س
         </button>
         <div style="display:flex;justify-content:center;gap:20px;margin-top:20px;flex-wrap:wrap;">
@@ -3809,12 +3809,14 @@ footer {
       سيتم حذف <strong style="color:var(--text2);">جميع دراساتك ونقاطك وبياناتك</strong> بشكل دائم.<br>هذا الإجراء <strong style="color:#F87171;">لا يمكن التراجع عنه.</strong>
     </p>
     <div style="text-align:right;margin-bottom:6px;font-size:0.82rem;color:var(--text3);">أدخل كلمة مرورك للتأكيد</div>
-    <input id="delete-account-password" type="password" placeholder="كلمة المرور"
-      style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--ink3);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;margin-bottom:20px;box-sizing:border-box;direction:rtl;">
-    <div style="display:flex;gap:10px;">
-      <button onclick="closeDeleteAccountModal()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;">إلغاء</button>
-      <button id="delete-account-btn" onclick="confirmDeleteAccount()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#F87171;color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;">🗑 احذف حسابي</button>
-    </div>
+    <form onsubmit="confirmDeleteAccount();return false;" style="margin:0;">
+      <input id="delete-account-password" type="password" placeholder="كلمة المرور"
+        style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--ink3);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;margin-bottom:20px;box-sizing:border-box;direction:rtl;">
+      <div style="display:flex;gap:10px;">
+        <button type="button" onclick="closeDeleteAccountModal()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;">إلغاء</button>
+        <button type="submit" id="delete-account-btn" style="flex:1;padding:11px;border-radius:10px;border:none;background:#F87171;color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;">🗑 احذف حسابي</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -6481,19 +6483,30 @@ function closePayment() {
   if (errDiv)  errDiv.style.display  = 'none';
 }
 
-// ── ربط زر الباقة بـ addEventListener (أكثر موثوقية من onclick) ──
+// ── ربط زر الباقة — capture phase على document لضمان استقبال الضغط ──
+document.addEventListener('click', function(e) {
+  var t = e.target;
+  // تحقق من الزر نفسه أو أي عنصر داخله (emoji أو نص)
+  var btn = (t && t.id === 'pricing-cta-btn')
+         || (t && t.closest && t.closest('#pricing-cta-btn'));
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[Jadwa] pricing-cta-btn CLICKED (capture)');
+    startPaymentForStudy();
+  }
+}, true); // true = capture phase — يسبق أي handler آخر
+
+// fallback: DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
   var btn = document.getElementById('pricing-cta-btn');
   if (btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
-      e.stopPropagation();
-      console.log('[Jadwa] pricing-cta-btn clicked via addEventListener');
+      console.log('[Jadwa] pricing-cta-btn clicked (bubble)');
       startPaymentForStudy();
     });
     console.log('[Jadwa] pricing-cta-btn listener attached');
-  } else {
-    console.error('[Jadwa] pricing-cta-btn NOT FOUND in DOM');
   }
 });
 </script>
@@ -7404,18 +7417,20 @@ function authLogout() {
 
       <!-- ── شاشة LOGIN ── -->
       <div class="auth-screen active" id="screen-login">
-        <div class="fgroup">
-          <label class="mlabel">البريد الإلكتروني</label>
-          <input class="minput" id="login-email" type="email" placeholder="example@email.com" dir="ltr" autocomplete="email">
-        </div>
-        <div class="fgroup">
-          <label class="mlabel">كلمة السر</label>
-          <input class="minput" id="login-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="current-password">
-        </div>
-        <button class="auth-submit" id="login-btn" onclick="doLogin()">
-          <i class="fa-solid fa-right-to-bracket"></i>
-          <span>دخول</span>
-        </button>
+        <form onsubmit="doLogin();return false;" style="margin:0;">
+          <div class="fgroup">
+            <label class="mlabel">البريد الإلكتروني</label>
+            <input class="minput" id="login-email" type="email" placeholder="example@email.com" dir="ltr" autocomplete="email">
+          </div>
+          <div class="fgroup">
+            <label class="mlabel">كلمة السر</label>
+            <input class="minput" id="login-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="current-password">
+          </div>
+          <button type="submit" class="auth-submit" id="login-btn">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>دخول</span>
+          </button>
+        </form>
         <div class="auth-footer">
           <button class="auth-link" onclick="switchAuthScreen('forgot')">نسيت كلمة السر؟</button>
         </div>
@@ -7423,6 +7438,7 @@ function authLogout() {
 
       <!-- ── شاشة REGISTER ── -->
       <div class="auth-screen" id="screen-register">
+        <form onsubmit="doRegister();return false;" style="margin:0;">
         <div class="auth-row">
           <div class="fgroup" style="margin-bottom:0">
             <label class="mlabel">الاسم الكامل</label>
@@ -7441,10 +7457,11 @@ function authLogout() {
           <label class="mlabel">كلمة السر (8 أحرف على الأقل)</label>
           <input class="minput" id="reg-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password">
         </div>
-        <button class="auth-submit" id="register-btn" onclick="doRegister()">
+        <button type="submit" class="auth-submit" id="register-btn">
           <i class="fa-solid fa-user-plus"></i>
           <span>إنشاء الحساب</span>
         </button>
+        </form>
         <p style="font-size:0.68rem;color:var(--text3);text-align:center;margin-top:12px;line-height:1.7;">
           بالتسجيل تقبل
           <button class="auth-link" onclick="showPage('terms');closeAuthModal()">شروط الاستخدام</button>
