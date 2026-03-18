@@ -1243,21 +1243,24 @@ input[type=range]::-webkit-slider-thumb {
 .output-body p { margin-bottom:10px; }
 .output-body ul { padding-right:20px; margin-bottom:10px; }
 .output-body li { margin-bottom:6px; }
-.output-body table {
-  width:100%; border-collapse:collapse; margin:14px 0; font-size:0.78rem;
-  background:#ffffff; border-radius:10px; overflow:hidden;
+.output-body .table-wrap {
+  overflow-x:auto; margin:14px 0; border-radius:10px;
   box-shadow:0 2px 12px rgba(0,0,0,0.18);
 }
+.output-body table {
+  width:100%; min-width:480px; border-collapse:collapse; font-size:0.78rem;
+  background:#ffffff;
+}
 .output-body th {
-  background:#1D4ED8; color:#ffffff; padding:11px 14px;
+  background:#1D4ED8 !important; color:#ffffff !important; padding:11px 14px;
   text-align:right; border:1px solid #2563EB;
   font-weight:700; font-size:0.8rem;
 }
 .output-body td {
   padding:10px 14px; border:1px solid #e2e8f0;
-  color:#1e293b; background:#ffffff; font-size:0.78rem;
+  color:#1e293b !important; background:#ffffff !important; font-size:0.78rem;
 }
-.output-body tr:nth-child(even) td { background:#f0f7ff; color:#1e293b; }
+.output-body tr:nth-child(even) td { background:#f0f7ff !important; color:#1e293b !important; }
 .output-body tr:hover td { background:#dbeafe; transition:background 0.15s; }
 
 .typing-state {
@@ -3432,6 +3435,20 @@ function showResult(text){
     outputBody.appendChild(sec);
   });
 
+  // لف كل جدول بـ wrapper للتمرير الأفقي + فرض ألوان الرؤوس
+  outputBody.querySelectorAll('table').forEach(t => {
+    // فرض تلوين th حتى لو كانت inline styles
+    t.querySelectorAll('th').forEach(th => {
+      th.style.setProperty('background','#1D4ED8','important');
+      th.style.setProperty('color','#ffffff','important');
+    });
+    // لف بـ div قابل للتمرير
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
   document.getElementById('typing-state').style.display='none';
   document.getElementById('output-result').style.display='block';
 }
@@ -3937,32 +3954,36 @@ async function exportPDF(){
         el.style.color = '#111';
       }
     });
-    wrap.querySelectorAll('h2').forEach(h => {
-      h.style.cssText = 'color:#1D4ED8;font-size:15px;font-weight:800;margin:22px 0 8px;border-right:4px solid #1D4ED8;padding-right:10px;page-break-after:avoid;';
+    wrap.querySelectorAll('h2').forEach((h, i) => {
+      h.style.cssText = 'color:#1D4ED8;font-size:15px;font-weight:800;margin:22px 0 8px;border-right:4px solid #1D4ED8;padding-right:10px;page-break-after:avoid;' + (i > 0 ? 'page-break-before:always;' : '');
     });
     wrap.querySelectorAll('h3').forEach(h => {
       h.style.cssText = 'color:#1e3a8a;font-size:13px;font-weight:700;margin:14px 0 6px;page-break-after:avoid;';
     });
     wrap.querySelectorAll('p,li').forEach(el => { el.style.color = '#222'; el.style.lineHeight = '1.8'; });
+    // إزالة table-wrap divs من نسخة الـ PDF واستبدالها بالجداول مباشرة
+    wrap.querySelectorAll('.table-wrap').forEach(tw => {
+      tw.replaceWith(...tw.childNodes);
+    });
     wrap.querySelectorAll('table').forEach(t => {
-      t.style.cssText = 'width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;page-break-inside:avoid;';
+      t.style.cssText = 'width:100%;border-collapse:collapse;margin:10px 0;font-size:11px;';
     });
     wrap.querySelectorAll('th').forEach(th => {
-      th.style.cssText = 'background:#1D4ED8;color:#fff;padding:7px 10px;border:1px solid #93c5fd;text-align:right;font-weight:700;';
+      th.setAttribute('style','background:#1D4ED8!important;color:#fff!important;padding:7px 10px;border:1px solid #93c5fd;text-align:right;font-weight:700;');
     });
-    wrap.querySelectorAll('td').forEach((td, i) => {
+    wrap.querySelectorAll('td').forEach(td => {
       td.style.cssText = 'padding:6px 10px;border:1px solid #ddd;text-align:right;color:#222;';
     });
     wrap.querySelectorAll('strong,b').forEach(s => { s.style.color = '#111'; });
 
     // ── توليد PDF وتنزيله مباشرة ──
     await html2pdf().set({
-      margin:        [14, 14, 14, 14],
-      filename:      title + '.pdf',
-      image:         { type: 'jpeg', quality: 0.92 },
-      html2canvas:   { scale: 2, useCORS: true, letterRendering: true, logging: false },
-      jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:     { mode: ['avoid-all', 'css', 'legacy'] }
+      margin:      [12, 12, 12, 12],
+      filename:    title + '.pdf',
+      image:       { type: 'jpeg', quality: 0.88 },
+      html2canvas: { scale: 1.5, useCORS: true, letterRendering: true, logging: false, scrollY: 0 },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:   { mode: ['css', 'legacy'], before: 'h2', avoid: ['tr', 'h3'] }
     }).from(wrap).save();
 
     hidePDFLoader(loader);
