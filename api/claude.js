@@ -330,6 +330,18 @@ export default async function handler(req, res) {
       return { text, stopReason };
     };
 
+    // ── حذف التكرار عند نقطة دمج الـ continuation ──
+    function removeOverlap(existing, continuation) {
+      const maxCheck = Math.min(existing.length, 1000);
+      const tail = existing.slice(-maxCheck);
+      for (let len = Math.min(continuation.length, maxCheck); len > 60; len--) {
+        if (tail.endsWith(continuation.slice(0, len))) {
+          return continuation.slice(len);
+        }
+      }
+      return continuation;
+    }
+
     // ── الحلقة الرئيسية: متابعة تلقائية عند max_tokens ──
     let fullText = '';
     let { text: t1, stopReason: sr1 } = await streamOnce(response);
@@ -337,6 +349,8 @@ export default async function handler(req, res) {
 
     // إذا اقتُطع: أرسل طلب متابعة (حتى مرتين)
     for (let pass = 0; pass < 2 && sr1 === 'max_tokens'; pass++) {
+      // آخر 300 حرف من النص — لإخبار النموذج بالنقطة الدقيقة للاستمرار
+      const tail = fullText.slice(-300).trim();
       const contRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -346,20 +360,20 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
-          max_tokens: 16000,
+          max_tokens: 8000,
           temperature: 0,
           stream: true,
           system: systemPrompt,
           messages: [
             { role: 'user',      content: prompt },
             { role: 'assistant', content: fullText },
-            { role: 'user',      content: 'أكمل من حيث توقفت فوراً — لا تكرر أي كلمة مما سبق، ابدأ مباشرةً من النقطة التي انقطع عندها النص.' },
+            { role: 'user',      content: `أكمل النص من النقطة التي توقفت عندها بالضبط. آخر ما كتبته:\n"...${tail}"\nاستمر مباشرةً بعد هذه النقطة دون أي تكرار.` },
           ],
         }),
       });
       if (!contRes.ok) break;
       const { text: t2, stopReason: sr2 } = await streamOnce(contRes);
-      fullText += t2;
+      fullText += removeOverlap(fullText, t2);
       sr1 = sr2;
     }
 
