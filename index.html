@@ -1245,16 +1245,20 @@ input[type=range]::-webkit-slider-thumb {
 .output-body li { margin-bottom:6px; }
 .output-body table {
   width:100%; border-collapse:collapse; margin:14px 0; font-size:0.78rem;
+  background:#ffffff; border-radius:10px; overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,0.18);
 }
 .output-body th {
-  background:#ffffff; color:#1D4ED8; padding:11px 14px;
-  text-align:right; border:1px solid #93C5FD;
-  font-weight:700;
+  background:#1D4ED8; color:#ffffff; padding:11px 14px;
+  text-align:right; border:1px solid #2563EB;
+  font-weight:700; font-size:0.8rem;
 }
 .output-body td {
-  padding:10px 14px; border:1px solid var(--border2); color:var(--text2);
+  padding:10px 14px; border:1px solid #e2e8f0;
+  color:#1e293b; background:#ffffff; font-size:0.78rem;
 }
-.output-body tr:nth-child(even) td { background:var(--ink2); }
+.output-body tr:nth-child(even) td { background:#f0f7ff; color:#1e293b; }
+.output-body tr:hover td { background:#dbeafe; transition:background 0.15s; }
 
 .typing-state {
   padding:40px 28px; display:flex; align-items:center; gap:14px;
