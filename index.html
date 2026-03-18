@@ -3346,16 +3346,26 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
   if (iconEl)    iconEl.textContent    = '⚡';
   if (sectionEl) sectionEl.textContent = 'يتم كتابة الأقسام في آنٍ واحد';
-  if (statusEl)  statusEl.textContent  = 'جاري التحليل...';
+  if (statusEl)  statusEl.textContent  = '🔗 جاري الاتصال بمحرك الذكاء الاصطناعي...';
+  if (barEl)     barEl.style.width     = '3%';
 
-  // إنشاء عناصر القائمة بالترتيب 1 → 10 (رمادي في البداية)
+  // إنشاء عناصر القائمة بالترتيب 1 → 10 مع animation نبض للانتظار
+  const pendingStyle = 'display:flex;align-items:center;gap:8px;background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.12);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#64748b;direction:rtl;transition:all 0.4s ease;animation:sectionPulse 1.8s ease-in-out infinite;';
   const listItems = sectionMeta.map((m) => {
     const item = document.createElement('div');
-    item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(148,163,184,0.05);border:1px solid rgba(148,163,184,0.1);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#475569;direction:rtl;transition:all 0.4s ease;';
-    item.innerHTML = `<span style="opacity:0.35;font-size:0.85rem;">○</span><span>${m.icon} ${m.label}</span>`;
+    item.style.cssText = pendingStyle;
+    item.innerHTML = `<span style="font-size:0.8rem;opacity:0.5;">⏳</span><span>${m.icon} ${m.label}</span>`;
     if (listEl) listEl.appendChild(item);
     return item;
   });
+
+  // إضافة keyframe للنبض إن لم يكن موجوداً
+  if (!document.getElementById('sectionPulseStyle')) {
+    const st = document.createElement('style');
+    st.id = 'sectionPulseStyle';
+    st.textContent = '@keyframes sectionPulse{0%,100%{opacity:0.55;}50%{opacity:1;}}';
+    document.head.appendChild(st);
+  }
 
   let doneCount = 0;
   const sectionTexts = new Array(10);
@@ -3367,15 +3377,18 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
         doneCount++;
 
         // تحويل عنصر القائمة إلى أخضر فور اكتماله
+        // عند اكتمال أول قسم: حدّث رسالة الحالة
+        if (doneCount === 1 && statusEl) statusEl.textContent = '✍️ جاري كتابة الأقسام...';
+
         const item = listItems[idx];
         if (item) {
           item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;direction:rtl;animation:fadeSlide 0.4s ease;';
           item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
         }
 
-        if (barEl)  barEl.style.width     = `${doneCount * 10}%`;
+        if (barEl)  barEl.style.width     = `${Math.max(doneCount * 10, 5)}%`;
         if (textEl) textEl.textContent    = `${doneCount} / 10 أقسام مكتملة`;
-        if (statusEl) statusEl.textContent = `✅ ${doneCount} / 10 أقسام مكتملة`;
+        if (statusEl && doneCount > 1) statusEl.textContent = `✅ ${doneCount} / 10 أقسام مكتملة`;
       })
     ));
 
