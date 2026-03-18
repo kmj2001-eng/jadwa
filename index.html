@@ -2859,17 +2859,9 @@ footer {
                     <span class="btn-pdf-sub">تصميم احترافي</span>
                   </span>
                 </button>
-                <button class="btn-word" onclick="downloadWord()">
-                  <span>📝</span>
-                  <span>تحميل Word</span>
-                </button>
                 <button class="btn-new" onclick="goStep(1)">
                   <span>🔄</span>
                   <span>دراسة جديدة</span>
-                </button>
-                <button class="btn-back" onclick="goStep(3)" style="display:flex;align-items:center;gap:7px;padding:10px 16px;font-size:0.78rem;">
-                  <span>→</span>
-                  <span>تعديل البيانات</span>
                 </button>
               </div>
             </div>
@@ -4519,6 +4511,12 @@ function goStep(n){
   });
   document.getElementById('step-tip').textContent=stepTips[n-1];
   window.scrollTo({top:0,behavior:'smooth'});
+  // إعادة تفعيل زر التوليد عند الرجوع لأي خطوة قبل النتائج
+  if(n <= 3){
+    _studyGenerating = false;
+    const genBtn = document.querySelector('.btn-next[onclick="generateStudy()"]');
+    if(genBtn){ genBtn.disabled=false; genBtn.style.opacity=''; genBtn.style.pointerEvents=''; }
+  }
 }
 function pickSector(btn,name){
   document.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('selected'));
@@ -4912,6 +4910,13 @@ function unlockStudy(){
 }
 
 function downloadPDF(){
+  // التحقق من تسجيل الدخول أولاً
+  if(!localStorage.getItem('user_data')){
+    window._pendingPdfAfterLogin = true;
+    showToast('💡 يرجى تسجيل الدخول لتحميل الدراسة');
+    openAuthModal('login', {pdfHint:true});
+    return;
+  }
   if(!window._studyUnlocked){
     document.getElementById('study-paywall')?.scrollIntoView({behavior:'smooth'});
     showToast('⚠️ أكمل الاشتراك لتحميل الدراسة كاملة');
@@ -5798,6 +5803,13 @@ function openSavedStudy(id) {
 }
 
 function exportReadyStudyPDF() {
+  // التحقق من تسجيل الدخول أولاً
+  if(!localStorage.getItem('user_data')){
+    window._pendingReadyPdfAfterLogin = true;
+    showToast('💡 يرجى تسجيل الدخول لتحميل الدراسة');
+    openAuthModal('login', {pdfHint:true});
+    return;
+  }
   const body    = document.getElementById('study-viewer-body');
   const titleEl = document.getElementById('study-viewer-title');
   const title   = (titleEl && titleEl.textContent.trim()) || 'دراسة الجدوى';
@@ -5974,6 +5986,18 @@ function setAuthUI(user) {
   if (mli) mli.style.display = 'none';
   const mlo = document.getElementById('mobile-logout-item');
   if (mlo) mlo.style.display = '';
+  // ── تنفيذ إجراء PDF المعلق بعد تسجيل الدخول ──
+  if (window._pendingPdfAfterLogin) {
+    window._pendingPdfAfterLogin = false;
+    setTimeout(()=>{
+      showToast('✅ تم تسجيل الدخول — جاري تصدير الدراسة...');
+      if (window._fullStudyText) exportPDF();
+    }, 600);
+  }
+  if (window._pendingReadyPdfAfterLogin) {
+    window._pendingReadyPdfAfterLogin = false;
+    setTimeout(()=>{ exportReadyStudyPDF(); }, 600);
+  }
 }
 
 function authClear() {
@@ -5992,10 +6016,13 @@ function authClear() {
 }
 
 // ── Modal Controls ──────────────────────────────────────────
-function openAuthModal(screen) {
+function openAuthModal(screen, opts) {
   document.getElementById('auth-modal').classList.add('open');
   switchAuthScreen(screen || 'login');
   clearAuthError();
+  // hint banner للـ PDF
+  const hint = document.getElementById('auth-pdf-hint');
+  if (hint) hint.style.display = (opts && opts.pdfHint) ? '' : 'none';
 }
 function closeAuthModal() {
   document.getElementById('auth-modal').classList.remove('open');
@@ -6511,6 +6538,10 @@ function startPaymentForStudy() {
         <button class="auth-tab"        id="tab-register" onclick="switchAuthScreen('register')">حساب جديد</button>
       </div>
 
+      <!-- hint: يظهر عند طلب PDF قبل تسجيل الدخول -->
+      <div id="auth-pdf-hint" style="display:none;background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.06));border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:#93c5fd;text-align:center;line-height:1.6;">
+        <span style="font-size:1rem;">📄</span> سجّل الدخول أو أنشئ حساباً مجانياً<br>لتحميل دراستك بصيغة <strong>PDF</strong> احترافية
+      </div>
       <!-- رسالة الخطأ المشتركة -->
       <div class="auth-error" id="auth-error"></div>
 
