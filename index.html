@@ -2950,18 +2950,37 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
 أنشئ دراسة الجدوى الكاملة الآن بجميع أقسامها مع جداول HTML دقيقة للأرقام المالية.`;
 
-  // ── دالة مساعدة: تستقبل SSE stream لجزء واحد ──────────────
-  async function streamPart(partNum, combinedText) {
-    const loaderText = document.getElementById('study-status-msg');
-    const partLabel  = partNum === 1
-      ? '📝 الجزء الأول (1/2) — التحليل الاستراتيجي والسوقي...'
-      : '📊 الجزء الثاني (2/2) — التحليل المالي والتنفيذي...';
-    if (loaderText) loaderText.textContent = partLabel;
+  // ── بيانات الأقسام العشرة ────────────────────────────────
+  const sectionMeta = [
+    { id:1,  icon:'📋', label:'الملخص التنفيذي'                  },
+    { id:2,  icon:'🎯', label:'الإطار الاستراتيجي'                },
+    { id:3,  icon:'📊', label:'الدراسة السوقية والتسويقية'          },
+    { id:4,  icon:'⚙️', label:'الدراسة الفنية والتشغيلية'          },
+    { id:5,  icon:'⚖️', label:'الدراسة القانونية والتنظيمية'       },
+    { id:6,  icon:'💰', label:'الدراسة المالية الشاملة'            },
+    { id:7,  icon:'🛡️', label:'إدارة المخاطر'                     },
+    { id:8,  icon:'🗓️', label:'خطة التنفيذ والإطار الزمني'        },
+    { id:9,  icon:'🌱', label:'الأثر البيئي والاجتماعي'            },
+    { id:10, icon:'🏆', label:'الخلاصة والتوصيات النهائية'         },
+  ];
+
+  // ── دالة مساعدة: تستقبل SSE stream لقسم واحد ─────────────
+  async function streamSection(secNum) {
+    const meta      = sectionMeta[secNum - 1];
+    const statusEl  = document.getElementById('study-status-msg');
+    const iconEl    = document.getElementById('study-current-icon');
+    const sectionEl = document.getElementById('study-current-section');
+    const barEl     = document.getElementById('study-progress-bar');
+
+    if (iconEl)    iconEl.textContent    = meta.icon;
+    if (sectionEl) sectionEl.textContent = `${secNum}/10 — ${meta.label}`;
+    if (statusEl)  statusEl.textContent  = 'جاري التحليل والكتابة...';
+    if (barEl)     barEl.style.width     = `${(secNum - 1) * 10}%`;
 
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, part: partNum })
+      body: JSON.stringify({ prompt, section: secNum }),
     });
 
     if (!res.ok) {
@@ -2971,54 +2990,59 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
 
     const reader  = res.body.getReader();
     const decoder = new TextDecoder();
-    let buffer    = '';
-    let partText  = '';
-    let streamError = null;
+    let buffer = '', secText = '', streamErr = null;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop();
-
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const raw = line.slice(6).trim();
         try {
-          const parsed = JSON.parse(raw);
-          if (parsed.error) { streamError = parsed.error; break; }
-          if (parsed.chunk) {
-            partText += parsed.chunk;
-            const totalWords = (combinedText + partText).split(/\s+/).length;
-            if (loaderText) loaderText.textContent =
-              `✍️ الجزء ${partNum}/2 — ${totalWords.toLocaleString('ar-SA')} كلمة`;
+          const p = JSON.parse(raw);
+          if (p.error) { streamErr = p.error; break; }
+          if (p.chunk) {
+            secText += p.chunk;
+            if (statusEl)
+              statusEl.textContent = `✍️ ${meta.label} — ${secText.split(/\s+/).length.toLocaleString('ar-SA')} كلمة`;
           }
-          if (parsed.done && parsed.text) partText = parsed.text;
+          if (p.done && p.text) secText = p.text;
         } catch (_) {}
       }
-      if (streamError) break;
+      if (streamErr) break;
     }
 
-    if (streamError) throw new Error(streamError);
-    return partText;
+    if (streamErr) throw new Error(streamErr);
+    return secText;
   }
 
-  // ── تشغيل الجزأين تباعاً ───────────────────────────────────
-  let fullText = '';
+  // ── تشغيل الأقسام العشرة تباعاً ─────────────────────────
+  let fullText = '', doneCount = 0;
   try {
-    // الجزء الأول: الأقسام 1-5
-    const part1 = await streamPart(1, '');
-    fullText = part1;
+    for (let s = 1; s <= 10; s++) {
+      const secText = await streamSection(s);
+      fullText += (doneCount > 0 ? '\n\n' : '') + secText;
+      doneCount++;
 
-    // إشعار انتهاء الجزء الأول وبدء الثاني
-    const loaderText = document.getElementById('study-status-msg');
-    if (loaderText) loaderText.textContent = '✅ الجزء الأول مكتمل — جاري توليد الجزء الثاني...';
+      // أضف القسم المكتمل إلى قائمة التقدم
+      const listEl = document.getElementById('study-completed-list');
+      if (listEl) {
+        const m    = sectionMeta[s - 1];
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.15);border-radius:8px;padding:5px 12px;font-size:0.75rem;color:#34D399;animation:fadeSlide 0.4s ease;direction:rtl;';
+        item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${m.icon} ${m.label}</span>`;
+        listEl.prepend(item);
+      }
 
-    // الجزء الثاني: الأقسام 6-10
-    const part2 = await streamPart(2, part1);
-    fullText = part1.trimEnd() + '\n\n---\n\n' + part2.trimStart();
+      // تحديث شريط التقدم والعداد
+      const barEl  = document.getElementById('study-progress-bar');
+      const textEl = document.getElementById('study-progress-text');
+      if (barEl)  barEl.style.width = `${doneCount * 10}%`;
+      if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
+    }
 
     hideStudyLoader(studyLoader);
     if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
@@ -3158,58 +3182,45 @@ function startPaymentForStudy(){
   const overlay = document.createElement('div');
   overlay.id = 'study-loader';
   overlay.style.cssText = `
-    position:fixed; inset:0; z-index:9999;
-    background:rgba(11,17,32,0.92);
-    backdrop-filter:blur(12px);
-    display:flex; align-items:center; justify-content:center;
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(7,12,24,0.96);
+    backdrop-filter:blur(20px);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Cairo',sans-serif;
   `;
   overlay.innerHTML = `
-    <div style="background:linear-gradient(145deg,#101828,#162035);border:1px solid rgba(59,130,246,0.3);border-radius:24px;padding:48px 52px;text-align:center;max-width:420px;width:90%;box-shadow:0 40px 80px rgba(0,0,0,0.6);font-family:'Cairo',sans-serif;">
-      <div style="width:72px;height:72px;margin:0 auto 24px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));border:2px solid rgba(59,130,246,0.4);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:studyPulse 1.5s ease-in-out infinite;">🤖</div>
-      <div style="font-size:1.1rem;font-weight:700;color:#E8EEFF;margin-bottom:8px;">جاري إعداد دراسة الجدوى</div>
-      <div id="study-status-msg" style="font-size:0.82rem;color:rgba(220,230,255,0.6);margin-bottom:28px;line-height:1.8;min-height:48px;">يحلل الذكاء الاصطناعي بيانات مشروعك...</div>
-      <div style="background:rgba(255,255,255,0.07);border-radius:20px;height:6px;margin-bottom:16px;overflow:hidden;">
-        <div id="study-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8);border-radius:20px;transition:width 0.6s ease;"></div>
+    <div style="background:linear-gradient(155deg,#0C1929,#101E30);border:1px solid rgba(59,130,246,0.18);border-radius:28px;padding:36px 42px;text-align:center;max-width:500px;width:92%;box-shadow:0 60px 120px rgba(0,0,0,0.85);">
+
+      <!-- أيقونة القسم الحالي -->
+      <div id="study-current-icon" style="width:76px;height:76px;margin:0 auto 16px;background:linear-gradient(135deg,rgba(59,130,246,0.14),rgba(59,130,246,0.04));border:1.5px solid rgba(59,130,246,0.28);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;animation:studyPulse 2s ease-in-out infinite;">📋</div>
+
+      <!-- العنوان -->
+      <div style="font-size:1.08rem;font-weight:700;color:#E8EEFF;margin-bottom:4px;letter-spacing:-0.01em;">ذكاء الأعمال يكتب دراستك</div>
+
+      <!-- اسم القسم الحالي -->
+      <div id="study-current-section" style="font-size:0.88rem;color:#60A5FA;font-weight:600;margin-bottom:6px;min-height:22px;direction:rtl;transition:all 0.4s ease;">الملخص التنفيذي</div>
+
+      <!-- رسالة الحالة -->
+      <div id="study-status-msg" style="font-size:0.75rem;color:rgba(200,220,255,0.42);margin-bottom:20px;min-height:18px;direction:rtl;"></div>
+
+      <!-- شريط التقدم -->
+      <div style="background:rgba(255,255,255,0.05);border-radius:99px;height:7px;margin-bottom:6px;overflow:hidden;">
+        <div id="study-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#38BDF8 55%,#34D399);border-radius:99px;transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>
       </div>
-      <div style="font-size:0.75rem;color:rgba(220,230,255,0.4);display:flex;align-items:center;justify-content:center;gap:6px;">
-        <span>⏱</span>
-        <span>الوقت المتبقي تقريباً:</span>
-        <span id="study-countdown" style="color:#60A5FA;font-weight:700;">30 ثانية</span>
-      </div>
+
+      <!-- عداد الأقسام -->
+      <div id="study-progress-text" style="font-size:0.7rem;color:rgba(200,220,255,0.28);text-align:right;margin-bottom:22px;direction:rtl;">0 / 10 أقسام</div>
+
+      <!-- قائمة الأقسام المكتملة -->
+      <div id="study-completed-list" style="display:flex;flex-direction:column;gap:5px;max-height:190px;overflow:hidden;direction:rtl;"></div>
     </div>
-    <style>@keyframes studyPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(59,130,246,0);}50%{transform:scale(1.05);box-shadow:0 0 20px rgba(59,130,246,0.3);}}</style>
+    <style>
+      @keyframes studyPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(59,130,246,0);}50%{transform:scale(1.045);box-shadow:0 0 30px rgba(59,130,246,0.2);}}
+      @keyframes fadeSlide{from{opacity:0;transform:translateY(-7px);}to{opacity:1;transform:translateY(0);}}
+    </style>
   `;
   document.body.appendChild(overlay);
-
-  const messages = [
-    'يحلل الذكاء الاصطناعي بيانات مشروعك...',
-    'يدرس حجم السوق والمنافسين في منطقتك...',
-    'يحسب التكاليف الاستثمارية والتشغيلية...',
-    'يبني الإسقاطات المالية لـ 5 سنوات...',
-    'يحسب IRR و NPV ونقطة التعادل...',
-    'يُعد تحليل SWOT والمخاطر...',
-    'يكتب التوصية النهائية والخلاصة...',
-    'مراجعة الدراسة وضبط الأرقام...',
-    'اللمسات الأخيرة على دراستك...',
-  ];
-
-  let seconds = 90, msgIndex = 0;
-  const interval = setInterval(() => {
-    seconds--;
-    const progress = ((90 - seconds) / 90) * 100;
-    const bar = document.getElementById('study-progress-bar');
-    const countdown = document.getElementById('study-countdown');
-    const statusMsg = document.getElementById('study-status-msg');
-    if (bar) bar.style.width = progress + '%';
-    if (countdown) countdown.textContent = seconds > 0 ? seconds + ' ثانية' : 'قريباً جداً...';
-    if (statusMsg && !statusMsg.textContent.includes('✍️')) {
-      const idx = Math.floor(((90 - seconds) / 90) * messages.length);
-      statusMsg.textContent = messages[Math.min(idx, messages.length - 1)];
-    }
-    if (seconds <= 0) clearInterval(interval);
-  }, 1000);
-
-  overlay._interval = interval;
+  overlay._interval = null;
   return overlay;
 }
 
