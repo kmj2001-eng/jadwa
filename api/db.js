@@ -10,68 +10,114 @@ function getSQL() {
 // ──────────────────────────────────────────────────────────
 export async function setupTables() {
   const sql = getSQL();
+
+  // 1. users
   await sql`CREATE TABLE IF NOT EXISTS users (
-    id          SERIAL PRIMARY KEY,
-    email       VARCHAR(255) UNIQUE NOT NULL,
-    phone       VARCHAR(50),
-    name        VARCHAR(255),
-    created_at  TIMESTAMP DEFAULT NOW()
+    id                   SERIAL PRIMARY KEY,
+    name                 TEXT NOT NULL,
+    email                TEXT UNIQUE NOT NULL,
+    password_hash        TEXT NOT NULL,
+    phone                TEXT,
+    reset_token          TEXT,
+    reset_token_expires  TIMESTAMP WITH TIME ZONE,
+    created_at           TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   )`;
+
+  // 2. orders
   await sql`CREATE TABLE IF NOT EXISTS orders (
-    id                SERIAL PRIMARY KEY,
-    user_id           INTEGER REFERENCES users(id),
-    paymob_order_id   VARCHAR(255) UNIQUE,
-    amount            INTEGER NOT NULL,
-    currency          VARCHAR(10) DEFAULT 'SAR',
-    status            VARCHAR(50) DEFAULT 'pending',
-    plan              VARCHAR(50) DEFAULT 'basic',
-    created_at        TIMESTAMP DEFAULT NOW(),
-    updated_at        TIMESTAMP DEFAULT NOW()
+    id               SERIAL PRIMARY KEY,
+    user_id          INTEGER REFERENCES users(id),
+    amount           INTEGER NOT NULL,
+    currency         TEXT DEFAULT 'SAR',
+    status           TEXT DEFAULT 'pending',
+    plan             TEXT DEFAULT 'basic',
+    paymob_order_id  TEXT UNIQUE,
+    payment_id       TEXT,
+    created_at       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   )`;
+
+  // 3. feasibility_studies
+  await sql`CREATE TABLE IF NOT EXISTS feasibility_studies (
+    id            SERIAL PRIMARY KEY,
+    user_id       INTEGER REFERENCES users(id),
+    order_id      INTEGER REFERENCES orders(id),
+    project_name  TEXT NOT NULL,
+    input_data    JSONB,
+    ai_output     TEXT,
+    metadata      JSONB,
+    word_file_url TEXT,
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  )`;
+
+  // 4. invoices
+  await sql`CREATE TABLE IF NOT EXISTS invoices (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER REFERENCES users(id),
+    order_id        INTEGER REFERENCES orders(id),
+    invoice_number  TEXT UNIQUE,
+    amount          INTEGER NOT NULL,
+    currency        TEXT DEFAULT 'SAR',
+    status          TEXT DEFAULT 'paid',
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  )`;
+
+  // 5. user_points
   await sql`CREATE TABLE IF NOT EXISTS user_points (
     id            SERIAL PRIMARY KEY,
     user_id       INTEGER REFERENCES users(id),
     order_id      INTEGER REFERENCES orders(id),
     total_points  INTEGER DEFAULT 5,
     used_points   INTEGER DEFAULT 0,
-    expires_at    TIMESTAMP DEFAULT (NOW() + INTERVAL '6 months'),
-    created_at    TIMESTAMP DEFAULT NOW()
+    expires_at    TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '6 months'),
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   )`;
-  await sql`CREATE TABLE IF NOT EXISTS studies (
-    id          SERIAL PRIMARY KEY,
-    user_id     INTEGER REFERENCES users(id),
-    order_id    INTEGER REFERENCES orders(id),
-    title       VARCHAR(500),
-    content     TEXT,
-    metadata    JSONB,
-    created_at  TIMESTAMP DEFAULT NOW()
-  )`;
-  await sql`CREATE TABLE IF NOT EXISTS invoices (
-    id              SERIAL PRIMARY KEY,
-    order_id        INTEGER REFERENCES orders(id),
-    user_id         INTEGER REFERENCES users(id),
-    amount          INTEGER NOT NULL,
-    currency        VARCHAR(10) DEFAULT 'SAR',
-    status          VARCHAR(50) DEFAULT 'pending',
-    invoice_number  VARCHAR(100) UNIQUE,
-    created_at      TIMESTAMP DEFAULT NOW()
-  )`;
+
   return { success: true, message: 'تم إنشاء جميع الجداول بنجاح' };
 }
 
-// إضافة أعمدة Auth لجدول users (migration آمن)
+// migration آمن للجداول الموجودة → يضيف الأعمدة الناقصة بدون حذف بيانات
 export async function migrateUsersTable() {
   const sql = getSQL();
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS name          VARCHAR(255)`;
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone         VARCHAR(50)`;
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)`;
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token   VARCHAR(255)`;
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP`;
-  // إزالة قيد NOT NULL من عمود password القديم إن وجد
+  // users
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS name                 TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone                TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash        TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token          TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires  TIMESTAMP WITH TIME ZONE`;
+  try { await sql`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`; } catch (_) {}
+
+  // orders
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan        TEXT DEFAULT 'basic'`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_id  TEXT`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`;
+
+  // إنشاء feasibility_studies إن لم تكن موجودة (احتياط)
+  await sql`CREATE TABLE IF NOT EXISTS feasibility_studies (
+    id            SERIAL PRIMARY KEY,
+    user_id       INTEGER REFERENCES users(id),
+    order_id      INTEGER REFERENCES orders(id),
+    project_name  TEXT NOT NULL,
+    input_data    JSONB,
+    ai_output     TEXT,
+    metadata      JSONB,
+    word_file_url TEXT,
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  )`;
+
+  // نقل البيانات من studies → feasibility_studies إن وجدت
   try {
-    await sql`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`;
-  } catch (_) { /* العمود غير موجود أو لا يوجد قيد */ }
-  return { success: true, message: 'تم تحديث جدول users بنجاح' };
+    await sql`
+      INSERT INTO feasibility_studies (user_id, order_id, project_name, ai_output, metadata, created_at)
+      SELECT user_id, order_id, title, content, metadata, created_at
+      FROM studies
+      WHERE NOT EXISTS (
+        SELECT 1 FROM feasibility_studies f WHERE f.user_id = studies.user_id AND f.project_name = studies.title
+      )
+    `;
+  } catch (_) { /* جدول studies قد لا يوجد */ }
+
+  return { success: true, message: 'تم تحديث قاعدة البيانات بنجاح' };
 }
 
 // ──────────────────────────────────────────────────────────

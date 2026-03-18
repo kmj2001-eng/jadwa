@@ -4650,13 +4650,14 @@ async function generateStudy(){
     details,
   };
 
-  // ── حفظ meta للدراسة للاستخدام في لوحة التحكم ──
+  // ── حفظ meta وبيانات النموذج للاستخدام في لوحة التحكم وقاعدة البيانات ──
   window._currentStudyMeta = {
     sector  : selSector || 'تجارة عامة',
     capital : capital,
     location: location,
     workers : workers,
   };
+  window._currentStudyForm = formData; // input_data كامل لقاعدة البيانات
 
   // ── بيانات الأقسام العشرة ────────────────────────────────
   const sectionMeta = [
@@ -5776,8 +5777,9 @@ function _getLoggedUser() {
 }
 
 async function saveStudy(title, content) {
-  const date     = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
-  const metadata = window._currentStudyMeta || {};
+  const date       = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const metadata   = window._currentStudyMeta   || {};
+  const input_data = window._currentStudyForm   || null; // بيانات النموذج الكاملة
 
   // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
   const user = _getLoggedUser();
@@ -5786,7 +5788,7 @@ async function saveStudy(title, content) {
       const res = await fetch('/api/studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-        body: JSON.stringify({ title, content, metadata })
+        body: JSON.stringify({ title, content, metadata, input_data })
       });
       if (res.ok) {
         showToast('✅ تم حفظ الدراسة في حسابك');
