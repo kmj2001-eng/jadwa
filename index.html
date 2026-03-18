@@ -4650,6 +4650,14 @@ async function generateStudy(){
     details,
   };
 
+  // ── حفظ meta للدراسة للاستخدام في لوحة التحكم ──
+  window._currentStudyMeta = {
+    sector  : selSector || 'تجارة عامة',
+    capital : capital,
+    location: location,
+    workers : workers,
+  };
+
   // ── بيانات الأقسام العشرة ────────────────────────────────
   const sectionMeta = [
     { id:1,  icon:'📋', label:'الملخص التنفيذي'                  },
@@ -5757,7 +5765,8 @@ function _getLoggedUser() {
 }
 
 async function saveStudy(title, content) {
-  const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const date     = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const metadata = window._currentStudyMeta || {};
 
   // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
   const user = _getLoggedUser();
@@ -5766,7 +5775,7 @@ async function saveStudy(title, content) {
       const res = await fetch('/api/studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-        body: JSON.stringify({ title, content })
+        body: JSON.stringify({ title, content, metadata })
       });
       if (res.ok) {
         showToast('✅ تم حفظ الدراسة في حسابك');
@@ -5786,7 +5795,7 @@ async function saveStudy(title, content) {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     const idx = local.findIndex(s => s.title === title);
     if (idx !== -1) local.splice(idx, 1);
-    local.unshift({ id: 'local_' + Date.now(), title, content, date });
+    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata });
     if (local.length > 30) local.splice(30);
     localStorage.setItem('saved_studies', JSON.stringify(local));
     if (!user || !user.id) {
@@ -5814,10 +5823,11 @@ async function loadDashboardStudies() {
       if (res.ok) {
         const data = await res.json();
         studies = (data.studies || []).map(s => ({
-          id: 'db_' + s.id,
-          dbId: s.id,
-          title: s.title,
-          date: new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+          id      : 'db_' + s.id,
+          dbId    : s.id,
+          title   : s.title,
+          metadata: s.metadata || {},
+          date    : new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
         }));
       }
     } catch(e) { console.warn('loadDashboardStudies DB:', e); }
@@ -5840,12 +5850,18 @@ async function loadDashboardStudies() {
 
   if (noRow) noRow.style.display = 'none';
   studies.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.className = 'study-row';
+    const tr      = document.createElement('tr');
+    tr.className  = 'study-row';
     const idParam = JSON.stringify(s.id);
+    const meta    = s.metadata || {};
+    const sector  = meta.sector   || '—';
+    const capital = meta.capital  || '—';
+    const irr     = meta.irr      || '—';
     tr.innerHTML = `
       <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span></td>
-      <td>—</td><td>—</td><td>—</td>
+      <td style="font-size:0.8rem;color:var(--text2);">${sector}</td>
+      <td style="font-size:0.8rem;color:var(--text2);">${capital}</td>
+      <td style="font-size:0.8rem;color:var(--text2);">${irr}</td>
       <td><span class="sbadge sbadge-done">مكتملة</span></td>
       <td style="font-size:0.75rem;color:var(--text3);">${s.date}
         <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="margin-right:8px;background:none;border:none;cursor:pointer;color:var(--rose);font-size:0.85rem;">🗑</button>

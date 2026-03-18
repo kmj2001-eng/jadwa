@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       }
 
       const rows = await sql`
-        SELECT id, title, created_at
+        SELECT id, title, metadata, created_at
         FROM studies
         WHERE user_id = ${userId}
         ORDER BY created_at DESC
@@ -40,8 +40,10 @@ export default async function handler(req, res) {
 
     // ── POST: حفظ دراسة (upsert بنفس العنوان) ──
     if (req.method === 'POST') {
-      const { title, content } = req.body || {};
+      const { title, content, metadata } = req.body || {};
       if (!title || !content) return res.status(400).json({ error: 'العنوان والمحتوى مطلوبان' });
+
+      const metaJson = metadata ? JSON.stringify(metadata) : null;
 
       const existing = await sql`
         SELECT id FROM studies WHERE user_id = ${userId} AND title = ${title} LIMIT 1
@@ -50,14 +52,14 @@ export default async function handler(req, res) {
       let studyId;
       if (existing.length > 0) {
         await sql`
-          UPDATE studies SET content = ${content}, created_at = NOW()
+          UPDATE studies SET content = ${content}, metadata = ${metaJson}::jsonb, created_at = NOW()
           WHERE id = ${existing[0].id}
         `;
         studyId = existing[0].id;
       } else {
         const rows = await sql`
-          INSERT INTO studies (user_id, title, content)
-          VALUES (${userId}, ${title}, ${content})
+          INSERT INTO studies (user_id, title, content, metadata)
+          VALUES (${userId}, ${title}, ${content}, ${metaJson}::jsonb)
           RETURNING id
         `;
         studyId = rows[0].id;
