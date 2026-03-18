@@ -3353,60 +3353,63 @@ ${details ? 'تفاصيل إضافية: ' + details : ''}
     return item;
   });
 
-  // ── التشغيل التسلسلي — قسم بعد قسم فوراً ─────────────────
-  let fullText = '', doneCount = 0;
-  try {
-    for (let s = 1; s <= 10; s++) {
-      const meta = sectionMeta[s - 1];
-      const item = listItems[s - 1];
+  // ── التشغيل المتوازي — كل الأقسام تبدأ في نفس الوقت ──────
+  const sectionTexts = new Array(10).fill('');
+  let doneCount = 0;
 
-      // إظهار القسم الحالي
-      if (iconEl)    iconEl.textContent    = meta.icon;
-      if (sectionEl) sectionEl.textContent = `${s}/10 — ${meta.label}`;
-      if (statusEl)  statusEl.textContent  = '✍️ جاري الكتابة...';
-      if (item) {
-        item.style.cssText = ACTIVE_STYLE;
-        item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label}</span>`;
-      }
+  // تشغيل كل الأقسام نشطة فوراً
+  if (iconEl)    iconEl.textContent    = '⚡';
+  if (sectionEl) sectionEl.textContent = 'جميع الأقسام تُكتب الآن';
+  if (statusEl)  statusEl.textContent  = '✍️ جاري التوليد المتوازي...';
 
-      // streaming مع تحديث عداد الكلمات في الوقت الفعلي
-      let secText = '';
-      try {
-        secText = await streamSection(s, partial => {
-          const wc = partial.trim().split(/\s+/).length;
-          if (statusEl) statusEl.textContent = `✍️ ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة`;
-        });
-      } catch(_) {
-        // إعادة محاولة واحدة
+  listItems.forEach((item, i) => {
+    const m = sectionMeta[i];
+    item.style.cssText = ACTIVE_STYLE;
+    item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
+  });
+
+  const sectionPromises = sectionMeta.map((meta, i) => {
+    const s = i + 1;
+    const item = listItems[i];
+
+    const run = () => streamSection(s, partial => {
+      const wc = partial.trim().split(/\s+/).length;
+      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة</span>`;
+    });
+
+    return run()
+      .catch(async () => {
         await new Promise(r => setTimeout(r, 1500));
-        try { secText = await streamSection(s, () => {}); } catch(__) { secText = ''; }
-      }
-
-      if (secText) fullText += (doneCount > 0 ? '\n\n' : '') + secText;
-      doneCount++;
-
-      // تحويل العنصر لأخضر
-      if (item) {
+        return run().catch(() => '');
+      })
+      .then(text => {
+        sectionTexts[i] = text || '';
+        doneCount++;
         item.style.cssText = DONE_STYLE;
         item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
-      }
-      if (barEl)  barEl.style.width  = `${doneCount * 10}%`;
-      if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
-    }
+        if (barEl)  barEl.style.width  = `${doneCount * 10}%`;
+        if (textEl) textEl.textContent = `${doneCount} / 10 أقسام مكتملة`;
+        if (statusEl) statusEl.textContent = doneCount < 10
+          ? `✍️ جاري إنهاء ${10 - doneCount} أقسام متبقية...`
+          : '✅ اكتملت جميع الأقسام!';
+      });
+  });
 
+  try {
+    await Promise.all(sectionPromises);
+    const fullText = sectionTexts.filter(t => t.trim()).join('\n\n');
     hideStudyLoader(studyLoader);
     if (!fullText.trim()) throw new Error('لم يتم استلام محتوى');
     showResult(fullText);
-
   } catch(e) {
     hideStudyLoader(studyLoader);
-    const errMsg = e.message || 'خطأ في الاتصال';
-    if (fullText && fullText.split(/\s+/).length > 200) {
-      showToast('⚠️ الدراسة جزئية: ' + errMsg);
-      showResult(fullText);
+    const partial = sectionTexts.filter(t => t.trim()).join('\n\n');
+    if (partial && partial.split(/\s+/).length > 200) {
+      showToast('⚠️ الدراسة جزئية');
+      showResult(partial);
     } else {
       goStep(3);
-      showToast('❌ خطأ في التوليد: ' + errMsg, 8000);
+      showToast('❌ خطأ في التوليد: ' + (e.message || 'خطأ في الاتصال'), 8000);
     }
   }
 }
