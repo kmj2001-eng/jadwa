@@ -14,25 +14,6 @@ export default async function handler(req, res) {
 
   try {
 
-    // ── migration واحد آمن بـ PL/pgSQL block — يضيف الأعمدة مرة واحدة ──
-    await sql`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                       WHERE table_name='feasibility_studies' AND column_name='metadata') THEN
-          ALTER TABLE feasibility_studies ADD COLUMN metadata JSONB;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                       WHERE table_name='feasibility_studies' AND column_name='input_data') THEN
-          ALTER TABLE feasibility_studies ADD COLUMN input_data JSONB;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                       WHERE table_name='feasibility_studies' AND column_name='status') THEN
-          ALTER TABLE feasibility_studies ADD COLUMN status TEXT DEFAULT 'completed';
-        END IF;
-      END $$
-    `;
-
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
       const studyId = req.query.id ? parseInt(req.query.id) : null;
@@ -65,9 +46,9 @@ export default async function handler(req, res) {
       const { title, content, metadata, input_data, status } = req.body || {};
       if (!title || !content) return res.status(400).json({ error: 'العنوان والمحتوى مطلوبان' });
 
-      const metaJson      = metadata   ? JSON.stringify(metadata)   : null;
-      const inputDataJson = input_data ? JSON.stringify(input_data) : null;
-      const studyStatus   = status === 'draft' ? 'draft' : 'completed';
+      const metaVal      = metadata   ? JSON.stringify(metadata)   : null;
+      const inputDataVal = input_data ? JSON.stringify(input_data) : null;
+      const studyStatus  = status === 'draft' ? 'draft' : 'completed';
 
       const existing = await sql`
         SELECT id FROM feasibility_studies
@@ -80,8 +61,8 @@ export default async function handler(req, res) {
         await sql`
           UPDATE feasibility_studies
           SET ai_output  = ${content},
-              metadata   = CASE WHEN ${metaJson} IS NULL THEN NULL ELSE ${metaJson}::jsonb END,
-              input_data = CASE WHEN ${inputDataJson} IS NULL THEN NULL ELSE ${inputDataJson}::jsonb END,
+              metadata   = ${metaVal}::jsonb,
+              input_data = ${inputDataVal}::jsonb,
               status     = ${studyStatus},
               created_at = NOW()
           WHERE id = ${existing[0].id}
@@ -89,13 +70,10 @@ export default async function handler(req, res) {
         studyId = existing[0].id;
       } else {
         const rows = await sql`
-          INSERT INTO feasibility_studies (user_id, project_name, ai_output, metadata, input_data, status)
-          VALUES (
-            ${userId}, ${title}, ${content},
-            CASE WHEN ${metaJson} IS NULL THEN NULL ELSE ${metaJson}::jsonb END,
-            CASE WHEN ${inputDataJson} IS NULL THEN NULL ELSE ${inputDataJson}::jsonb END,
-            ${studyStatus}
-          )
+          INSERT INTO feasibility_studies
+            (user_id, project_name, ai_output, metadata, input_data, status)
+          VALUES
+            (${userId}, ${title}, ${content}, ${metaVal}::jsonb, ${inputDataVal}::jsonb, ${studyStatus})
           RETURNING id
         `;
         studyId = rows[0].id;
