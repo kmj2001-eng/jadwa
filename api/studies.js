@@ -20,8 +20,13 @@ export default async function handler(req, res) {
 
       if (studyId) {
         const rows = await sql`
-          SELECT id, project_name AS title, ai_output AS content, metadata, input_data,
-                 COALESCE(status, 'completed') AS status, created_at
+          SELECT id,
+                 project_name                          AS title,
+                 ai_output                             AS content,
+                 metadata,
+                 input_data,
+                 COALESCE(metadata->>'status', 'completed') AS status,
+                 created_at
           FROM feasibility_studies
           WHERE id = ${studyId} AND user_id = ${userId}
           LIMIT 1
@@ -31,8 +36,12 @@ export default async function handler(req, res) {
       }
 
       const rows = await sql`
-        SELECT id, project_name AS title, metadata, input_data,
-               COALESCE(status, 'completed') AS status, created_at
+        SELECT id,
+               project_name                          AS title,
+               metadata,
+               input_data,
+               COALESCE(metadata->>'status', 'completed') AS status,
+               created_at
         FROM feasibility_studies
         WHERE user_id = ${userId}
         ORDER BY created_at DESC
@@ -46,9 +55,11 @@ export default async function handler(req, res) {
       const { title, content, metadata, input_data, status } = req.body || {};
       if (!title || !content) return res.status(400).json({ error: 'العنوان والمحتوى مطلوبان' });
 
-      const metaVal      = metadata   ? JSON.stringify(metadata)   : null;
-      const inputDataVal = input_data ? JSON.stringify(input_data) : null;
+      // دمج status داخل metadata لتجنب الاعتماد على عمود status المنفصل
       const studyStatus  = status === 'draft' ? 'draft' : 'completed';
+      const metaMerged   = { ...(metadata || {}), status: studyStatus };
+      const metaVal      = JSON.stringify(metaMerged);
+      const inputDataVal = input_data ? JSON.stringify(input_data) : null;
 
       const existing = await sql`
         SELECT id FROM feasibility_studies
@@ -63,7 +74,6 @@ export default async function handler(req, res) {
           SET ai_output  = ${content},
               metadata   = ${metaVal}::jsonb,
               input_data = ${inputDataVal}::jsonb,
-              status     = ${studyStatus},
               created_at = NOW()
           WHERE id = ${existing[0].id}
         `;
@@ -71,9 +81,9 @@ export default async function handler(req, res) {
       } else {
         const rows = await sql`
           INSERT INTO feasibility_studies
-            (user_id, project_name, ai_output, metadata, input_data, status)
+            (user_id, project_name, ai_output, metadata, input_data)
           VALUES
-            (${userId}, ${title}, ${content}, ${metaVal}::jsonb, ${inputDataVal}::jsonb, ${studyStatus})
+            (${userId}, ${title}, ${content}, ${metaVal}::jsonb, ${inputDataVal}::jsonb)
           RETURNING id
         `;
         studyId = rows[0].id;
