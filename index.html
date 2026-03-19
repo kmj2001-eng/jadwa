@@ -6242,7 +6242,8 @@ async function saveStudy(title, content) {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     const idx = local.findIndex(s => s.title === title);
     if (idx !== -1) local.splice(idx, 1);
-    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata });
+    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata,
+                    status: window._hasPoints ? 'completed' : 'draft' });
     if (local.length > 30) local.splice(30);
     localStorage.setItem('saved_studies', JSON.stringify(local));
     if (!user || !user.id) {
@@ -6325,7 +6326,8 @@ async function loadDashboardStudies() {
   if (studies.length === 0) {
     try {
       const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
-      studies = local;
+      // الدراسات المحلية القديمة بدون status → افتراضيًا draft (غير مدفوعة)
+      studies = local.map(s => ({ ...s, status: s.status || 'draft' }));
     } catch(e) {}
   }
 
