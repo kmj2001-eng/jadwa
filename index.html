@@ -1279,14 +1279,20 @@ input[type=range]::-webkit-slider-thumb {
   position: absolute;
   inset: 0;
   background: rgba(5, 10, 25, 0.78);
+  z-index: 10;
+  direction: rtl;
+  /* لا padding هنا — المحتوى يُدار بـ sticky inner */
+}
+/* المحتوى الداخلي يتبع التمرير ويبقى مرئياً دائماً */
+.paywall-overlay-inner {
+  position: sticky;
+  top: 68px; /* أسفل الشريط العلوي مباشرةً */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  z-index: 10;
-  padding: 52px 24px 24px;
   text-align: center;
-  direction: rtl;
+  padding: 40px 24px 32px;
+  pointer-events: auto;
 }
 .paywall-overlay-msg {
   font-family: 'Cairo', sans-serif;
@@ -1752,7 +1758,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 .study-viewer-topbar {
-  position:sticky; top:0; z-index:10;
+  position:sticky; top:0; z-index:50;
   background:rgba(8,12,20,0.96); backdrop-filter:blur(12px);
   border-bottom:1px solid var(--border2);
   display:flex; align-items:center; justify-content:space-between;
@@ -5241,14 +5247,16 @@ function showResult(text){
       const overlayDiv = document.createElement('div');
       overlayDiv.className = 'paywall-overlay';
       overlayDiv.innerHTML = `
-        <div style="font-size:3rem;margin-bottom:20px;">🔒</div>
-        <p class="paywall-overlay-msg">
-          عزيزي المستخدم يجب عليكم
-          <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
-          بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
-          لنتمكن من إزالة الحجب عن المحتوى
-        </p>
-        <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+        <div class="paywall-overlay-inner">
+          <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+          <p class="paywall-overlay-msg">
+            عزيزي المستخدم يجب عليكم
+            <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
+            بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
+            لنتمكن من إزالة الحجب عن المحتوى
+          </p>
+          <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+        </div>
       `;
 
       // الغلاف الرئيسي = محتوى مضبّب + overlay فوقه
