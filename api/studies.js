@@ -14,12 +14,10 @@ export default async function handler(req, res) {
 
   try {
 
-    // ── migrations آمنة — تُضاف الأعمدة الناقصة إن لم تكن موجودة ──
-    await Promise.allSettled([
-      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS metadata   JSONB`,
-      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS input_data JSONB`,
-      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status     TEXT DEFAULT 'completed'`,
-    ]);
+    // ── migrations آمنة — تسلسلية لتجنب lock conflict في Neon Serverless ──
+    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS metadata   JSONB`; } catch(_) {}
+    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS input_data JSONB`; } catch(_) {}
+    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status     TEXT DEFAULT 'completed'`; } catch(_) {}
 
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
@@ -68,8 +66,8 @@ export default async function handler(req, res) {
         await sql`
           UPDATE feasibility_studies
           SET ai_output  = ${content},
-              metadata   = ${metaJson}::jsonb,
-              input_data = ${inputDataJson}::jsonb,
+              metadata   = CASE WHEN ${metaJson} IS NULL THEN NULL ELSE ${metaJson}::jsonb END,
+              input_data = CASE WHEN ${inputDataJson} IS NULL THEN NULL ELSE ${inputDataJson}::jsonb END,
               status     = ${studyStatus},
               created_at = NOW()
           WHERE id = ${existing[0].id}
@@ -78,7 +76,12 @@ export default async function handler(req, res) {
       } else {
         const rows = await sql`
           INSERT INTO feasibility_studies (user_id, project_name, ai_output, metadata, input_data, status)
-          VALUES (${userId}, ${title}, ${content}, ${metaJson}::jsonb, ${inputDataJson}::jsonb, ${studyStatus})
+          VALUES (
+            ${userId}, ${title}, ${content},
+            CASE WHEN ${metaJson} IS NULL THEN NULL ELSE ${metaJson}::jsonb END,
+            CASE WHEN ${inputDataJson} IS NULL THEN NULL ELSE ${inputDataJson}::jsonb END,
+            ${studyStatus}
+          )
           RETURNING id
         `;
         studyId = rows[0].id;
