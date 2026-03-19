@@ -14,13 +14,19 @@ export default async function handler(req, res) {
 
   try {
 
+    // ── migration آمن: أضف عمود status إن لم يكن موجوداً ──
+    try {
+      await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed'`;
+    } catch (_) {}
+
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
       const studyId = req.query.id ? parseInt(req.query.id) : null;
 
       if (studyId) {
         const rows = await sql`
-          SELECT id, project_name AS title, ai_output AS content, metadata, input_data, created_at
+          SELECT id, project_name AS title, ai_output AS content, metadata, input_data,
+                 COALESCE(status, 'completed') AS status, created_at
           FROM feasibility_studies
           WHERE id = ${studyId} AND user_id = ${userId}
           LIMIT 1
@@ -30,7 +36,8 @@ export default async function handler(req, res) {
       }
 
       const rows = await sql`
-        SELECT id, project_name AS title, metadata, input_data, created_at
+        SELECT id, project_name AS title, metadata, input_data,
+               COALESCE(status, 'completed') AS status, created_at
         FROM feasibility_studies
         WHERE user_id = ${userId}
         ORDER BY created_at DESC
@@ -41,11 +48,12 @@ export default async function handler(req, res) {
 
     // ── POST: حفظ دراسة (upsert بنفس الاسم) ──
     if (req.method === 'POST') {
-      const { title, content, metadata, input_data } = req.body || {};
+      const { title, content, metadata, input_data, status } = req.body || {};
       if (!title || !content) return res.status(400).json({ error: 'العنوان والمحتوى مطلوبان' });
 
       const metaJson      = metadata   ? JSON.stringify(metadata)   : null;
       const inputDataJson = input_data ? JSON.stringify(input_data) : null;
+      const studyStatus   = status === 'draft' ? 'draft' : 'completed';
 
       const existing = await sql`
         SELECT id FROM feasibility_studies
@@ -60,14 +68,15 @@ export default async function handler(req, res) {
           SET ai_output  = ${content},
               metadata   = ${metaJson}::jsonb,
               input_data = ${inputDataJson}::jsonb,
+              status     = ${studyStatus},
               created_at = NOW()
           WHERE id = ${existing[0].id}
         `;
         studyId = existing[0].id;
       } else {
         const rows = await sql`
-          INSERT INTO feasibility_studies (user_id, project_name, ai_output, metadata, input_data)
-          VALUES (${userId}, ${title}, ${content}, ${metaJson}::jsonb, ${inputDataJson}::jsonb)
+          INSERT INTO feasibility_studies (user_id, project_name, ai_output, metadata, input_data, status)
+          VALUES (${userId}, ${title}, ${content}, ${metaJson}::jsonb, ${inputDataJson}::jsonb, ${studyStatus})
           RETURNING id
         `;
         studyId = rows[0].id;

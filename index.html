@@ -1262,6 +1262,70 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer; font-family:'Cairo',sans-serif; transition: all 0.2s;
 }
 .paywall-btn-secondary:hover { border-color: rgba(59,130,246,0.5); color: var(--text); }
+/* ── غلاف الحجب الشفاف — Best Practice Paywall ── */
+.paywall-blur-wrapper {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.paywall-blur-content {
+  filter: blur(7px);
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.paywall-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 10, 25, 0.78);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 48px 24px;
+  text-align: center;
+  direction: rtl;
+}
+.paywall-overlay-msg {
+  font-family: 'Cairo', sans-serif;
+  color: #e2e8f0;
+  font-size: 1.02rem;
+  line-height: 2.2;
+  max-width: 520px;
+  margin-bottom: 24px;
+  margin-top: 0;
+}
+.paywall-overlay-link {
+  color: #3B82F6;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 1.02rem;
+  font-family: 'Cairo', sans-serif;
+  padding: 0;
+  display: inline;
+}
+.paywall-overlay-btn {
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Cairo', sans-serif;
+  box-shadow: 0 8px 28px rgba(59, 130, 246, 0.4);
+  transition: all 0.25s;
+}
+.paywall-overlay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(59, 130, 246, 0.55);
+}
 /* شريط التحذير أعلى viewer للمستخدم بلا نقاط */
 .points-warning-bar {
   background: rgba(251,191,36,0.08); border-bottom: 1px solid rgba(251,191,36,0.2);
@@ -4907,8 +4971,8 @@ async function generateStudy(){
       }
     } catch(_) {}
   }
-  // المستخدمون غير المسجلين أو بلا نقاط → معاينة مجانية (قسمان فقط)
-  const _sectionsToGenerate = window._hasPoints ? sectionMeta : sectionMeta.slice(0, 2);
+  // توليد جميع الأقسام العشرة دائماً — الحجب يتم في العرض فقط
+  const _sectionsToGenerate = sectionMeta;
   const _totalSec = _sectionsToGenerate.length;
 
   // ── streaming قسم واحد مع callback للكلمات الفورية ──────────
@@ -4974,20 +5038,15 @@ async function generateStudy(){
 
   // تشغيل كل الأقسام نشطة فوراً
   if (iconEl)    iconEl.textContent    = '⚡';
-  if (sectionEl) sectionEl.textContent = window._hasPoints ? 'جميع الأقسام تُكتب الآن' : 'توليد معاينة — قسمان مجانيان';
+  if (sectionEl) sectionEl.textContent = 'جميع الأقسام العشرة تُكتب الآن...';
   if (statusEl)  statusEl.textContent  = '✍️ جاري التوليد المتوازي...';
 
   const LOCKED_STYLE = 'display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:6px 12px;font-size:0.75rem;color:#475569;direction:rtl;';
   listItems.forEach((item, i) => {
     const m = sectionMeta[i];
-    if (!window._hasPoints && i >= 2) {
-      // أقسام محجوبة
-      item.style.cssText = LOCKED_STYLE;
-      item.innerHTML = `<span style="font-size:0.8rem;">🔒</span><span style="opacity:0.4;">${m.icon} ${m.label}</span>`;
-    } else {
-      item.style.cssText = ACTIVE_STYLE;
-      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
-    }
+    // جميع الأقسام تُولَّد — الحجب في العرض فقط
+    item.style.cssText = ACTIVE_STYLE;
+    item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
   });
 
   const sectionPromises = _sectionsToGenerate.map((meta, i) => {
@@ -5144,66 +5203,62 @@ function showResult(text){
     outputBody.appendChild(tocEl);
   }
 
-  // ── عرض الأقسام — كاملة إن كان لديه نقاط، وإلا قسمان + Paywall ──
+  // ── عرض الأقسام — كاملة إن كان لديه نقاط، وإلا قسمان + غلاف حجب شفاف ──
   const _freeSections = 2;
   const _loggedUser = _getLoggedUser();
 
-  // شريط تحذير في أعلى الـ viewer إن لم تكن نقاط
+  // إزالة شريط التحذير القديم إن وجد
   const existingWarnBar = document.getElementById('points-warning-bar');
   if (existingWarnBar) existingWarnBar.remove();
-  if (!window._hasPoints) {
-    const warnBar = document.createElement('div');
-    warnBar.id = 'points-warning-bar';
-    warnBar.className = 'points-warning-bar';
-    warnBar.innerHTML = _loggedUser
-      ? `⚠️ نقاطك انتهت — هذه معاينة مجانية (قسمان من 10)
-         <button onclick="closeStudyViewer();showPage('pricing')">اشترِ باقة</button>`
-      : `⚠️ معاينة مجانية — سجّل دخولك للحصول على الدراسة كاملة
-         <button onclick="closeStudyViewer();openAuthModal('register')">إنشاء حساب مجاني</button>`;
-    const overlayTopbar = document.querySelector('#study-viewer-overlay .study-viewer-topbar');
-    if (overlayTopbar && overlayTopbar.parentNode) {
-      overlayTopbar.parentNode.insertBefore(warnBar, outputBody);
-    } else {
-      outputBody.parentNode ? outputBody.parentNode.insertBefore(warnBar, outputBody) : outputBody.prepend(warnBar);
+
+  if (window._hasPoints) {
+    // ── مستخدم لديه نقاط: عرض كامل بدون حجب ──
+    sections.forEach((sec, idx) => {
+      sec.setAttribute('data-section-idx', idx);
+      outputBody.appendChild(sec);
+    });
+  } else {
+    // ── مستخدم بلا نقاط: قسمان مرئيان + غلاف حجب شفاف على الباقي ──
+    sections.forEach((sec, idx) => {
+      sec.setAttribute('data-section-idx', idx);
+      if (idx < _freeSections) outputBody.appendChild(sec);
+    });
+
+    if (sections.length > _freeSections) {
+      // رابط الاشتراك حسب حالة تسجيل الدخول
+      const payAction = _loggedUser
+        ? `onclick="closeStudyViewer();showPage('pricing')"`
+        : `onclick="closeStudyViewer();openAuthModal('login')"`;
+
+      // المحتوى المضبّب (الأقسام 3-10)
+      const blurredContent = document.createElement('div');
+      blurredContent.className = 'paywall-blur-content';
+      sections.forEach((sec, idx) => {
+        if (idx >= _freeSections) blurredContent.appendChild(sec);
+      });
+
+      // الغلاف الشفاف مع رسالة الاشتراك
+      const overlayDiv = document.createElement('div');
+      overlayDiv.className = 'paywall-overlay';
+      overlayDiv.innerHTML = `
+        <div style="font-size:3rem;margin-bottom:20px;">🔒</div>
+        <p class="paywall-overlay-msg">
+          عزيزي المستخدم يجب عليكم
+          <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
+          بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
+          لنتمكن من إزالة الحجب عن المحتوى
+        </p>
+        <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+      `;
+
+      // الغلاف الرئيسي = محتوى مضبّب + overlay فوقه
+      const paywallWrapper = document.createElement('div');
+      paywallWrapper.id = 'paywall-blur-wrapper';
+      paywallWrapper.className = 'paywall-blur-wrapper';
+      paywallWrapper.appendChild(blurredContent);
+      paywallWrapper.appendChild(overlayDiv);
+      outputBody.appendChild(paywallWrapper);
     }
-  }
-
-  sections.forEach((sec, idx) => {
-    sec.setAttribute('data-section-idx', idx);
-    if (!window._hasPoints && idx >= _freeSections) return; // تخطّ الأقسام المدفوعة
-    outputBody.appendChild(sec);
-  });
-
-  // ── بطاقة Paywall للأقسام المحجوبة ──
-  if (!window._hasPoints) {
-    const lockedCount = Math.max(0, sections.length + (window._hasPoints ? 0 : 8) - _freeSections);
-    const paywallCard = document.createElement('div');
-    paywallCard.id = 'study-paywall-card';
-    paywallCard.className = 'study-paywall-card';
-    paywallCard.innerHTML = `
-      <div class="paywall-lock-icon">🔒</div>
-      <div class="paywall-title">${_loggedUser ? '8 أقسام محجوبة' : 'سجّل دخولك لتوليد الدراسة كاملة'}</div>
-      <div class="paywall-subtitle">
-        ${_loggedUser
-          ? 'نقاطك انتهت — اشترِ باقة واحصل على 5 دراسات جدوى كاملة صالحة 6 أشهر'
-          : 'أنشئ حساباً مجانياً أو سجّل دخولك واشترِ باقة للحصول على 5 دراسات جدوى كاملة'
-        }
-      </div>
-      <div class="paywall-features">
-        <span>✦ 10 أقسام متكاملة</span>
-        <span>✦ تحليل مالي شامل</span>
-        <span>✦ تصدير PDF و Word</span>
-        <span>✦ حفظ في الحساب</span>
-      </div>
-      <div class="paywall-actions">
-        ${_loggedUser
-          ? `<button class="paywall-btn-primary" onclick="closeStudyViewer();showPage('pricing')">اشترِ الآن — 49.99 ر.س</button>`
-          : `<button class="paywall-btn-primary" onclick="closeStudyViewer();openAuthModal('register')">إنشاء حساب مجاني</button>
-             <button class="paywall-btn-secondary" onclick="closeStudyViewer();openAuthModal('login')">تسجيل الدخول</button>`
-        }
-      </div>
-    `;
-    outputBody.appendChild(paywallCard);
   }
 
   // لف كل جدول بـ wrapper للتمرير الأفقي + فرض ألوان الرؤوس + منع التداخل
@@ -6134,10 +6189,14 @@ async function saveStudy(title, content) {
       const res = await fetch('/api/studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-        body: JSON.stringify({ title, content, metadata, input_data })
+        body: JSON.stringify({
+          title, content, metadata, input_data,
+          status: window._hasPoints ? 'completed' : 'draft'
+        })
       });
       if (res.ok) {
-        showToast('✅ تم حفظ الدراسة في حسابك');
+        const statusLabel = window._hasPoints ? '✅ تم حفظ الدراسة في حسابك' : '💾 حُفظت كمسودة — اشترك لفتح المحتوى كاملاً';
+        showToast(statusLabel);
         // تحديث لوحة التحكم إن كانت مفتوحة
         if (document.getElementById('page-dashboard')?.classList.contains('active')) {
           loadDashboardStudies();
@@ -6225,6 +6284,7 @@ async function loadDashboardStudies() {
             dbId    : s.id,
             title   : s.title,
             metadata: meta,
+            status  : s.status || 'completed',
             date    : new Date(s.created_at).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
           };
         });
@@ -6265,13 +6325,24 @@ async function loadDashboardStudies() {
               : rawCap)
       : '—';
     const irr     = meta.irr || inp.irr || '—';
+    const isDraft = s.status === 'draft';
     tr.innerHTML = `
-      <td><span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span></td>
+      <td>
+        <span style="cursor:pointer;color:${isDraft ? 'var(--text2)' : 'var(--gold)'};font-weight:700;${isDraft ? 'opacity:0.75;' : ''}" onclick="openSavedStudy(${idParam})">
+          ${isDraft ? '🔒 ' : ''}${s.title}
+        </span>
+      </td>
       <td style="font-size:0.8rem;color:var(--text2);">${sector}</td>
       <td style="font-size:0.8rem;color:var(--text2);">${capital}</td>
       <td style="font-size:0.8rem;color:var(--text2);">${irr}</td>
-      <td><span class="sbadge sbadge-done">مكتملة</span></td>
+      <td>
+        ${isDraft
+          ? `<span class="sbadge sbadge-draft">مسودة</span>`
+          : `<span class="sbadge sbadge-done">مكتملة</span>`
+        }
+      </td>
       <td style="font-size:0.75rem;color:var(--text3);">${s.date}
+        ${isDraft ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="margin-right:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:2px 8px;">اشترك</button>` : ''}
         <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="margin-right:8px;background:none;border:none;cursor:pointer;color:var(--rose);font-size:0.85rem;">🗑</button>
       </td>
     `;
