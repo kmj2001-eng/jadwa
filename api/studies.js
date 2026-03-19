@@ -14,10 +14,24 @@ export default async function handler(req, res) {
 
   try {
 
-    // ── migrations آمنة — تسلسلية لتجنب lock conflict في Neon Serverless ──
-    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS metadata   JSONB`; } catch(_) {}
-    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS input_data JSONB`; } catch(_) {}
-    try { await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status     TEXT DEFAULT 'completed'`; } catch(_) {}
+    // ── migration واحد آمن بـ PL/pgSQL block — يضيف الأعمدة مرة واحدة ──
+    await sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name='feasibility_studies' AND column_name='metadata') THEN
+          ALTER TABLE feasibility_studies ADD COLUMN metadata JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name='feasibility_studies' AND column_name='input_data') THEN
+          ALTER TABLE feasibility_studies ADD COLUMN input_data JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name='feasibility_studies' AND column_name='status') THEN
+          ALTER TABLE feasibility_studies ADD COLUMN status TEXT DEFAULT 'completed';
+        END IF;
+      END $$
+    `;
 
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
