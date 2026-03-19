@@ -5338,17 +5338,10 @@ function unlockStudy(){
 }
 
 function downloadPDF(){
-  // التحقق من تسجيل الدخول أولاً
-  if(!localStorage.getItem('user_data')){
+  // غير مسجّل أو بلا نقاط → مودال الاشتراك
+  if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
     window._pendingPdfAfterLogin = true;
-    showToast('💡 يرجى تسجيل الدخول لتحميل الدراسة');
-    openAuthModal('login', {pdfHint:true});
-    return;
-  }
-  if(!window._studyUnlocked){
-    const pw = document.getElementById('study-paywall-card') || document.getElementById('study-paywall');
-    if (pw) pw.scrollIntoView({behavior:'smooth'});
-    showToast('⚠️ اشترِ باقة لتحميل الدراسة كاملة');
+    showPDFPaywallModal();
     return;
   }
   exportPDF();
@@ -5373,9 +5366,8 @@ function htmlToMarkdownFallback(el) {
 }
 
 async function downloadWord(){
-  if(!window._studyUnlocked){
-    document.getElementById('study-paywall')?.scrollIntoView({behavior:'smooth'});
-    showToast('⚠️ أكمل الاشتراك لتحميل الدراسة كملف Word');
+  if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
+    showPDFPaywallModal('word');
     return;
   }
   const title = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
@@ -6421,12 +6413,88 @@ async function deleteSavedStudy(id) {
   loadDashboardStudies();
 }
 
+// ── مودال Paywall لـ PDF/Word ──────────────────────────────────
+function showPDFPaywallModal(type) {
+  const existing = document.getElementById('pdf-paywall-modal');
+  if (existing) existing.remove();
+
+  const isLoggedIn = !!localStorage.getItem('user_data');
+  const fileLabel  = type === 'word' ? 'Word' : 'PDF';
+
+  const payAction = isLoggedIn
+    ? `onclick="document.getElementById('pdf-paywall-modal').remove();showPage('pricing')"`
+    : `onclick="document.getElementById('pdf-paywall-modal').remove();openAuthModal('login')"`;
+
+  const modal = document.createElement('div');
+  modal.id = 'pdf-paywall-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:99999;
+    background:rgba(0,0,0,0.78);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;backdrop-filter:blur(5px);
+    animation:fadeIn 0.2s ease;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:#0f1829;
+      border:1.5px solid rgba(59,130,246,0.32);
+      border-radius:20px;
+      padding:44px 36px 36px;
+      max-width:460px;width:100%;
+      text-align:center;direction:rtl;
+      position:relative;
+      box-shadow:0 32px 80px rgba(0,0,0,0.6);
+      animation:slideUp 0.25s ease;
+    ">
+      <button onclick="document.getElementById('pdf-paywall-modal').remove()" style="
+        position:absolute;top:16px;left:16px;
+        background:rgba(255,255,255,0.06);border:none;cursor:pointer;
+        color:#64748b;font-size:1rem;width:30px;height:30px;
+        border-radius:50%;display:flex;align-items:center;justify-content:center;
+      ">✕</button>
+
+      <div style="font-size:3rem;margin-bottom:16px;">📄🔒</div>
+      <h3 style="font-family:'Cairo',sans-serif;color:#e2e8f0;font-size:1.25rem;font-weight:800;margin-bottom:12px;">
+        تحميل ${fileLabel} يتطلب اشتراكاً
+      </h3>
+      <p style="font-family:'Cairo',sans-serif;color:#94a3b8;font-size:0.9rem;line-height:2.1;margin-bottom:28px;">
+        ${isLoggedIn
+          ? `نقاطك انتهت — يجب عليكم <strong style="color:#e2e8f0;">الاشتراك</strong> بمبلغ <strong style="color:#34D399;">49.99 ر.س</strong><br>لنتمكن من تحميل ملف ${fileLabel} الكامل`
+          : `يجب عليكم <strong style="color:#e2e8f0;">الاشتراك</strong> بمبلغ <strong style="color:#34D399;">49.99 ر.س</strong><br>لنتمكن من تحميل ملف ${fileLabel} الكامل`
+        }
+      </p>
+      <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.18);border-radius:12px;padding:16px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+        <span style="font-size:0.78rem;color:#93c5fd;background:rgba(59,130,246,0.1);border-radius:8px;padding:5px 12px;">✦ 10 أقسام كاملة</span>
+        <span style="font-size:0.78rem;color:#93c5fd;background:rgba(59,130,246,0.1);border-radius:8px;padding:5px 12px;">✦ تحميل PDF و Word</span>
+        <span style="font-size:0.78rem;color:#93c5fd;background:rgba(59,130,246,0.1);border-radius:8px;padding:5px 12px;">✦ 5 دراسات جدوى</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button ${payAction} style="
+          background:linear-gradient(135deg,#3B82F6,#1D4ED8);
+          color:#fff;border:none;border-radius:12px;
+          padding:15px 32px;font-size:1rem;font-weight:700;
+          cursor:pointer;font-family:'Cairo',sans-serif;
+          box-shadow:0 8px 24px rgba(59,130,246,0.35);
+          transition:all 0.2s;
+        ">💳 اشترك الآن — 49.99 ر.س</button>
+        <button onclick="document.getElementById('pdf-paywall-modal').remove()" style="
+          background:none;border:1px solid rgba(255,255,255,0.1);
+          color:#64748b;border-radius:10px;
+          padding:11px 24px;font-size:0.88rem;
+          cursor:pointer;font-family:'Cairo',sans-serif;
+        ">إلغاء</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
 function exportReadyStudyPDF() {
-  // التحقق من تسجيل الدخول أولاً
-  if(!localStorage.getItem('user_data')){
+  // غير مسجّل أو بلا نقاط → مودال الاشتراك
+  if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
     window._pendingReadyPdfAfterLogin = true;
-    showToast('💡 يرجى تسجيل الدخول لتحميل الدراسة');
-    openAuthModal('login', {pdfHint:true});
+    showPDFPaywallModal();
     return;
   }
   const body    = document.getElementById('study-viewer-body');
