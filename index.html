@@ -1929,8 +1929,8 @@ input[type=range]::-webkit-slider-thumb {
 .sbadge {
   font-size:0.62rem; font-weight:700; padding:4px 11px; border-radius:20px;
 }
-.sbadge-done { background:rgba(52,211,153,0.1); color:var(--green); border:1px solid rgba(52,211,153,0.2); }
-.sbadge-draft { background:var(--gold-dim); color:var(--gold); border:1px solid var(--border); }
+.sbadge-done  { background:rgba(52,211,153,0.12); color:var(--green); border:1px solid rgba(52,211,153,0.25); }
+.sbadge-draft { background:rgba(251,191,36,0.12); color:#FBB024;    border:1px solid rgba(251,191,36,0.3); }
 
 /* ════════════════════════════════════
    FOOTER
@@ -3835,7 +3835,7 @@ footer {
       <div class="dash-sub">إليك ملخص نشاطك على منصة ذكاء الأعمال</div>
       <div class="dash-kpis">
         <div class="kpi-card"><span class="kpi-card-val" id="kpi-total">0</span><div class="kpi-card-label">دراسات منشأة</div></div>
-        <div class="kpi-card"><span class="kpi-card-val" id="kpi-done">0</span><div class="kpi-card-label">دراسات مكتملة</div></div>
+        <div class="kpi-card"><span class="kpi-card-val" id="kpi-done">0</span><div class="kpi-card-label">دراسات مدفوعة</div></div>
         <div class="kpi-card"><span class="kpi-card-val" style="color:var(--gold);" id="kpi-points">0</span><div class="kpi-card-label">نقاط متبقية</div></div>
         <div class="kpi-card"><span class="kpi-card-val" style="color:var(--green);">—</span><div class="kpi-card-label">متوسط IRR</div></div>
       </div>
@@ -3860,9 +3860,8 @@ footer {
           </tbody>
         </table>
         <div style="margin-top:14px;padding:10px 14px;background:var(--ink3);border-radius:10px;font-size:0.75rem;color:var(--text3);display:flex;gap:16px;flex-wrap:wrap;">
-          <span><span class="sbadge sbadge-done">مكتملة</span> — دراسة مكتملة بالكامل</span>
-          <span><span class="sbadge sbadge-draft">مسودة</span> — في طور الإنجاز</span>
-          <span><span class="sbadge" style="background:rgba(251,191,36,0.15);color:#FBB024;border:1px solid rgba(251,191,36,0.3);padding:2px 8px;border-radius:8px;font-size:0.65rem;font-weight:700;">بانتظار الدفع</span> — بانتظار إتمام الدفع</span>
+          <span><span class="sbadge sbadge-done">مدفوعة</span> — الدراسة مفتوحة بالكامل</span>
+          <span><span class="sbadge sbadge-draft">بانتظار الدفع</span> — المحتوى محجوب — اشترك لفتحه</span>
         </div>
       </div>
     </div>
@@ -6343,8 +6342,8 @@ async function loadDashboardStudies() {
       <td style="font-size:0.8rem;color:var(--text2);">${irr}</td>
       <td>
         ${isDraft
-          ? `<span class="sbadge sbadge-draft">مسودة</span>`
-          : `<span class="sbadge sbadge-done">مكتملة</span>`
+          ? `<span class="sbadge sbadge-draft">بانتظار الدفع</span>`
+          : `<span class="sbadge sbadge-done">مدفوعة</span>`
         }
       </td>
       <td style="font-size:0.75rem;color:var(--text3);">${s.date}
@@ -6354,8 +6353,9 @@ async function loadDashboardStudies() {
     `;
     tbody.appendChild(tr);
   });
+  const paidCount = studies.filter(s => s.status !== 'draft').length;
   document.getElementById('kpi-total').textContent = studies.length;
-  document.getElementById('kpi-done').textContent  = studies.length;
+  document.getElementById('kpi-done').textContent  = paidCount;
 }
 
 async function openSavedStudy(id) {
