@@ -14,11 +14,6 @@ export default async function handler(req, res) {
 
   try {
 
-    // ── migration آمن: أضف عمود status إن لم يكن موجوداً ──
-    try {
-      await sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed'`;
-    } catch (_) {}
-
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
       const studyId = req.query.id ? parseInt(req.query.id) : null;
