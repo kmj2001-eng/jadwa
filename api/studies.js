@@ -14,6 +14,13 @@ export default async function handler(req, res) {
 
   try {
 
+    // ── migrations آمنة — تُضاف الأعمدة الناقصة إن لم تكن موجودة ──
+    await Promise.allSettled([
+      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS metadata   JSONB`,
+      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS input_data JSONB`,
+      sql`ALTER TABLE feasibility_studies ADD COLUMN IF NOT EXISTS status     TEXT DEFAULT 'completed'`,
+    ]);
+
     // ── GET: قائمة الدراسات أو دراسة واحدة بمحتواها ──
     if (req.method === 'GET') {
       const studyId = req.query.id ? parseInt(req.query.id) : null;
