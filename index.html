@@ -6435,13 +6435,104 @@ async function openSavedStudy(id) {
   if (!study) { showToast('⚠️ لم يُعثر على الدراسة'); body.innerHTML = ''; overlay.style.display = 'none'; document.body.style.overflow = ''; return; }
 
   titleEl.textContent = study.title;
-  body.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
   window._viewerStudyText = study.content;
   window._fullStudyText   = study.content;
+
   const pdfBtn = document.getElementById('viewer-pdf-btn');
   if (pdfBtn) pdfBtn.style.display = '';
   const newStudyBtn = document.getElementById('viewer-new-study-btn');
   if (newStudyBtn) newStudyBtn.style.display = 'none';
+
+  // ── تحديد حالة الدراسة: مدفوعة أم بانتظار الدفع ──
+  const studyStatus = study.status
+    || (study.metadata && study.metadata.status)
+    || 'draft';
+  const isPaid = (studyStatus === 'completed');
+
+  // ── تحويل المحتوى وتقسيمه لأقسام بنفس منطق showResult ──
+  const html = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
+  const tmpDiv = document.createElement('div');
+  tmpDiv.innerHTML = html;
+
+  const sections = [];
+  let cur = null;
+  Array.from(tmpDiv.childNodes).forEach(node => {
+    if (node.nodeType === 1 && (node.tagName === 'H2' || node.tagName === 'H3')) {
+      cur = document.createElement('div');
+      cur.className = 'study-section';
+      cur.appendChild(node.cloneNode(true));
+      sections.push(cur);
+    } else if (cur) {
+      cur.appendChild(node.cloneNode(true));
+    } else {
+      cur = document.createElement('div');
+      cur.className = 'study-section';
+      cur.appendChild(node.cloneNode(true));
+      sections.push(cur);
+    }
+  });
+
+  body.innerHTML = '';
+
+  // ── فهرس المحتويات ──
+  const headings = sections.map(s => s.querySelector('h2,h3')?.textContent?.trim() || '').filter(Boolean);
+  if (headings.length > 0) {
+    const tocEl = document.createElement('div');
+    tocEl.className = 'study-toc';
+    tocEl.innerHTML = `<div class="study-toc-head">📋 فهرس المحتويات</div>` +
+      headings.map((h, i) => `
+        <div class="study-toc-row" onclick="scrollToSection(${i})">
+          <span class="study-toc-title">${h}</span>
+          <span class="study-toc-dots"></span>
+          <span class="study-toc-num">${i + 1}</span>
+        </div>`).join('');
+    body.appendChild(tocEl);
+  }
+
+  const _freeSections = 7;
+  const _loggedUser   = _getLoggedUser();
+
+  if (isPaid) {
+    // ── مدفوعة: عرض كامل بدون حجب ──
+    sections.forEach((sec, idx) => { sec.setAttribute('data-section-idx', idx); body.appendChild(sec); });
+  } else {
+    // ── بانتظار الدفع: 7 أقسام مرئية + حجب الباقي ──
+    sections.forEach((sec, idx) => {
+      sec.setAttribute('data-section-idx', idx);
+      if (idx < _freeSections) body.appendChild(sec);
+    });
+
+    if (sections.length > _freeSections) {
+      const payAction = _loggedUser
+        ? `onclick="closeStudyViewer();startPaymentForStudy()"`
+        : `onclick="closeStudyViewer();openAuthModal('login')"`;
+
+      const blurredContent = document.createElement('div');
+      blurredContent.className = 'paywall-blur-content';
+      sections.forEach((sec, idx) => { if (idx >= _freeSections) blurredContent.appendChild(sec); });
+
+      const overlayDiv = document.createElement('div');
+      overlayDiv.className = 'paywall-overlay';
+      overlayDiv.innerHTML = `
+        <div class="paywall-overlay-inner">
+          <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+          <p class="paywall-overlay-msg">
+            عزيزي المستخدم يجب عليكم
+            <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
+            بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
+            لنتمكن من إزالة الحجب عن المحتوى
+          </p>
+          <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+        </div>`;
+
+      const paywallWrapper = document.createElement('div');
+      paywallWrapper.id = 'paywall-blur-wrapper';
+      paywallWrapper.className = 'paywall-blur-wrapper';
+      paywallWrapper.appendChild(blurredContent);
+      paywallWrapper.appendChild(overlayDiv);
+      body.appendChild(paywallWrapper);
+    }
+  }
 }
 
 async function deleteSavedStudy(id) {
