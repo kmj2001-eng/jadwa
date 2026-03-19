@@ -6197,13 +6197,19 @@ async function saveStudy(title, content) {
       if (res.ok) {
         const statusLabel = window._hasPoints ? '✅ تم حفظ الدراسة في حسابك' : '💾 حُفظت كمسودة — اشترك لفتح المحتوى كاملاً';
         showToast(statusLabel);
-        // تحديث لوحة التحكم إن كانت مفتوحة
         if (document.getElementById('page-dashboard')?.classList.contains('active')) {
           loadDashboardStudies();
         }
-        return; // نجح الحفظ في DB — لا داعي لـ localStorage
+        return;
       }
-    } catch(e) { console.warn('saveStudy DB:', e); }
+      // تسجيل الخطأ الحقيقي من الخادم لتشخيص المشكلة
+      try {
+        const errBody = await res.json();
+        console.error('[saveStudy] خطأ الخادم:', res.status, errBody);
+      } catch(_) {
+        console.error('[saveStudy] HTTP', res.status, res.statusText);
+      }
+    } catch(e) { console.warn('[saveStudy] fetch error:', e.message); }
     // فشل DB — احتياط بـ localStorage
     showToast('⚠️ تعذّر الحفظ في الخادم، حُفظت محلياً');
   }
