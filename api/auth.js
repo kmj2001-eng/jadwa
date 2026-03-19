@@ -5,7 +5,10 @@ import {
   setResetToken,
   getUserByResetToken,
   updatePassword,
-  migrateUsersTable
+  migrateUsersTable,
+  checkBonusAlreadyUsed,
+  recordBonusUsed,
+  grantWelcomePoint
 } from './db.js';
 
 // ──────────────────────────────────────────────────────────
@@ -150,7 +153,7 @@ export default async function handler(req, res) {
 
     // ── REGISTER ────────────────────────────────────────────
     if (action === 'register') {
-      const { email, password, name, phone } = req.body;
+      const { email, password, name, phone, fingerprint } = req.body;
       if (!email || !password || !name)
         return res.status(400).json({ error: 'الاسم والبريد وكلمة السر مطلوبة' });
       if (password.length < 8)
@@ -160,6 +163,20 @@ export default async function handler(req, res) {
       if (existing)
         return res.status(409).json({ error: 'هذا البريد الإلكتروني مسجَّل مسبقاً' });
 
+      // استخراج IP الحقيقي (Vercel يضعه في x-forwarded-for)
+      const ip = (req.headers['x-forwarded-for'] || '')
+        .split(',')[0].trim()
+        || req.headers['x-real-ip']
+        || req.socket?.remoteAddress
+        || 'unknown';
+
+      // فحص هل هذا الجهاز/IP استخدم النقطة المجانية من قبل
+      let bonusAlreadyUsed = false;
+      try {
+        bonusAlreadyUsed = await checkBonusAlreadyUsed(ip, fingerprint || null);
+      } catch(_) {}
+
+      // إنشاء الحساب دائماً بغض النظر عن الـ bonus
       const user = await createUserWithPassword({
         email: email.toLowerCase().trim(),
         name: name.trim(),
@@ -167,9 +184,27 @@ export default async function handler(req, res) {
         passwordHash: hashPassword(password)
       });
       const token = signJWT({ userId: user.id, email: user.email, name: user.name });
+
+      if (bonusAlreadyUsed) {
+        // سبق منح النقطة المجانية لهذا الجهاز/IP — لا نمنح نقطة
+        return res.status(200).json({
+          token,
+          user: { id: user.id, email: user.email, name: user.name, phone: user.phone },
+          bonusGranted: false,
+          bonusDenied: true
+        });
+      }
+
+      // منح نقطة ترحيبية مجانية وتسجيل الجهاز/IP
+      try {
+        await grantWelcomePoint(user.id);
+        await recordBonusUsed(user.id, ip, fingerprint || null);
+      } catch(_) {}
+
       return res.status(200).json({
         token,
-        user: { id: user.id, email: user.email, name: user.name, phone: user.phone }
+        user: { id: user.id, email: user.email, name: user.name, phone: user.phone },
+        bonusGranted: true
       });
     }
 
