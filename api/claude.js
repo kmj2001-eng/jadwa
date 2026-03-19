@@ -1,3 +1,5 @@
+import { neon } from '@neondatabase/serverless';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -308,6 +310,37 @@ export default async function handler(req, res) {
 — استخدم عدد الموظفين (${workers}) والطاقة الإنتاجية (${capacity || 'حسب حجم المشروع'}) في حسابات التكاليف
 
 ${sectionInstructions}`;
+
+  // ── حماية النقاط: استهلاك نقطة من الخادم عند القسم الأول فقط ──
+  // هذا يمنع تجاوز النقاط بتعديل window._hasPoints من المتصفح
+  const userId = parseInt(req.headers['x-user-id'] || '0');
+  if (sectionNum === 1 && userId > 0 && process.env.POSTGRES_URL) {
+    try {
+      const sql = neon(process.env.POSTGRES_URL);
+      // فحص الرصيد
+      const check = await sql`
+        SELECT COALESCE(SUM(total_points - used_points), 0)::int AS remaining
+        FROM user_points
+        WHERE user_id = ${userId} AND expires_at > NOW()
+      `;
+      const remaining = check[0]?.remaining ?? 0;
+      if (remaining >= 1) {
+        // استهلاك نقطة واحدة من أقدم باقة نشطة
+        await sql`
+          UPDATE user_points
+          SET used_points = used_points + 1
+          WHERE id = (
+            SELECT id FROM user_points
+            WHERE user_id = ${userId}
+              AND (total_points - used_points) > 0
+              AND expires_at > NOW()
+            ORDER BY created_at ASC LIMIT 1
+          )
+        `;
+      }
+      // لا نوقف التوليد إذا لم تكن نقاط — المحتوى يُنشأ لكن 8-10 محجوبة
+    } catch (_) { /* خطأ DB لا يوقف التوليد */ }
+  }
 
   // ── قراءة المفتاح (يدعم أي اسم متغير) ────────────────────
   const apiKey = process.env.CLAUDE_API_KEY

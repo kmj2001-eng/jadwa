@@ -5006,9 +5006,13 @@ async function generateStudy(){
 
   // ── streaming قسم واحد مع callback للكلمات الفورية ──────────
   async function streamSection(secNum, onChunk) {
+    const _cu = _getLoggedUser();
     const res = await fetch('/api/claude', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(_cu?.id ? { 'x-user-id': String(_cu.id) } : {}),
+      },
       body: JSON.stringify({ ...formData, section: secNum }),
     });
     if (!res.ok) {
@@ -5121,19 +5125,22 @@ async function generateStudy(){
       throw new Error(apiErr);
     }
     showResult(fullText);
-    // ── استهلاك نقطة بعد التوليد الكامل الناجح ──
-    if (window._hasPoints && _authUser && _authUser.id) {
-      fetch('/api/points', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': String(_authUser.id) },
-        body: JSON.stringify({ action: 'consume' })
-      }).then(r => {
-        if (r.ok) r.json().then(d => {
-          if (typeof d.remaining === 'number') {
-            showToast(`✅ تم استخدام نقطة — متبقٍ: ${d.remaining} نقاط`);
+    // ── تحديث رصيد النقاط من الخادم بعد التوليد ──
+    // (الاستهلاك الفعلي يحدث في api/claude.js عند القسم الأول — server-side فقط)
+    if (_authUser && _authUser.id) {
+      fetch('/api/points', { headers: { 'x-user-id': String(_authUser.id) } })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d && typeof d.remaining === 'number') {
+            window._hasPoints = d.remaining >= 1;
+            const el = document.getElementById('kpi-points');
+            if (el) el.textContent = d.remaining;
+            if (d.remaining < (window._prevPointsBalance ?? 99)) {
+              showToast(`✅ تم استخدام نقطة — متبقٍ: ${d.remaining} نقاط`);
+            }
+            window._prevPointsBalance = d.remaining;
           }
-        });
-      }).catch(() => {});
+        }).catch(() => {});
     }
   } catch(e) {
     hideStudyLoader(studyLoader);
