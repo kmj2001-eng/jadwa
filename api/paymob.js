@@ -214,15 +214,12 @@ export default async function handler(req, res) {
       const newStatus = paid ? 'paid' : 'failed';
       await sql`UPDATE orders SET status = ${newStatus}, updated_at = NOW() WHERE id = ${dbOrderId}`;
 
-      // إضافة نقاط للمستخدم عند نجاح الدفع
+      // إضافة نقاط للمستخدم عند نجاح الدفع (5 نقاط = 5 دراسات)
       if (paid && userId) {
         await sql`
-          INSERT INTO user_points (user_id, points, expires_at, source)
-          VALUES (${userId}, 5, NOW() + INTERVAL '6 months', 'purchase')
-          ON CONFLICT (user_id) DO UPDATE
-            SET points     = user_points.points + 5,
-                expires_at = NOW() + INTERVAL '6 months'
-        `.catch(() => {});
+          INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
+          VALUES (${userId}, ${dbOrderId}, 5, 0, NOW() + INTERVAL '6 months')
+        `.catch(e => console.error('[paymob] user_points insert error:', e.message));
       }
     }
 
