@@ -276,6 +276,11 @@ export default async function handler(req, res) {
       });
       const token = signJWT({ userId: user.id, email: user.email, name: user.name });
 
+      // إرسال بريد ترحيبي لجميع المسجلين (لا يوقف التسجيل إذا فشل)
+      if (process.env.RESEND_API_KEY) {
+        sendWelcomeEmail({ to: user.email, name: user.name }).catch(() => {});
+      }
+
       if (bonusAlreadyUsed) {
         // سبق منح النقطة المجانية لهذا الجهاز/IP — لا نمنح نقطة
         return res.status(200).json({
@@ -291,11 +296,6 @@ export default async function handler(req, res) {
         await grantWelcomePoint(user.id);
         await recordBonusUsed(user.id, ip, fingerprint || null);
       } catch(_) {}
-
-      // إرسال بريد ترحيبي (لا يوقف التسجيل إذا فشل)
-      if (process.env.RESEND_API_KEY) {
-        sendWelcomeEmail({ to: user.email, name: user.name }).catch(() => {});
-      }
 
       return res.status(200).json({
         token,
