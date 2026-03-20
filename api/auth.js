@@ -278,7 +278,11 @@ export default async function handler(req, res) {
 
       // إرسال بريد ترحيبي لجميع المسجلين (لا يوقف التسجيل إذا فشل)
       if (process.env.RESEND_API_KEY) {
-        sendWelcomeEmail({ to: user.email, name: user.name }).catch(() => {});
+        sendWelcomeEmail({ to: user.email, name: user.name })
+          .then(() => console.log(`✅ Welcome email sent to ${user.email}`))
+          .catch(e => console.error(`❌ Welcome email failed for ${user.email}:`, e.message));
+      } else {
+        console.warn('⚠️ RESEND_API_KEY not set — welcome email skipped');
       }
 
       if (bonusAlreadyUsed) {
