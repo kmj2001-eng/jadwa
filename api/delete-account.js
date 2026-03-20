@@ -34,10 +34,11 @@ export default async function handler(req, res) {
 
     // حذف البيانات بالترتيب الصحيح (FK)
     await sql`DELETE FROM feasibility_studies WHERE user_id = ${userId}`;
-    await sql`DELETE FROM invoices        WHERE user_id = ${userId}`;
-    await sql`DELETE FROM user_points     WHERE user_id = ${userId}`;
-    await sql`DELETE FROM orders          WHERE user_id = ${userId}`;
-    await sql`DELETE FROM users           WHERE id      = ${userId}`;
+    await sql`DELETE FROM invoices            WHERE user_id = ${userId}`;
+    await sql`DELETE FROM user_points         WHERE user_id = ${userId}`;
+    await sql`DELETE FROM orders              WHERE user_id = ${userId}`;
+    await sql`DELETE FROM bonus_tracker       WHERE user_id = ${userId}`;
+    await sql`DELETE FROM users               WHERE id      = ${userId}`;
 
     return res.status(200).json({ success: true, message: 'تم حذف الحساب وجميع البيانات بنجاح' });
 
