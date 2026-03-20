@@ -148,7 +148,9 @@ async function sendTempPasswordEmail({ to, name, tempPassword }) {
 //  Main Handler
 // ──────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = ['https://eses.store', 'https://www.eses.store', 'http://localhost:3001'];
+  const origin = req.headers.origin || '';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes(origin) ? origin : allowedOrigins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-setup-secret');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -305,6 +307,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Auth Error:', err.message);
-    return res.status(500).json({ error: 'خطأ في الخادم: ' + err.message });
+    return res.status(500).json({ error: 'خطأ في الخادم، حاول مجدداً' });
   }
 }
