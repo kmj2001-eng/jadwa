@@ -8018,6 +8018,7 @@ async function doForgot() {
     if (!res.ok) throw new Error(data.error || 'خطأ');
 
     clearAuthError();
+    window._forgotLastEmail = email; // احفظ الإيميل قبل المسح لاستخدامه في التسجيل التلقائي
     document.getElementById('forgot-email').value = '';
     // أعد تعطيل الزر بعد مسح الحقل
     const sb = document.getElementById('forgot-btn');
@@ -8058,25 +8059,21 @@ function copyTempPassword() {
   }).catch(() => showToast('انسخ كلمة المرور يدوياً'));
 }
 
-// ── تسجيل دخول تلقائي بعد كلمة المرور المؤقتة ──────────────
-function forgotAutoLogin() {
-  const email = document.getElementById('forgot-email').value.trim();
+// ── تسجيل دخول تلقائي بعد كلمة المرور الجديدة ──────────────
+async function forgotAutoLogin() {
+  const email = window._forgotLastEmail || '';
   const pw    = document.getElementById('forgot-temp-display').textContent.trim();
+  if (!email || !pw) {
+    // fallback: انقل للشاشة ودع المستخدم يكمل يدوياً
+    switchAuthScreen('login');
+    return;
+  }
+  // عبّئ نموذج الدخول في الخلفية ثم سجّل دخول تلقائياً
+  document.getElementById('login-email').value    = email;
+  document.getElementById('login-password').value = pw;
   switchAuthScreen('login');
-  // تعبئة النموذج تلقائياً إذا توفرت البيانات
-  if (email) {
-    const emailEl = document.getElementById('login-email');
-    if (emailEl) emailEl.value = email;
-  }
-  if (pw) {
-    const pwEl = document.getElementById('login-password');
-    if (pwEl) {
-      pwEl.value = pw;
-      // إبراز الحقل لحظة واحدة ليلاحظ المستخدم أنه مُعبَّأ
-      pwEl.style.borderColor = 'var(--gold)';
-      setTimeout(() => { pwEl.style.borderColor = ''; }, 1500);
-    }
-  }
+  // تسجيل دخول مباشر بدون ضغطة إضافية
+  setTimeout(() => doLogin(), 300);
 }
 
 // ── تعيين كلمة السر الجديدة ─────────────────────────────────
