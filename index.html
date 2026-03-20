@@ -980,6 +980,141 @@ nav.scrolled {
 .testi-role { font-size:0.7rem; color:var(--text3); margin-top:2px; }
 
 /* ════════════════════════════════════
+   INLINE PAYMENT SYSTEM
+════════════════════════════════════ */
+@keyframes ip-spin   { to { transform: rotate(360deg); } }
+@keyframes ip-fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes ip-pulse  { 0%,100% { box-shadow:0 0 0 0 rgba(52,211,153,0.5); } 50% { box-shadow:0 0 0 14px rgba(52,211,153,0); } }
+@keyframes ip-confetti {
+  0%   { transform:translateY(-10px) rotate(0deg);   opacity:1; }
+  100% { transform:translateY(80px)  rotate(720deg); opacity:0; }
+}
+
+#inline-payment-container {
+  margin-top: 24px;
+  border-radius: 16px;
+  overflow: hidden;
+  animation: ip-fadeIn 0.3s ease;
+}
+
+/* ── Loader ── */
+#ipc-loader {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 48px 24px; gap: 20px;
+  background: rgba(10,20,40,0.7);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 16px;
+}
+.ipc-spinner {
+  width: 52px; height: 52px;
+  border: 4px solid rgba(59,130,246,0.15);
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: ip-spin 0.8s linear infinite;
+}
+#ipc-loader p {
+  color: #94a3b8; font-size: 0.92rem;
+  font-family: 'Cairo',sans-serif; margin: 0;
+}
+
+/* ── iframe wrapper ── */
+#ipc-iframe-wrap {
+  background: #fff; border-radius: 16px;
+  overflow: hidden; border: 1px solid rgba(59,130,246,0.25);
+  animation: ip-fadeIn 0.4s ease;
+  position: relative;
+}
+#ipc-iframe-wrap::before {
+  content: '🔒 اتصال آمن مشفر';
+  display: block; background: #0a1428;
+  color: #64748b; font-size: 0.72rem;
+  font-family: 'Cairo',sans-serif;
+  text-align: center; padding: 8px;
+  border-bottom: 1px solid rgba(59,130,246,0.15);
+}
+#ipc-iframe {
+  width: 100%; height: 580px; border: none; display: block;
+}
+.ipc-cancel-row {
+  padding: 14px; background: #0a1428;
+  text-align: center; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.ipc-cancel-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.12);
+  color: #64748b; border-radius: 8px;
+  padding: 8px 24px; font-size: 0.82rem;
+  cursor: pointer; font-family: 'Cairo',sans-serif;
+  transition: all 0.2s;
+}
+.ipc-cancel-btn:hover { border-color: rgba(248,113,113,0.5); color: #F87171; }
+
+/* ── Success ── */
+#ipc-success {
+  padding: 56px 24px; text-align: center;
+  background: linear-gradient(135deg,rgba(5,150,105,0.12),rgba(10,20,40,0.9));
+  border: 1.5px solid rgba(52,211,153,0.4);
+  border-radius: 16px; position: relative; overflow: hidden;
+  animation: ip-fadeIn 0.5s ease;
+}
+.ipc-success-icon {
+  font-size: 4rem; margin-bottom: 16px;
+  display: block;
+  animation: ip-pulse 2s ease infinite;
+}
+#ipc-success h3 {
+  color: #34D399; font-family: 'Cairo',sans-serif;
+  font-size: 1.6rem; font-weight: 900; margin: 0 0 10px;
+}
+#ipc-success p {
+  color: #94a3b8; font-size: 0.9rem;
+  font-family: 'Cairo',sans-serif; margin: 0 0 28px;
+}
+.ipc-confetti-dot {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  animation: ip-confetti 1.5s ease forwards;
+}
+
+/* ── Timeout ── */
+#ipc-timeout {
+  padding: 48px 24px; text-align: center;
+  background: rgba(10,20,40,0.8);
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 16px; animation: ip-fadeIn 0.4s ease;
+}
+#ipc-timeout p { color: #94a3b8; font-family:'Cairo',sans-serif; margin: 8px 0 24px; }
+
+/* ── Error ── */
+#ipc-error {
+  padding: 48px 24px; text-align: center;
+  background: rgba(10,20,40,0.8);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 16px; animation: ip-fadeIn 0.4s ease;
+}
+#ipc-error-text { color: #F87171; font-size: 0.88rem; font-family:'Cairo',sans-serif; margin: 8px 0 24px; }
+
+/* ── Shared buttons ── */
+.ipc-retry-btn {
+  background: linear-gradient(135deg,#3B82F6,#1D4ED8);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 13px 32px; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; font-family: 'Cairo',sans-serif;
+  box-shadow: 0 6px 20px rgba(59,130,246,0.35);
+  transition: all 0.2s;
+}
+.ipc-retry-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(59,130,246,0.5); }
+.ipc-go-btn {
+  background: linear-gradient(135deg,#34D399,#059669);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 13px 32px; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; font-family: 'Cairo',sans-serif;
+  box-shadow: 0 6px 20px rgba(52,211,153,0.35);
+  transition: all 0.2s; margin-right: 10px;
+}
+.ipc-go-btn:hover { transform: translateY(-2px); }
+
+/* ── CTA BAND ── */
+/* ════════════════════════════════════
    CTA BAND
 ════════════════════════════════════ */
 .cta-band {
@@ -3906,11 +4041,63 @@ footer {
         <button id="pricing-cta-btn" type="button" class="btn-plan primary" style="width:100%;padding:18px;font-size:1.05rem;cursor:pointer;pointer-events:auto;position:relative;z-index:10;">
           💳 احصل على الباقة — 49.99 ر.س
         </button>
-        <div style="display:flex;justify-content:center;gap:20px;margin-top:20px;flex-wrap:wrap;">
+        <div style="display:flex;justify-content:center;gap:20px;margin-top:16px;flex-wrap:wrap;">
           <span style="font-size:0.72rem;color:var(--text3);">🔒 دفع آمن عبر Paymob</span>
           <span style="font-size:0.72rem;color:var(--text3);">💯 ضمان استرداد 7 أيام</span>
           <span style="font-size:0.72rem;color:var(--text3);">⚡ فوري بعد الدفع</span>
         </div>
+
+        <!-- ══ Inline Payment Container ══ -->
+        <div id="inline-payment-container" style="display:none;">
+
+          <!-- Loader -->
+          <div id="ipc-loader">
+            <div class="ipc-spinner"></div>
+            <p>⏳ جاري تجهيز بوابة الدفع الآمنة...</p>
+          </div>
+
+          <!-- iframe الدفع -->
+          <div id="ipc-iframe-wrap" style="display:none;">
+            <iframe id="ipc-iframe"
+              allow="payment *"
+              sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
+              src=""></iframe>
+            <div class="ipc-cancel-row">
+              <button class="ipc-cancel-btn" onclick="ipcReset()">✕ إلغاء العملية</button>
+            </div>
+          </div>
+
+          <!-- نجاح -->
+          <div id="ipc-success" style="display:none;">
+            <span class="ipc-success-icon">✅</span>
+            <h3>تم الدفع بنجاح! 🎉</h3>
+            <p>تمت إضافة <strong style="color:#34D399;">5 نقاط جدوى</strong> إلى حسابك — يمكنك الآن إنشاء دراساتك الكاملة</p>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+              <button class="ipc-go-btn" onclick="ipcReset();showPage('tool')">🚀 ابدأ دراستك الآن</button>
+              <button class="ipc-go-btn" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);box-shadow:0 6px 20px rgba(59,130,246,0.35);"
+                onclick="ipcReset();showPage('dashboard')">📋 لوحة التحكم</button>
+            </div>
+          </div>
+
+          <!-- انتهاء الوقت -->
+          <div id="ipc-timeout" style="display:none;">
+            <div style="font-size:3rem;margin-bottom:12px;">⏱️</div>
+            <h3 style="color:#FCD34D;font-family:'Cairo',sans-serif;font-size:1.2rem;margin:0;">انتهى وقت الانتظار</h3>
+            <p>لم يتم تأكيد الدفع خلال المدة المحددة — يرجى المحاولة مرة أخرى</p>
+            <button class="ipc-retry-btn" onclick="ipcReset();startPaymentForStudy()">🔄 إعادة المحاولة</button>
+          </div>
+
+          <!-- خطأ -->
+          <div id="ipc-error" style="display:none;">
+            <div style="font-size:3rem;margin-bottom:12px;">⚠️</div>
+            <h3 style="color:#F87171;font-family:'Cairo',sans-serif;font-size:1.2rem;margin:0;">حدث خطأ</h3>
+            <p id="ipc-error-text" class="ipc-error-text">خطأ في الاتصال بخادم الدفع</p>
+            <button class="ipc-retry-btn" onclick="ipcReset();startPaymentForStudy()">🔄 إعادة المحاولة</button>
+          </div>
+
+        </div>
+        <!-- ══ /Inline Payment Container ══ -->
+
       </div>
     </div>
 
@@ -6798,50 +6985,149 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
   showToast('✅ ستُفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم "حفظ"');
 }
 
-// ═══════════════════════════════════════════════════════
-//  PAYMOB PAYMENT LOGIC — نُعرِّفها هنا لضمان الوصول من startPaymentForStudy
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+//  INLINE PAYMENT SYSTEM — نظام الدفع المدمج داخل الصفحة
+//  منطق: زر → loader → iframe → polling كل 3ث → نجاح/فشل/timeout
+// ═══════════════════════════════════════════════════════════════════
+
+// ── متغيرات الحالة ──
+window._ipcPollingTimer  = null;   // interval ID للـ polling
+window._ipcTimeoutTimer  = null;   // timeout ID للـ 2 دقيقة
+window._ipcOrderId       = null;   // ID الطلب الحالي
+const IPC_POLL_INTERVAL  = 3000;   // 3 ثوانٍ
+const IPC_TIMEOUT_MS     = 120000; // دقيقتان
+
+// ── مساعد: إظهار حالة واحدة فقط داخل الحاوية ──
+function ipcShow(stateId) {
+  ['ipc-loader','ipc-iframe-wrap','ipc-success','ipc-timeout','ipc-error']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (id === stateId) ? '' : 'none';
+    });
+  const container = document.getElementById('inline-payment-container');
+  if (container) {
+    container.style.display = '';
+    // تمرير ناعم للحاوية
+    setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  }
+}
+
+// ── مسح الـ timers ──
+function ipcClearTimers() {
+  if (window._ipcPollingTimer)  { clearInterval(window._ipcPollingTimer);  window._ipcPollingTimer  = null; }
+  if (window._ipcTimeoutTimer)  { clearTimeout(window._ipcTimeoutTimer);   window._ipcTimeoutTimer  = null; }
+}
+
+// ── إعادة تهيئة كاملة (لزر الإلغاء وإعادة المحاولة) ──
+function ipcReset() {
+  ipcClearTimers();
+  window._ipcOrderId = null;
+  const iframe = document.getElementById('ipc-iframe');
+  if (iframe) { iframe.src = ''; }
+  const container = document.getElementById('inline-payment-container');
+  if (container) container.style.display = 'none';
+  // إعادة تفعيل الزر
+  const btn = document.getElementById('pricing-cta-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '💳 احصل على الباقة — 49.99 ر.س';
+    btn.style.opacity = '';
+  }
+}
+
+// ── إظهار نجاح الدفع مع تأثير Confetti ──
+function ipcShowSuccess() {
+  ipcClearTimers();
+  ipcShow('ipc-success');
+  // تأثير confetti
+  const success = document.getElementById('ipc-success');
+  if (success) {
+    const colors = ['#34D399','#3B82F6','#FCD34D','#F87171','#A78BFA'];
+    for (let i = 0; i < 18; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'ipc-confetti-dot';
+      dot.style.cssText = `
+        left:${Math.random()*100}%;
+        top:${Math.random()*30}%;
+        background:${colors[i % colors.length]};
+        animation-delay:${Math.random()*0.6}s;
+        animation-duration:${1.2 + Math.random()*0.8}s;
+        width:${6+Math.random()*6}px; height:${6+Math.random()*6}px;
+      `;
+      success.appendChild(dot);
+      setTimeout(() => dot.remove(), 2200);
+    }
+  }
+  // تحديث حالة التطبيق
+  window._hasPoints     = true;
+  window._studyUnlocked = true;
+  showToast('🎉 تم الدفع بنجاح! تمت إضافة 5 نقاط جدوى لحسابك');
+}
+
+// ── Polling: التحقق من حالة الطلب كل 3 ثوانٍ ──
+function ipcStartPolling(orderId) {
+  window._ipcOrderId = orderId;
+
+  // Timeout بعد دقيقتين
+  window._ipcTimeoutTimer = setTimeout(() => {
+    ipcClearTimers();
+    const iframe = document.getElementById('ipc-iframe');
+    if (iframe) iframe.src = '';
+    ipcShow('ipc-timeout');
+    console.warn('[IPC] Polling timed out after 2 minutes');
+  }, IPC_TIMEOUT_MS);
+
+  // Polling كل 3 ثوانٍ
+  window._ipcPollingTimer = setInterval(async () => {
+    try {
+      const res  = await fetch(`/api/check-order?id=${orderId}`);
+      if (!res.ok) return; // تجاهل أخطاء الشبكة المؤقتة
+      const data = await res.json();
+      console.log('[IPC] poll result:', data.status);
+
+      if (data.status === 'paid') {
+        ipcShowSuccess();
+      } else if (data.status === 'failed') {
+        ipcClearTimers();
+        const errText = document.getElementById('ipc-error-text');
+        if (errText) errText.textContent = 'تم رفض عملية الدفع — يرجى التحقق من بيانات البطاقة والمحاولة مجدداً';
+        ipcShow('ipc-error');
+      }
+      // pending → استمر في الـ polling
+    } catch (e) {
+      console.warn('[IPC] poll fetch error:', e.message);
+    }
+  }, IPC_POLL_INTERVAL);
+}
+
+// ── الدالة الرئيسية ──
 async function startPayment(customer) {
-  console.log('[Jadwa] startPayment called', customer);
-
-  const modal   = document.getElementById('payment-modal');
-  const iframe  = document.getElementById('payment-iframe');
-  const loading = document.getElementById('payment-loading');
-  const summary = document.getElementById('pm-summary');
-  const errDiv  = document.getElementById('payment-error');
-
-  // ── التحقق من وجود عناصر الـ DOM ──
-  if (!modal)   { console.error('[Jadwa] #payment-modal not found'); alert('خطأ: عنصر نافذة الدفع غير موجود'); return; }
-  if (!iframe)  { console.error('[Jadwa] #payment-iframe not found'); return; }
-  if (!loading) { console.error('[Jadwa] #payment-loading not found'); return; }
-
-  // إظهار الـ modal + إعادة تهيئة الحالة
-  modal.style.display   = 'flex';
-  iframe.style.display  = 'none';
-  iframe.src            = '';
-  loading.style.display = 'block';
-  if (summary) summary.style.display = '';
-  if (errDiv)  errDiv.style.display  = 'none';
+  console.log('[IPC] startPayment called', customer);
 
   // ── التحقق من تسجيل الدخول ──
   const user = _getLoggedUser();
-  console.log('[Jadwa] logged user:', user);
   if (!user || !user.id) {
-    // إغلاق مودال الدفع وفتح مودال تسجيل الدخول
-    modal.style.display = 'none';
     if (typeof showToast === 'function') showToast('💡 يرجى تسجيل الدخول أولاً لإتمام الشراء');
     if (typeof openAuthModal === 'function') {
-      // بعد تسجيل الدخول سنعيد فتح مودال الدفع تلقائياً
       window._pendingPaymentAfterLogin = true;
       openAuthModal('login');
-    } else {
-      alert('يرجى تسجيل الدخول أولاً ثم المحاولة مجدداً');
     }
     return;
   }
 
+  // ── تحديث الزر ──
+  const btn = document.getElementById('pricing-cta-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ جاري تجهيز الدفع...';
+    btn.style.opacity = '0.75';
+  }
+
+  // ── إظهار الـ Loader ──
+  ipcShow('ipc-loader');
+
   try {
-    console.log('[Jadwa] calling /api/paymob ...');
+    console.log('[IPC] calling /api/paymob ...');
     const res = await fetch('/api/paymob', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
@@ -6849,27 +7135,41 @@ async function startPayment(customer) {
     });
     let data = {};
     try { data = await res.json(); } catch(_) {}
-    console.log('[Jadwa] /api/paymob response:', res.status, data);
+    console.log('[IPC] /api/paymob response:', res.status, data);
     if (!res.ok) throw new Error(data.error || `خطأ ${res.status} في بوابة الدفع`);
 
-    if (summary) summary.classList.add('compact');
-    loading.style.display = 'none';
+    // ── تحميل iframe ──
+    const iframe = document.getElementById('ipc-iframe');
+    if (!iframe) throw new Error('عنصر iframe غير موجود');
     iframe.src = data.iframeUrl;
-    iframe.style.display = 'block';
     window._pendingOrderId = data.ourOrderId;
 
+    // انتظر تحميل iframe ثم اعرضه
+    iframe.onload = () => { ipcShow('ipc-iframe-wrap'); };
+    // fallback: إذا لم يُطلق onload خلال 4 ثوانٍ
+    setTimeout(() => {
+      const wrap = document.getElementById('ipc-iframe-wrap');
+      if (wrap && wrap.style.display === 'none') ipcShow('ipc-iframe-wrap');
+    }, 4000);
+
+    // ── ابدأ الـ Polling ──
+    ipcStartPolling(data.ourOrderId);
+    console.log('[IPC] iframe loaded, polling started for order:', data.ourOrderId);
+
   } catch (err) {
-    loading.style.display = 'none';
-    if (summary) summary.style.display = 'none';
-    const errText = document.getElementById('pm-error-text');
-    const msg = err.message || 'حدث خطأ أثناء تحضير الدفع';
+    const msg = err.message || 'حدث خطأ أثناء الاتصال بخادم الدفع';
+    console.error('[IPC] startPayment error:', msg);
+    const errText = document.getElementById('ipc-error-text');
     if (errText) errText.textContent = msg;
-    if (errDiv)  errDiv.style.display = 'block';
-    console.error('[Jadwa] startPayment error:', msg);
+    ipcShow('ipc-error');
+    // إعادة تفعيل الزر
+    if (btn) { btn.disabled = false; btn.innerHTML = '💳 احصل على الباقة — 49.99 ر.س'; btn.style.opacity = ''; }
   }
 }
 
 function closePayment() {
+  ipcReset();
+  // الحفاظ على التوافق مع الكود القديم
   const modal   = document.getElementById('payment-modal');
   const iframe  = document.getElementById('payment-iframe');
   const loading = document.getElementById('payment-loading');
@@ -7055,7 +7355,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── استماع لرسالة Paymob من الـ iframe ────────────────────────
 window.addEventListener('message', function(e) {
   if (!e.data) return;
-  const d = typeof e.data === 'string' ? (() => { try { return JSON.parse(e.data); } catch(_) { return {}; } })() : e.data;
+  const d = typeof e.data === 'string'
+    ? (() => { try { return JSON.parse(e.data); } catch(_) { return {}; } })()
+    : e.data;
 
   // تنسيقات Paymob المختلفة
   const isPaymob = d.type === 'paymob' || d.type === 'PAYMOB' ||
@@ -7068,18 +7370,19 @@ window.addEventListener('message', function(e) {
                   d.obj?.success === true || d.obj?.success === 'true';
   const pending  = d.pending  === true  || d.obj?.pending  === true;
 
-  closePayment();
+  console.log('[IPC] Paymob message received — success:', success, 'pending:', pending);
 
   if (success && !pending) {
-    // ── دفع ناجح: تحديث UI فوراً (الـ webhook يُحدّث DB تلقائياً) ──
-    window._hasPoints     = true;
-    window._studyUnlocked = true;
-    showPage('payment-success');
-  } else if (d.success === false || d.success === 'false' ||
-             d.obj?.success === false || d.obj?.success === 'false') {
-    showPage('payment-failed');
+    // ── دفع ناجح: عرض النجاح داخل الصفحة مباشرة ──
+    ipcShowSuccess();
+  } else if (!success && !pending) {
+    // ── فشل صريح من iframe ──
+    ipcClearTimers();
+    const errText = document.getElementById('ipc-error-text');
+    if (errText) errText.textContent = 'تم رفض عملية الدفع — يرجى التحقق من بيانات البطاقة والمحاولة مجدداً';
+    ipcShow('ipc-error');
   }
-  // pending → لا نفعل شيئاً، الـ webhook سيُعالجه
+  // pending → الـ polling سيُعالجه عند تحديث الـ webhook
 });
 
 // ── التحقق من redirect_url بعد الدفع (Paymob يعيد التوجيه هنا) ──
