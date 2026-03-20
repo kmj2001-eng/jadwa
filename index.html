@@ -7845,6 +7845,11 @@ function switchAuthScreen(screen) {
   });
   const loginNowBtn = document.getElementById('forgot-login-now-btn');
   if (loginNowBtn) { loginNowBtn.disabled = true; loginNowBtn.style.opacity = '0.4'; }
+  // إعادة إظهار حقل البريد والزر عند العودة لشاشة forgot
+  const fgEl = document.getElementById('forgot-email');
+  if (fgEl) { fgEl.value = ''; fgEl.closest('.fgroup').style.display = ''; }
+  const fbBtn = document.getElementById('forgot-btn');
+  if (fbBtn) { fbBtn.style.display = ''; fbBtn.disabled = true; fbBtn.style.opacity = '0.45'; fbBtn.style.cursor = 'not-allowed'; }
   clearAuthError();
 }
 function toggleNavDropdown(e) {
@@ -8024,28 +8029,26 @@ async function doForgot() {
     if (!res.ok) throw new Error(data.error || 'خطأ');
 
     clearAuthError();
-    window._forgotLastEmail = email; // احفظ الإيميل قبل المسح لاستخدامه في التسجيل التلقائي
+    window._forgotLastEmail = email;
     document.getElementById('forgot-email').value = '';
-    // أعد تعطيل الزر بعد مسح الحقل
+
+    // أخفِ حقل البريد والزر عند ظهور أي نتيجة
+    document.getElementById('forgot-email').closest('.fgroup').style.display = 'none';
     const sb = document.getElementById('forgot-btn');
-    if (sb) { sb.disabled = true; sb.style.opacity = '0.45'; sb.style.cursor = 'not-allowed'; }
+    if (sb) sb.style.display = 'none';
 
     if (data.emailSent) {
-      // البريد أُرسل — أظهر صندوق التأكيد مع العنوان
       document.getElementById('forgot-sent-email-display').textContent = email;
       document.getElementById('forgot-email-sent-box').style.display = 'block';
     } else if (data.tempPassword) {
-      // لا يوجد خدمة بريد — أظهر كلمة المرور المؤقتة مع زر النسخ
       document.getElementById('forgot-temp-display').textContent = data.tempPassword;
       document.getElementById('forgot-temp-box').style.display = 'block';
-      // فعّل زر "تسجيل الدخول الآن" بعد ظهور كلمة المرور بلحظة
       const loginNowBtn = document.getElementById('forgot-login-now-btn');
       if (loginNowBtn) {
         loginNowBtn.disabled = true; loginNowBtn.style.opacity = '0.4';
         setTimeout(() => { loginNowBtn.disabled = false; loginNowBtn.style.opacity = '1'; }, 1200);
       }
     } else {
-      // البريد غير مسجل — أظهر صندوق توجيه للتسجيل
       document.getElementById('forgot-not-found-box').style.display = 'block';
     }
   } catch(e) {
