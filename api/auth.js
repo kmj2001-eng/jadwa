@@ -153,26 +153,30 @@ async function sendWelcomeEmail({ to, name }) {
   const html = `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body{margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;}
-  .wrap{max-width:520px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;}
-  .header{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:36px 24px;text-align:center;}
-  .logo-box{display:inline-flex;align-items:center;gap:10px;margin-bottom:6px;}
-  .logo-mark{width:44px;height:44px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff;}
-  .logo-name{color:#fff;font-size:1.4rem;font-weight:700;letter-spacing:0.5px;}
+  body{margin:0;padding:20px 0;background:#0f172a;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;direction:rtl;}
+  .wrap{max-width:520px;margin:0 auto;background:#1e293b;border-radius:20px;overflow:hidden;border:1px solid #1e3a5f;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+  .header{background:linear-gradient(135deg,#1d4ed8 0%,#1e40af 100%);padding:40px 28px 36px;text-align:center;}
+  .logo-box{display:inline-flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .logo-mark{width:48px;height:48px;background:rgba(255,255,255,0.18);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Cairo',sans-serif;font-size:1.6rem;font-weight:800;color:#fff;}
+  .logo-name{color:#fff;font-size:1.5rem;font-weight:800;letter-spacing:0.5px;font-family:'Cairo',sans-serif;}
   .logo-name span{color:#93c5fd;}
-  .tagline{color:#bfdbfe;font-size:0.82rem;margin:6px 0 0;}
-  .body{padding:36px 28px;}
-  .emoji-big{font-size:2.5rem;text-align:center;margin-bottom:16px;}
-  .title{color:#f1f5f9;font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:8px;}
-  .greeting{color:#94a3b8;font-size:0.95rem;line-height:1.8;text-align:center;margin-bottom:28px;}
-  .cta{display:block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;text-decoration:none;text-align:center;padding:14px 24px;border-radius:12px;font-size:0.95rem;font-weight:600;margin-bottom:28px;}
-  .wish{color:#64748b;font-size:0.85rem;text-align:center;line-height:1.8;}
-  .footer{background:#0f172a;padding:20px;text-align:center;}
-  .footer-logo{color:#fff;font-size:1rem;font-weight:700;margin-bottom:4px;}
+  .tagline{color:#bfdbfe;font-size:0.85rem;margin:4px 0 0;font-weight:400;}
+  .body{padding:40px 32px;}
+  .emoji-big{font-size:3rem;text-align:center;margin-bottom:20px;line-height:1;}
+  .title-main{color:#f8fafc;font-size:1.35rem;font-weight:800;text-align:center;margin-bottom:6px;font-family:'Cairo',sans-serif;}
+  .title-sub{color:#60a5fa;font-size:1rem;font-weight:600;text-align:center;margin-bottom:28px;font-family:'Cairo',sans-serif;}
+  .divider{width:48px;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:2px;margin:0 auto 28px;border:none;}
+  .greeting{color:#cbd5e1;font-size:1rem;line-height:2;text-align:center;margin-bottom:32px;font-weight:400;}
+  .greeting strong{color:#f1f5f9;font-weight:700;}
+  .cta{display:block;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;text-decoration:none;text-align:center;padding:16px 28px;border-radius:14px;font-size:1rem;font-weight:700;margin-bottom:32px;font-family:'Cairo',sans-serif;letter-spacing:0.3px;}
+  .wish{color:#64748b;font-size:0.9rem;text-align:center;line-height:1.9;font-weight:400;}
+  .footer{background:#0f172a;padding:24px;text-align:center;border-top:1px solid #1e293b;}
+  .footer-logo{color:#f1f5f9;font-size:1.05rem;font-weight:800;margin-bottom:6px;font-family:'Cairo',sans-serif;}
   .footer-logo span{color:#60a5fa;}
-  .footer-link{color:#3b82f6;font-size:0.78rem;text-decoration:none;}
-  .footer-copy{color:#475569;font-size:0.72rem;margin-top:8px;}
+  .footer-link{color:#3b82f6;font-size:0.8rem;text-decoration:none;font-weight:600;}
+  .footer-copy{color:#334155;font-size:0.72rem;margin-top:10px;font-weight:400;}
 </style>
 </head>
 <body>
@@ -186,14 +190,16 @@ async function sendWelcomeEmail({ to, name }) {
   </div>
   <div class="body">
     <div class="emoji-big">🎉</div>
-    <div class="title">مرحباً ${displayName}!</div>
-    <div class="title" style="font-size:1rem;color:#60a5fa;margin-bottom:20px;">تم إنشاء حسابك بنجاح!</div>
+    <div class="title-main">مرحباً ${displayName}!</div>
+    <div class="title-sub">✅ تم إنشاء حسابك بنجاح!</div>
+    <hr class="divider">
     <p class="greeting">
-      أهلاً بك 👋<br>
-      ابدأ الآن واستفد من خدماتنا بكل سهولة.
+      <strong>أهلاً بك 👋</strong><br>
+      ابدأ الآن واستفد من خدماتنا بكل سهولة.<br>
+      نحن هنا لمساعدتك في كل خطوة.
     </p>
-    <a href="${siteUrl}" class="cta">🚀 ابدأ تجربتك الآن</a>
-    <p class="wish">🚀 نتمنى لك تجربة رائعة!</p>
+    <a href="${siteUrl}" class="cta">🚀 &nbsp;ابدأ تجربتك الآن</a>
+    <p class="wish">🌟 نتمنى لك تجربة رائعة مع ذكاء الأعمال!</p>
   </div>
   <div class="footer">
     <div class="footer-logo">ذكاء <span>الأعمال</span></div>
