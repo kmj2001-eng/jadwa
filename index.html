@@ -7825,10 +7825,10 @@ function switchAuthScreen(screen) {
   const titles = { login:'الدخول إلى حسابك', register:'إنشاء حساب جديد', forgot:'استعادة كلمة السر', reset:'تعيين كلمة السر الجديدة' };
   document.getElementById('auth-modal-title').textContent = titles[screen] || '';
   // إخفاء صناديق forgot عند التنقل
-  const tb = document.getElementById('forgot-temp-box');
-  const eb = document.getElementById('forgot-email-sent-box');
-  if (tb) tb.style.display = 'none';
-  if (eb) eb.style.display = 'none';
+  ['forgot-temp-box','forgot-email-sent-box','forgot-not-found-box'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   clearAuthError();
 }
 function toggleNavDropdown(e) {
@@ -8019,9 +8019,8 @@ async function doForgot() {
       document.getElementById('forgot-temp-display').textContent = data.tempPassword;
       document.getElementById('forgot-temp-box').style.display = 'block';
     } else {
-      // البريد غير مسجل — رسالة عامة + انتقال
-      showToast('إذا كان البريد مسجلاً ستصلك كلمة المرور المؤقتة');
-      setTimeout(() => switchAuthScreen('login'), 2500);
+      // البريد غير مسجل — أظهر صندوق توجيه للتسجيل
+      document.getElementById('forgot-not-found-box').style.display = 'block';
     }
   } catch(e) {
     showAuthError(e.message);
@@ -8605,6 +8604,14 @@ function authLogout() {
           <div id="forgot-sent-email-display" style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;direction:ltr;"></div>
           <div style="font-size:0.72rem;color:var(--text3);line-height:1.8;margin-bottom:14px;">تحقق من صندوق الوارد<br>وإذا لم تجدها تحقق من مجلد <strong style="color:var(--text2);">Spam / البريد المزعزع</strong></div>
           <button onclick="switchAuthScreen('login')" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تسجيل الدخول</button>
+        </div>
+        <!-- رسالة البريد غير المسجل -->
+        <div id="forgot-not-found-box" style="display:none;margin-top:16px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:1.4rem;margin-bottom:8px;">🔍</div>
+          <div style="font-size:0.88rem;color:#F87171;font-weight:600;margin-bottom:8px;">البريد غير مسجل</div>
+          <div style="font-size:0.78rem;color:var(--text2);line-height:1.8;margin-bottom:14px;">هذا البريد الإلكتروني غير موجود في نظامنا.<br>هل تريد إنشاء حساب جديد؟</div>
+          <button onclick="switchAuthScreen('register')" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;margin-bottom:8px;">إنشاء حساب جديد</button>
+          <button onclick="document.getElementById('forgot-email').value='';document.getElementById('forgot-not-found-box').style.display='none';" style="background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:10px;padding:8px 24px;font-size:0.82rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تجربة بريد آخر</button>
         </div>
         <div class="auth-footer" style="margin-top:12px;">
           <button class="auth-link" onclick="switchAuthScreen('login')">← العودة لتسجيل الدخول</button>
