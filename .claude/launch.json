@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "vercel-dev",
-      "runtimeExecutable": "vercel",
-      "runtimeArgs": ["dev"],
-      "port": 3000
+      "name": "jadwa-local",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-Command", "dotnet-serve --port 3001 --directory C:\\Users\\dell\\Desktop\\jadwa-project"],
+      "port": 3001
     }
   ]
 }

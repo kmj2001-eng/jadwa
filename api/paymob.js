@@ -1,13 +1,40 @@
 // api/paymob.js — Paymob SA Integration (ksa.paymob.com)
+// GET  /api/paymob?id=ORDER_ID  → check order status (merged from check-order.js)
+// POST /api/paymob               → create payment session
 import { neon } from '@neondatabase/serverless';
 
 const BASE = 'https://ksa.paymob.com/api';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-user-id');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // ── GET: التحقق من حالة الطلب (مدمج من check-order.js) ──────
+  if (req.method === 'GET') {
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'Missing order id' });
+    try {
+      const sql = neon(process.env.POSTGRES_URL);
+      const rows = await sql`
+        SELECT status, user_id, amount, created_at
+        FROM orders WHERE id = ${id} LIMIT 1
+      `;
+      if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+      const o = rows[0];
+      return res.status(200).json({
+        status:    o.status,
+        userId:    o.user_id,
+        amount:    o.amount,
+        createdAt: o.created_at,
+      });
+    } catch (err) {
+      console.error('[paymob/check] DB error:', err.message);
+      return res.status(500).json({ error: 'Database error', detail: err.message });
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   // ── متغيرات البيئة ──────────────────────────────────────────
