@@ -4274,11 +4274,11 @@ footer {
         </div>
         <table class="data-table" id="user-studies-table">
           <thead>
-            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>التاريخ</th></tr>
+            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>اشتراك/تحميل</th><th>حذف</th></tr>
           </thead>
           <tbody id="user-studies-tbody">
             <tr id="no-studies-row">
-              <td colspan="6" style="text-align:center;padding:48px 24px;color:var(--text3);">
+              <td colspan="7" style="text-align:center;padding:48px 24px;color:var(--text3);">
                 <div style="font-size:2rem;margin-bottom:12px;">📋</div>
                 <div style="font-weight:700;margin-bottom:8px;color:var(--text2);">لا توجد دراسات بعد</div>
                 <div style="font-size:0.8rem;margin-bottom:16px;">ابدأ بإنشاء دراستك الأولى الآن</div>
@@ -6750,12 +6750,14 @@ async function loadDashboardStudies() {
           : `<span class="sbadge sbadge-done">مدفوعة</span>`
         }
       </td>
-      <td style="font-size:0.75rem;color:var(--text3);">${s.date}
+      <td style="font-size:0.75rem;color:var(--text3);">
         ${isDraft
-          ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="margin-right:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:2px 8px;">اشترك</button>`
-          : `<button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="margin-right:6px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.75rem;padding:2px 8px;">📄 PDF</button>`
+          ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:3px 10px;font-family:'Cairo',sans-serif;">اشترك</button>`
+          : `<button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.75rem;padding:3px 10px;font-family:'Cairo',sans-serif;">📄 PDF</button>`
         }
-        <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="margin-right:8px;background:none;border:none;cursor:pointer;color:var(--rose);font-size:0.85rem;">🗑</button>
+      </td>
+      <td style="text-align:center;">
+        <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="background:none;border:none;cursor:pointer;color:#ff2d6b;font-size:1.1rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,45,107,0.5));">🗑</button>
       </td>
     `;
     tbody.appendChild(tr);
