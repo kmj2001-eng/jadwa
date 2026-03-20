@@ -8047,6 +8047,27 @@ function copyTempPassword() {
   }).catch(() => showToast('انسخ كلمة المرور يدوياً'));
 }
 
+// ── تسجيل دخول تلقائي بعد كلمة المرور المؤقتة ──────────────
+function forgotAutoLogin() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const pw    = document.getElementById('forgot-temp-display').textContent.trim();
+  switchAuthScreen('login');
+  // تعبئة النموذج تلقائياً إذا توفرت البيانات
+  if (email) {
+    const emailEl = document.getElementById('login-email');
+    if (emailEl) emailEl.value = email;
+  }
+  if (pw) {
+    const pwEl = document.getElementById('login-password');
+    if (pwEl) {
+      pwEl.value = pw;
+      // إبراز الحقل لحظة واحدة ليلاحظ المستخدم أنه مُعبَّأ
+      pwEl.style.borderColor = 'var(--gold)';
+      setTimeout(() => { pwEl.style.borderColor = ''; }, 1500);
+    }
+  }
+}
+
 // ── تعيين كلمة السر الجديدة ─────────────────────────────────
 async function doReset() {
   clearAuthError();
@@ -8603,7 +8624,7 @@ function authLogout() {
             <i class="fa-regular fa-copy"></i> نسخ
           </button>
           <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;margin-bottom:14px;">استخدمها لتسجيل الدخول ثم قم بتغييرها من إعدادات حسابك</div>
-          <button onclick="switchAuthScreen('login')" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تسجيل الدخول الآن</button>
+          <button onclick="forgotAutoLogin()" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تسجيل الدخول الآن ←</button>
         </div>
         <!-- رسالة تأكيد إرسال البريد -->
         <div id="forgot-email-sent-box" style="display:none;margin-top:16px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:16px;text-align:center;">
