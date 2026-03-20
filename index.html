@@ -8019,6 +8019,9 @@ async function doForgot() {
 
     clearAuthError();
     document.getElementById('forgot-email').value = '';
+    // أعد تعطيل الزر بعد مسح الحقل
+    const sb = document.getElementById('forgot-btn');
+    if (sb) { sb.disabled = true; sb.style.opacity = '0.45'; sb.style.cursor = 'not-allowed'; }
 
     if (data.emailSent) {
       // البريد أُرسل — أظهر صندوق التأكيد مع العنوان
@@ -8041,7 +8044,7 @@ async function doForgot() {
   } catch(e) {
     showAuthError(e.message);
   } finally {
-    authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال كلمة المرور المؤقتة');
+    authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال كلمة المرور الجديدة');
   }
 }
 
@@ -8614,19 +8617,19 @@ function authLogout() {
       <!-- ── شاشة FORGOT PASSWORD ── -->
       <div class="auth-screen" id="screen-forgot">
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:20px;line-height:1.8;">
-          أدخل بريدك الإلكتروني وسنرسل لك كلمة مرور مؤقتة لتسجيل الدخول.
+          أدخل بريدك الإلكتروني وسنرسل لك كلمة مرور جديدة لتسجيل الدخول.
         </p>
         <div class="fgroup">
           <label class="mlabel">البريد الإلكتروني</label>
-          <input class="minput" id="forgot-email" type="email" placeholder="example@email.com" dir="ltr">
+          <input class="minput" id="forgot-email" type="email" placeholder="example@email.com" dir="ltr" oninput="(function(v){var b=document.getElementById('forgot-btn');b.disabled=!v.trim();b.style.opacity=v.trim()?'1':'0.45';b.style.cursor=v.trim()?'pointer':'not-allowed';})(this.value)">
         </div>
-        <button class="auth-submit" id="forgot-btn" onclick="doForgot()">
+        <button class="auth-submit" id="forgot-btn" onclick="doForgot()" disabled style="opacity:0.45;cursor:not-allowed;">
           <i class="fa-solid fa-paper-plane"></i>
-          <span>إرسال كلمة المرور المؤقتة</span>
+          <span>إرسال كلمة المرور الجديدة</span>
         </button>
         <!-- صندوق كلمة المرور المؤقتة (يظهر عند غياب خدمة البريد) -->
         <div id="forgot-temp-box" style="display:none;margin-top:16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:16px;text-align:center;">
-          <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;">كلمة مرورك المؤقتة</div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;">كلمة مرورك الجديدة</div>
           <div id="forgot-temp-display" style="font-family:monospace;font-size:2rem;font-weight:700;color:var(--gold);letter-spacing:6px;margin-bottom:10px;"></div>
           <div style="font-size:0.78rem;color:var(--text2);line-height:1.7;margin-bottom:14px;">اضغط الزر أدناه عند تفعيله</div>
           <button id="forgot-login-now-btn" onclick="forgotAutoLogin()" disabled style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;opacity:0.4;transition:opacity 0.4s;">تسجيل الدخول الآن ←</button>
@@ -8634,7 +8637,7 @@ function authLogout() {
         <!-- رسالة تأكيد إرسال البريد -->
         <div id="forgot-email-sent-box" style="display:none;margin-top:16px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:16px;text-align:center;">
           <div style="font-size:1.5rem;margin-bottom:8px;">📧</div>
-          <div style="font-size:0.88rem;color:#34D399;font-weight:600;margin-bottom:6px;">تم إرسال كلمة المرور المؤقتة</div>
+          <div style="font-size:0.88rem;color:#34D399;font-weight:600;margin-bottom:6px;">تم إرسال كلمة المرور الجديدة</div>
           <div id="forgot-sent-email-display" style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;direction:ltr;"></div>
           <div style="font-size:0.72rem;color:var(--text3);line-height:1.8;margin-bottom:14px;">تحقق من صندوق الوارد<br>وإذا لم تجدها تحقق من مجلد <strong style="color:var(--text2);">Spam / البريد المزعزع</strong></div>
           <button onclick="switchAuthScreen('login')" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تسجيل الدخول</button>

@@ -109,10 +109,10 @@ async function sendTempPasswordEmail({ to, name, tempPassword }) {
     <p class="greeting">مرحباً ${name || 'عزيزنا'} 👋</p>
     <p class="msg">
       تلقّينا طلباً لاستعادة كلمة المرور الخاصة بحسابك.<br>
-      فيما يلي كلمة مرورك المؤقتة — استخدمها لتسجيل الدخول ثم قم بتغييرها من إعدادات حسابك.
+      فيما يلي كلمة مرورك الجديدة — استخدمها لتسجيل الدخول.
     </p>
     <div class="pw-box">
-      <div class="pw-label">كلمة المرور المؤقتة</div>
+      <div class="pw-label">كلمة المرور الجديدة</div>
       <div class="pw-value">${tempPassword}</div>
     </div>
     <p class="note">
@@ -133,7 +133,7 @@ async function sendTempPasswordEmail({ to, name, tempPassword }) {
     body: JSON.stringify({
       from: `ذكاء الأعمال <${process.env.SENDER_EMAIL || 'onboarding@resend.dev'}>`,
       to: [to],
-      subject: '🔑 كلمة المرور المؤقتة — ذكاء الأعمال',
+      subject: '🔑 كلمة المرور الجديدة — ذكاء الأعمال',
       html
     })
   });
