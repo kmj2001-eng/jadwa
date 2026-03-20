@@ -1464,19 +1464,6 @@ input[type=range]::-webkit-slider-thumb {
 }
 .btn-pdf:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(37,99,235,0.5); }
 
-/* زر تحميل Word */
-.btn-word {
-  display:flex; align-items:center; gap:8px;
-  background:linear-gradient(135deg,#166534,#15803d);
-  border:1px solid rgba(74,222,128,0.3);
-  border-radius:12px; padding:10px 16px;
-  cursor:pointer; color:white;
-  font-size:0.78rem; font-weight:700;
-  transition:all 0.2s;
-  font-family:'Cairo',sans-serif;
-  box-shadow:0 4px 14px rgba(22,101,52,0.35);
-}
-.btn-word:hover { transform:translateY(-2px); background:linear-gradient(135deg,#15803d,#16a34a); box-shadow:0 6px 22px rgba(22,101,52,0.5); }
 
 /* Paywall */
 .section-locked {
@@ -4263,7 +4250,7 @@ footer {
           <div style="font-size:2.2rem;line-height:1;">💎</div>
           <div>
             <div style="font-size:0.95rem;font-weight:800;color:#e2e8f0;margin-bottom:4px;">اشترك وافتح دراساتك كاملاً</div>
-            <div style="font-size:0.8rem;color:#94a3b8;line-height:1.7;">نقاطك انتهت — اشترك بـ <strong style="color:#34D399;">49.99 ر.س</strong> واحصل على 5 دراسات جدوى كاملة مع تحميل PDF و Word</div>
+            <div style="font-size:0.8rem;color:#94a3b8;line-height:1.7;">نقاطك انتهت — اشترك بـ <strong style="color:#34D399;">49.99 ر.س</strong> واحصل على 5 دراسات جدوى كاملة مع تحميل PDF</div>
           </div>
         </div>
         <button onclick="startPaymentForStudy()" style="
@@ -5820,39 +5807,6 @@ function htmlToMarkdownFallback(el) {
   return md.trim();
 }
 
-async function downloadWord(){
-  if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
-    showPDFPaywallModal('word');
-    return;
-  }
-  const title = document.getElementById('output-title').textContent.trim() || 'دراسة الجدوى';
-  const content = document.getElementById('output-body').innerHTML;
-  const loader = showPDFLoader();
-  try{
-    const res = await fetch('/api/generate-docx', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({title, content})
-    });
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      throw new Error(err?.error || 'فشل توليد الملف');
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = title + '.docx';
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    // فتح الملف بعد التحميل
-    setTimeout(() => { window.open(url, '_blank'); URL.revokeObjectURL(url); }, 1000);
-    hidePDFLoader(loader);
-    showToast('✅ تم تحميل الدراسة كملف Word بنجاح!');
-  }catch(err){
-    hidePDFLoader(loader);
-    showToast('❌ ' + err.message);
-  }
-}
 
 function startPaymentForStudy(){
   console.log('[Jadwa] startPaymentForStudy called');
@@ -6797,7 +6751,10 @@ async function loadDashboardStudies() {
         }
       </td>
       <td style="font-size:0.75rem;color:var(--text3);">${s.date}
-        ${isDraft ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="margin-right:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:2px 8px;">اشترك</button>` : ''}
+        ${isDraft
+          ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="margin-right:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:2px 8px;">اشترك</button>`
+          : `<button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="margin-right:6px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.75rem;padding:2px 8px;">📄 PDF</button>`
+        }
         <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="margin-right:8px;background:none;border:none;cursor:pointer;color:var(--rose);font-size:0.85rem;">🗑</button>
       </td>
     `;
@@ -6949,6 +6906,34 @@ async function openSavedStudy(id) {
       paywallWrapper.appendChild(overlayDiv);
       body.appendChild(paywallWrapper);
     }
+  }
+}
+
+async function downloadStudyPdf(id) {
+  const uid = window._currentUser?.id;
+  if (!uid) return showToast('يرجى تسجيل الدخول');
+  showToast('⏳ جارٍ تجهيز PDF...');
+  try {
+    const r = await fetch(`/api/studies?id=${id}`, { headers: { 'x-user-id': String(uid) } });
+    const data = await r.json();
+    const study = data.study;
+    if (!study) return showToast('تعذّر تحميل الدراسة');
+    const pr = await fetch('/api/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: study.title, markdown: study.content })
+    });
+    const pd = await pr.json();
+    if (!pd.html) return showToast('تعذّر توليد PDF');
+    const blob = new Blob([pd.html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${study.title}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    showToast('حدث خطأ أثناء توليد PDF');
   }
 }
 

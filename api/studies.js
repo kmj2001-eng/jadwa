@@ -25,6 +25,7 @@ export default async function handler(req, res) {
                  ai_output                             AS content,
                  metadata,
                  input_data,
+                 pdf_file_url,
                  COALESCE(metadata->>'status', 'completed') AS status,
                  created_at
           FROM feasibility_studies
@@ -40,6 +41,7 @@ export default async function handler(req, res) {
                project_name                          AS title,
                metadata,
                input_data,
+               pdf_file_url,
                COALESCE(metadata->>'status', 'completed') AS status,
                created_at
         FROM feasibility_studies
@@ -52,7 +54,7 @@ export default async function handler(req, res) {
 
     // ── POST: حفظ دراسة (upsert بنفس الاسم) ──
     if (req.method === 'POST') {
-      const { title, content, metadata, input_data, status } = req.body || {};
+      const { title, content, metadata, input_data, status, pdf_file_url } = req.body || {};
       if (!title || !content) return res.status(400).json({ error: 'العنوان والمحتوى مطلوبان' });
 
       // دمج status داخل metadata لتجنب الاعتماد على عمود status المنفصل
@@ -71,19 +73,20 @@ export default async function handler(req, res) {
       if (existing.length > 0) {
         await sql`
           UPDATE feasibility_studies
-          SET ai_output  = ${content},
-              metadata   = ${metaVal}::jsonb,
-              input_data = ${inputDataVal}::jsonb,
-              created_at = NOW()
+          SET ai_output    = ${content},
+              metadata     = ${metaVal}::jsonb,
+              input_data   = ${inputDataVal}::jsonb,
+              pdf_file_url = ${pdf_file_url || null},
+              created_at   = NOW()
           WHERE id = ${existing[0].id}
         `;
         studyId = existing[0].id;
       } else {
         const rows = await sql`
           INSERT INTO feasibility_studies
-            (user_id, project_name, ai_output, metadata, input_data)
+            (user_id, project_name, ai_output, metadata, input_data, pdf_file_url)
           VALUES
-            (${userId}, ${title}, ${content}, ${metaVal}::jsonb, ${inputDataVal}::jsonb)
+            (${userId}, ${title}, ${content}, ${metaVal}::jsonb, ${inputDataVal}::jsonb, ${pdf_file_url || null})
           RETURNING id
         `;
         studyId = rows[0].id;
