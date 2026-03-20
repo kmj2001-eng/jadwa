@@ -145,6 +145,82 @@ async function sendTempPasswordEmail({ to, name, tempPassword }) {
 }
 
 // ──────────────────────────────────────────────────────────
+//  Email Helper (Resend) — رسالة ترحيب بالعميل الجديد
+// ──────────────────────────────────────────────────────────
+async function sendWelcomeEmail({ to, name }) {
+  const displayName = name || to;
+  const siteUrl     = 'https://eses.store';
+  const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;}
+  .wrap{max-width:520px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;}
+  .header{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:36px 24px;text-align:center;}
+  .logo-box{display:inline-flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .logo-mark{width:44px;height:44px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff;}
+  .logo-name{color:#fff;font-size:1.4rem;font-weight:700;letter-spacing:0.5px;}
+  .logo-name span{color:#93c5fd;}
+  .tagline{color:#bfdbfe;font-size:0.82rem;margin:6px 0 0;}
+  .body{padding:36px 28px;}
+  .emoji-big{font-size:2.5rem;text-align:center;margin-bottom:16px;}
+  .title{color:#f1f5f9;font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:8px;}
+  .greeting{color:#94a3b8;font-size:0.95rem;line-height:1.8;text-align:center;margin-bottom:28px;}
+  .cta{display:block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;text-decoration:none;text-align:center;padding:14px 24px;border-radius:12px;font-size:0.95rem;font-weight:600;margin-bottom:28px;}
+  .wish{color:#64748b;font-size:0.85rem;text-align:center;line-height:1.8;}
+  .footer{background:#0f172a;padding:20px;text-align:center;}
+  .footer-logo{color:#fff;font-size:1rem;font-weight:700;margin-bottom:4px;}
+  .footer-logo span{color:#60a5fa;}
+  .footer-link{color:#3b82f6;font-size:0.78rem;text-decoration:none;}
+  .footer-copy{color:#475569;font-size:0.72rem;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo-box">
+      <div class="logo-mark">ذ</div>
+      <div class="logo-name">ذكاء <span>الأعمال</span></div>
+    </div>
+    <p class="tagline">منصة دراسات الجدوى الذكية</p>
+  </div>
+  <div class="body">
+    <div class="emoji-big">🎉</div>
+    <div class="title">مرحباً ${displayName}!</div>
+    <div class="title" style="font-size:1rem;color:#60a5fa;margin-bottom:20px;">تم إنشاء حسابك بنجاح!</div>
+    <p class="greeting">
+      أهلاً بك 👋<br>
+      ابدأ الآن واستفد من خدماتنا بكل سهولة.
+    </p>
+    <a href="${siteUrl}" class="cta">🚀 ابدأ تجربتك الآن</a>
+    <p class="wish">🚀 نتمنى لك تجربة رائعة!</p>
+  </div>
+  <div class="footer">
+    <div class="footer-logo">ذكاء <span>الأعمال</span></div>
+    <a href="${siteUrl}" class="footer-link">${siteUrl}</a>
+    <div class="footer-copy">© ${new Date().getFullYear()} ذكاء الأعمال — جميع الحقوق محفوظة</div>
+  </div>
+</div>
+</body></html>`;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: `ذكاء الأعمال <${process.env.SENDER_EMAIL || 'onboarding@resend.dev'}>`,
+      to: [to],
+      subject: '🎉 مرحباً بك في ذكاء الأعمال!',
+      html
+    })
+  });
+  if (!res.ok) throw new Error('Resend welcome error');
+  return res.json();
+}
+
+// ──────────────────────────────────────────────────────────
 //  Main Handler
 // ──────────────────────────────────────────────────────────
 export default async function handler(req, res) {
@@ -209,6 +285,11 @@ export default async function handler(req, res) {
         await grantWelcomePoint(user.id);
         await recordBonusUsed(user.id, ip, fingerprint || null);
       } catch(_) {}
+
+      // إرسال بريد ترحيبي (لا يوقف التسجيل إذا فشل)
+      if (process.env.RESEND_API_KEY) {
+        sendWelcomeEmail({ to: user.email, name: user.name }).catch(() => {});
+      }
 
       return res.status(200).json({
         token,
