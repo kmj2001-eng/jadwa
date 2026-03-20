@@ -7832,11 +7832,13 @@ function switchAuthScreen(screen) {
     (screen === 'forgot' || screen === 'reset') ? 'none' : '';
   const titles = { login:'الدخول إلى حسابك', register:'إنشاء حساب جديد', forgot:'استعادة كلمة السر', reset:'تعيين كلمة السر الجديدة' };
   document.getElementById('auth-modal-title').textContent = titles[screen] || '';
-  // إخفاء صناديق forgot عند التنقل
+  // إخفاء صناديق forgot عند التنقل وإعادة تعطيل زر الدخول
   ['forgot-temp-box','forgot-email-sent-box','forgot-not-found-box'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+  const loginNowBtn = document.getElementById('forgot-login-now-btn');
+  if (loginNowBtn) { loginNowBtn.disabled = true; loginNowBtn.style.opacity = '0.4'; }
   clearAuthError();
 }
 function toggleNavDropdown(e) {
@@ -8026,6 +8028,12 @@ async function doForgot() {
       // لا يوجد خدمة بريد — أظهر كلمة المرور المؤقتة مع زر النسخ
       document.getElementById('forgot-temp-display').textContent = data.tempPassword;
       document.getElementById('forgot-temp-box').style.display = 'block';
+      // فعّل زر "تسجيل الدخول الآن" بعد ظهور كلمة المرور بلحظة
+      const loginNowBtn = document.getElementById('forgot-login-now-btn');
+      if (loginNowBtn) {
+        loginNowBtn.disabled = true; loginNowBtn.style.opacity = '0.4';
+        setTimeout(() => { loginNowBtn.disabled = false; loginNowBtn.style.opacity = '1'; }, 1200);
+      }
     } else {
       // البريد غير مسجل — أظهر صندوق توجيه للتسجيل
       document.getElementById('forgot-not-found-box').style.display = 'block';
@@ -8624,7 +8632,7 @@ function authLogout() {
             <i class="fa-regular fa-copy"></i> نسخ
           </button>
           <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;margin-bottom:14px;">استخدمها لتسجيل الدخول ثم قم بتغييرها من إعدادات حسابك</div>
-          <button onclick="forgotAutoLogin()" style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;">تسجيل الدخول الآن ←</button>
+          <button id="forgot-login-now-btn" onclick="forgotAutoLogin()" disabled style="background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:0.85rem;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;opacity:0.4;transition:opacity 0.4s;">تسجيل الدخول الآن ←</button>
         </div>
         <!-- رسالة تأكيد إرسال البريد -->
         <div id="forgot-email-sent-box" style="display:none;margin-top:16px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:16px;text-align:center;">
