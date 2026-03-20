@@ -445,6 +445,28 @@ nav.scrolled {
 
 /* ─── AUTH MODAL ─── */
 #auth-modal .mbox { max-width:440px; }
+
+/* ─── AUTH MODAL — mobile fit (no scrollbars) ─── */
+@media (max-width:520px) {
+  #auth-modal {
+    padding:0;
+    align-items:flex-end;
+  }
+  #auth-modal .mbox {
+    max-width:100%;
+    border-radius:20px 20px 0 0;
+    max-height:96dvh;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  #auth-modal .mbox-head { padding:16px 20px; }
+  #auth-modal .mbox-body { padding:16px 20px 24px; }
+  #auth-modal .fgroup { margin-bottom:14px; }
+  #auth-modal .auth-row { grid-template-columns:1fr; gap:0; }
+  #auth-modal .auth-row .fgroup { margin-bottom:14px; }
+  #auth-modal .auth-submit { padding:12px; font-size:0.88rem; }
+  #auth-modal .auth-tabs { margin-bottom:16px; }
+}
 .auth-tabs {
   display:flex; background:var(--ink3);
   border-radius:10px; padding:4px; margin-bottom:24px; gap:4px;
@@ -7904,44 +7926,42 @@ function _showBonusDeniedModal(userName) {
 // ── نسيت كلمة السر ─────────────────────────────────────────
 async function doForgot() {
   clearAuthError();
-  document.getElementById('forgot-success-msg').style.display = 'none';
-  document.getElementById('forgot-token-box').classList.remove('show');
+  document.getElementById('forgot-temp-box').style.display = 'none';
   const email = document.getElementById('forgot-email').value.trim();
   if (!email) return showAuthError('أدخل البريد الإلكتروني');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAuthError('صيغة البريد الإلكتروني غير صحيحة');
   authBtnLoading('forgot-btn', true);
   try {
     const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'forgot',email}) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'خطأ');
 
-    if (data.emailSent) {
-      // البريد أُرسل — أظهر رسالة النجاح التقليدية
-      document.getElementById('forgot-success-msg').style.display = 'block';
-    } else if (data.resetToken) {
-      // لا يوجد خدمة بريد — أظهر التوكن مباشرة في الـ UI
-      _resetToken = data.resetToken;
-      document.getElementById('forgot-token-display').textContent = data.resetToken;
-      document.getElementById('forgot-token-box').classList.add('show');
-    } else {
-      // البريد غير مسجل — نظهر رسالة عامة لحماية الخصوصية
-      document.getElementById('forgot-success-msg').style.display = 'block';
-    }
+    clearAuthError();
     document.getElementById('forgot-email').value = '';
+
+    if (data.emailSent) {
+      // البريد أُرسل — أظهر رسالة لحظية ثم انتقل لتسجيل الدخول
+      showToast('📧 تم إرسال كلمة المرور المؤقتة إلى بريدك الإلكتروني');
+      setTimeout(() => switchAuthScreen('login'), 1800);
+    } else if (data.tempPassword) {
+      // لا يوجد خدمة بريد — أظهر كلمة المرور المؤقتة
+      document.getElementById('forgot-temp-display').textContent = data.tempPassword;
+      document.getElementById('forgot-temp-box').style.display = 'block';
+      // بعد 4 ثوانٍ انتقل لتسجيل الدخول تلقائياً
+      setTimeout(() => {
+        document.getElementById('forgot-temp-box').style.display = 'none';
+        switchAuthScreen('login');
+      }, 4000);
+    } else {
+      // البريد غير مسجل — رسالة عامة + انتقال
+      showToast('إذا كان البريد مسجلاً ستصلك كلمة المرور المؤقتة');
+      setTimeout(() => switchAuthScreen('login'), 1800);
+    }
   } catch(e) {
     showAuthError(e.message);
   } finally {
-    authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال رابط التعيين');
+    authBtnLoading('forgot-btn', false, 'paper-plane', 'إرسال كلمة المرور المؤقتة');
   }
-}
-
-function copyResetToken() {
-  const token = document.getElementById('forgot-token-display').textContent;
-  navigator.clipboard.writeText(token).then(() => showToast('✅ تم نسخ الرمز'));
-}
-
-function proceedToReset() {
-  // التوكن محفوظ في _resetToken، انتقل لشاشة إعادة التعيين
-  switchAuthScreen('reset');
 }
 
 // ── تعيين كلمة السر الجديدة ─────────────────────────────────
@@ -8482,7 +8502,7 @@ function authLogout() {
       <!-- ── شاشة FORGOT PASSWORD ── -->
       <div class="auth-screen" id="screen-forgot">
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:20px;line-height:1.8;">
-          أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة السر.
+          أدخل بريدك الإلكتروني وسنرسل لك كلمة مرور مؤقتة لتسجيل الدخول.
         </p>
         <div class="fgroup">
           <label class="mlabel">البريد الإلكتروني</label>
@@ -8490,30 +8510,13 @@ function authLogout() {
         </div>
         <button class="auth-submit" id="forgot-btn" onclick="doForgot()">
           <i class="fa-solid fa-paper-plane"></i>
-          <span>إرسال رابط التعيين</span>
+          <span>إرسال كلمة المرور المؤقتة</span>
         </button>
-        <!-- رسالة نجاح الإيميل -->
-        <div id="forgot-success-msg" style="display:none;margin-top:16px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:10px;padding:14px 16px;text-align:center;">
-          <div style="font-size:1.6rem;margin-bottom:6px;">📧</div>
-          <div style="color:var(--green);font-weight:700;font-size:0.95rem;margin-bottom:4px;">تم الإرسال بنجاح!</div>
-          <div style="color:var(--text2);font-size:0.82rem;line-height:1.7;">تحقق من بريدك الإلكتروني وانقر على الرابط لتعيين كلمة مرور جديدة.<br>الرابط صالح لمدة ساعة واحدة.</div>
-        </div>
-        <!-- صندوق التوكن (يظهر عند غياب خدمة البريد) -->
-        <div class="reset-token-box" id="forgot-token-box">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-            <i class="fa-solid fa-key" style="color:var(--gold);"></i>
-            <strong style="color:var(--text);font-size:0.82rem;">رمز إعادة التعيين</strong>
-          </div>
-          <div style="background:var(--ink);border-radius:8px;padding:10px;margin-bottom:10px;word-break:break-all;font-family:monospace;font-size:0.72rem;color:var(--text2);" id="forgot-token-display"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="copyResetToken()" style="flex:1;background:var(--ink3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <i class="fa-solid fa-copy"></i> نسخ الرمز
-            </button>
-            <button onclick="proceedToReset()" style="flex:1;background:var(--gold);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <i class="fa-solid fa-arrow-left"></i> إعادة تعيين الآن
-            </button>
-          </div>
-          <div style="font-size:0.72rem;color:var(--text2);margin-top:8px;opacity:0.7;">⏳ هذا الرمز صالح لمدة ساعة واحدة</div>
+        <!-- صندوق كلمة المرور المؤقتة (يظهر عند غياب خدمة البريد) -->
+        <div id="forgot-temp-box" style="display:none;margin-top:16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;">كلمة مرورك المؤقتة</div>
+          <div id="forgot-temp-display" style="font-family:monospace;font-size:2rem;font-weight:700;color:var(--gold);letter-spacing:6px;margin-bottom:12px;"></div>
+          <div style="font-size:0.72rem;color:var(--text3);line-height:1.7;">استخدمها لتسجيل الدخول ثم قم بتغييرها<br>سيتم الانتقال لتسجيل الدخول تلقائياً...</div>
         </div>
         <div class="auth-footer" style="margin-top:12px;">
           <button class="auth-link" onclick="switchAuthScreen('login')">← العودة لتسجيل الدخول</button>
