@@ -37,7 +37,9 @@ export default async function handler(req, res) {
     await sql`DELETE FROM invoices            WHERE user_id = ${userId}`;
     await sql`DELETE FROM user_points         WHERE user_id = ${userId}`;
     await sql`DELETE FROM orders              WHERE user_id = ${userId}`;
-    await sql`DELETE FROM bonus_tracker       WHERE user_id = ${userId}`;
+    // نُبقي سجلات IP/fingerprint ونُفصلها عن المستخدم المحذوف
+    // لمنع الحصول على النقطة المجانية مجدداً بعد إعادة التسجيل
+    await sql`UPDATE bonus_tracker SET user_id = NULL WHERE user_id = ${userId}`;
     await sql`DELETE FROM users               WHERE id      = ${userId}`;
 
     return res.status(200).json({ success: true, message: 'تم حذف الحساب وجميع البيانات بنجاح' });

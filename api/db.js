@@ -225,9 +225,9 @@ export async function getUserPoints(userId) {
   const sql = getSQL();
   const rows = await sql`
     SELECT
-      SUM(total_points) AS total,
-      SUM(used_points)  AS used,
-      SUM(total_points - used_points) AS remaining
+      COALESCE(SUM(total_points), 0)              AS total,
+      COALESCE(SUM(used_points), 0)               AS used,
+      COALESCE(SUM(total_points - used_points), 0) AS remaining
     FROM user_points
     WHERE user_id = ${userId} AND expires_at > NOW()
   `;
@@ -288,5 +288,6 @@ export async function grantWelcomePoint(userId) {
   await sql`
     INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
     VALUES (${userId}, NULL, 1, 0, NOW() + INTERVAL '6 months')
+    ON CONFLICT DO NOTHING
   `;
 }

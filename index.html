@@ -449,13 +449,13 @@ nav.scrolled {
 /* ─── AUTH MODAL — mobile fit (no scrollbars) ─── */
 @media (max-width:520px) {
   #auth-modal {
-    padding:0 0 52px 0;
-    align-items:flex-end;
+    padding:16px;
+    align-items:center;
   }
   #auth-modal .mbox {
     max-width:100%;
-    border-radius:20px 20px 0 0;
-    max-height:96dvh;
+    border-radius:20px;
+    max-height:92dvh;
     overflow-y:auto;
     overflow-x:hidden;
   }
@@ -7849,6 +7849,14 @@ function togglePw(inputId, btn) {
   const icon = btn.querySelector('i');
   if (icon) { icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'; }
 }
+function resetPwField(inputId) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.value = '';
+  inp.type = 'password';
+  const btn = inp.parentElement && inp.parentElement.querySelector('.pw-eye');
+  if (btn) { const ic = btn.querySelector('i'); if (ic) ic.className = 'fa-regular fa-eye'; }
+}
 function switchAuthScreen(screen) {
   document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
   const t = document.getElementById('screen-' + screen);
@@ -7873,6 +7881,12 @@ function switchAuthScreen(screen) {
   if (fgEl) { fgEl.value = ''; fgEl.closest('.fgroup').style.display = ''; }
   const fbBtn = document.getElementById('forgot-btn');
   if (fbBtn) { fbBtn.style.display = ''; fbBtn.disabled = true; fbBtn.style.opacity = '0.45'; fbBtn.style.cursor = 'not-allowed'; }
+  // مسح حقول تسجيل الدخول
+  ['login-email','login-password','reg-name','reg-email','reg-phone'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  resetPwField('login-password');
+  resetPwField('reg-password');
   clearAuthError();
 }
 function toggleNavDropdown(e) {

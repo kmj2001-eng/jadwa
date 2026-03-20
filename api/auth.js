@@ -222,7 +222,10 @@ async function sendWelcomeEmail({ to, name }) {
       html
     })
   });
-  if (!res.ok) throw new Error('Resend welcome error');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error('Resend error: ' + JSON.stringify(err));
+  }
   return res.json();
 }
 
@@ -265,7 +268,10 @@ export default async function handler(req, res) {
       let bonusAlreadyUsed = false;
       try {
         bonusAlreadyUsed = await checkBonusAlreadyUsed(ip, fingerprint || null);
-      } catch(_) {}
+      } catch(e) {
+        console.warn('bonus check failed:', e.message);
+        bonusAlreadyUsed = true; // رفض المنح احتياطاً عند خطأ DB
+      }
 
       // إنشاء الحساب دائماً بغض النظر عن الـ bonus
       const user = await createUserWithPassword({

@@ -99,7 +99,7 @@ async function sendInvoiceEmail({ to, name, invoiceNumber, date, transactionId }
 </div>
 </body></html>`;
 
-  await fetch('https://api.resend.com/emails', {
+  const emailRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -112,6 +112,10 @@ async function sendInvoiceEmail({ to, name, invoiceNumber, date, transactionId }
       html
     })
   });
+  if (!emailRes.ok) {
+    const err = await emailRes.json().catch(() => ({}));
+    throw new Error('Resend invoice error: ' + JSON.stringify(err));
+  }
 }
 
 export default async function handler(req, res) {
