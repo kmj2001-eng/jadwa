@@ -1228,16 +1228,23 @@ nav.scrolled {
   position: relative; margin-bottom: 10px;
 }
 .pmo-input {
-  width: 100%; padding: 14px 42px 14px 16px;
+  width: 100%; padding: 9px 42px 9px 16px;
   background: rgba(255,255,255,0.06);
   border: 1.5px solid rgba(255,255,255,0.12);
   border-radius: 10px; color: #e2e8f0;
-  font-size: 0.95rem; font-family: 'Cairo', sans-serif;
+  font-size: 1rem;
+  font-family: 'Courier New', 'Consolas', monospace;
+  line-height: 1.4;
   outline: none; box-sizing: border-box;
   transition: border-color 0.2s, background 0.2s;
-  direction: ltr; text-align: left;
+  direction: ltr; text-align: center;
 }
-.pmo-input::placeholder { color: #64748b; direction: rtl; text-align: right; }
+.pmo-input::placeholder {
+  color: #64748b;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.85rem;
+  direction: rtl; text-align: center;
+}
 .pmo-input:focus {
   border-color: rgba(59,130,246,0.6);
   background: rgba(59,130,246,0.06);
@@ -8627,7 +8634,7 @@ function authLogout() {
           <div class="pmo-field-wrap">
             <input id="pmo-card-name" class="pmo-input" type="text"
               placeholder="الاسم الكامل" autocomplete="cc-name"
-              style="text-align:right; direction:rtl;">
+              style="text-align:center; direction:ltr; font-family:'Cairo',sans-serif;">
           </div>
 
           <!-- الصف الأخير: انتهاء + CVC -->
