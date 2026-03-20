@@ -2990,7 +2990,7 @@ footer {
       </div>
 
       <!-- الأسئلة الشائعة -->
-      <div>
+      <div id="faq-section">
         <h2 style="color:#e2e8f0;font-size:1.5rem;margin-bottom:28px;font-weight:700;">الأسئلة الشائعة عن دراسة الجدوى</h2>
         <div style="display:flex;flex-direction:column;gap:16px;" id="seo-faq">
 
@@ -8041,7 +8041,7 @@ function authLogout() {
       <p>منصة ذكاء الأعمال المتخصصة في إنشاء دراسات الجدوى الاحترافية للسوق العربي.</p>
     </div>
     <div class="footer-col"><h4>المنتج</h4><a onclick="showPage('tool')">الأداة</a><a onclick="showPage('pricing')">الأسعار</a><a onclick="showPage('ready')">نماذج جاهزة</a><a onclick="showPage('dashboard')">لوحة التحكم</a></div>
-    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a>الأسئلة الشائعة</a></div>
+    <div class="footer-col"><h4>التعلم</h4><a onclick="showPage('blog')">المدونة</a><a>دليل الاستخدام</a><a>مصطلحات مالية</a><a style="cursor:pointer" onclick="showPage('home');setTimeout(()=>{const el=document.getElementById('faq-section');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},350)">الأسئلة الشائعة</a></div>
     <div class="footer-col"><h4>الشركة</h4><a style="cursor:pointer" onclick="showPage('about')">من نحن</a><a style="cursor:pointer" onclick="showPage('about')">تواصل معنا</a><a style="cursor:pointer" onclick="showPage('privacy')">سياسة الخصوصية</a><a style="cursor:pointer" onclick="showPage('terms')">شروط الاستخدام</a></div>
   </div>
   <div class="footer-bottom">
