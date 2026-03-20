@@ -4115,56 +4115,7 @@ footer {
           <span style="font-size:0.72rem;color:var(--text3);">⚡ فوري بعد الدفع</span>
         </div>
 
-        <!-- ══ Inline Payment Container ══ -->
-        <div id="inline-payment-container" style="display:none;">
-
-          <!-- Loader -->
-          <div id="ipc-loader">
-            <div class="ipc-spinner"></div>
-            <p>⏳ جاري تجهيز بوابة الدفع الآمنة...</p>
-          </div>
-
-          <!-- iframe الدفع -->
-          <div id="ipc-iframe-wrap" style="display:none;">
-            <iframe id="ipc-iframe"
-              allow="payment *"
-              sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
-              src=""></iframe>
-            <div class="ipc-cancel-row">
-              <button class="ipc-cancel-btn" onclick="ipcReset()">✕ إلغاء العملية</button>
-            </div>
-          </div>
-
-          <!-- نجاح -->
-          <div id="ipc-success" style="display:none;">
-            <span class="ipc-success-icon">✅</span>
-            <h3>تم الدفع بنجاح! 🎉</h3>
-            <p>تمت إضافة <strong style="color:#34D399;">5 نقاط جدوى</strong> إلى حسابك — يمكنك الآن إنشاء دراساتك الكاملة</p>
-            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-              <button class="ipc-go-btn" onclick="ipcReset();showPage('tool')">🚀 ابدأ دراستك الآن</button>
-              <button class="ipc-go-btn" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);box-shadow:0 6px 20px rgba(59,130,246,0.35);"
-                onclick="ipcReset();showPage('dashboard')">📋 لوحة التحكم</button>
-            </div>
-          </div>
-
-          <!-- انتهاء الوقت -->
-          <div id="ipc-timeout" style="display:none;">
-            <div style="font-size:3rem;margin-bottom:12px;">⏱️</div>
-            <h3 style="color:#FCD34D;font-family:'Cairo',sans-serif;font-size:1.2rem;margin:0;">انتهى وقت الانتظار</h3>
-            <p>لم يتم تأكيد الدفع خلال المدة المحددة — يرجى المحاولة مرة أخرى</p>
-            <button class="ipc-retry-btn" onclick="ipcReset();startPaymentForStudy()">🔄 إعادة المحاولة</button>
-          </div>
-
-          <!-- خطأ -->
-          <div id="ipc-error" style="display:none;">
-            <div style="font-size:3rem;margin-bottom:12px;">⚠️</div>
-            <h3 style="color:#F87171;font-family:'Cairo',sans-serif;font-size:1.2rem;margin:0;">حدث خطأ</h3>
-            <p id="ipc-error-text" class="ipc-error-text">خطأ في الاتصال بخادم الدفع</p>
-            <button class="ipc-retry-btn" onclick="ipcReset();startPaymentForStudy()">🔄 إعادة المحاولة</button>
-          </div>
-
-        </div>
-        <!-- ══ /Inline Payment Container ══ -->
+        <!-- payment elements moved to #payment-modal-overlay at end of body -->
 
       </div>
     </div>
