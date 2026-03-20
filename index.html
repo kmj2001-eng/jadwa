@@ -1181,6 +1181,102 @@ nav.scrolled {
 /* ── inline-payment-container (hidden, replaced by modal) ── */
 #inline-payment-container { display: none !important; }
 
+/* ══════════════════════════════════════
+   CUSTOM PAYMENT FORM STYLES
+══════════════════════════════════════ */
+
+/* Apple Pay زر */
+.pmo-apple-btn {
+  width: 100%; padding: 14px;
+  background: #000; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 1rem; font-weight: 600;
+  cursor: pointer; font-family: -apple-system, 'Cairo', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 10px; transition: opacity 0.2s;
+  letter-spacing: 0.3px;
+}
+.pmo-apple-btn:hover { opacity: 0.88; }
+
+/* Google Pay زر */
+.pmo-google-btn {
+  width: 100%; padding: 13px;
+  background: #fff; color: #3c4043;
+  border: 1.5px solid #dadce0; border-radius: 12px;
+  cursor: pointer; font-family: 'Cairo', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px; transition: box-shadow 0.2s;
+}
+.pmo-google-btn:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+/* فاصل */
+.pmo-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.pmo-divider::before, .pmo-divider::after {
+  content: ''; flex: 1;
+  height: 1px; background: rgba(255,255,255,0.1);
+}
+.pmo-divider span {
+  color: #64748b; font-size: 0.75rem;
+  font-family: 'Cairo', sans-serif; white-space: nowrap;
+}
+
+/* حقل الإدخال */
+.pmo-field-wrap {
+  position: relative; margin-bottom: 10px;
+}
+.pmo-input {
+  width: 100%; padding: 14px 42px 14px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px; color: #e2e8f0;
+  font-size: 0.95rem; font-family: 'Cairo', sans-serif;
+  outline: none; box-sizing: border-box;
+  transition: border-color 0.2s, background 0.2s;
+  direction: ltr; text-align: left;
+}
+.pmo-input::placeholder { color: #64748b; direction: rtl; text-align: right; }
+.pmo-input:focus {
+  border-color: rgba(59,130,246,0.6);
+  background: rgba(59,130,246,0.06);
+}
+.pmo-input.error { border-color: rgba(248,113,113,0.7); }
+.pmo-field-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%); font-size: 1rem;
+  pointer-events: none; user-select: none;
+}
+
+/* صف MM/YY + CVC */
+.pmo-row { display: flex; gap: 10px; }
+.pmo-row .pmo-field-wrap { margin-bottom: 0; }
+
+/* رسالة الخطأ */
+.pmo-form-error {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 8px; padding: 10px 14px;
+  color: #F87171; font-size: 0.82rem;
+  font-family: 'Cairo', sans-serif;
+  margin-top: 10px; text-align: right; direction: rtl;
+}
+
+/* زر الدفع الرئيسي */
+.pmo-pay-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: #fff; border: none; border-radius: 12px;
+  font-size: 1.05rem; font-weight: 800;
+  cursor: pointer; font-family: 'Cairo', sans-serif;
+  margin-top: 14px;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+  transition: all 0.2s; letter-spacing: 0.5px;
+}
+.pmo-pay-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(59,130,246,0.5); }
+.pmo-pay-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
 /* ── CTA BAND ── */
 /* ════════════════════════════════════
    CTA BAND
@@ -7053,13 +7149,119 @@ function pmoBgClick(e) {
 
 // ── مساعد: إظهار حالة واحدة فقط داخل المودال ──
 function ipcShow(stateId) {
-  ['ipc-loader','ipc-iframe-wrap','ipc-success','ipc-timeout','ipc-error']
+  ['ipc-loader','ipc-card-form','ipc-success','ipc-timeout','ipc-error']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = (id === stateId) ? '' : 'none';
     });
-  // فتح المودال تلقائياً
   pmoOpen();
+}
+
+/** إظهار نموذج البطاقة مجدداً */
+function ipcShowCardForm() {
+  ipcShow('ipc-card-form');
+  const errDiv = document.getElementById('pmo-form-error');
+  if (errDiv) errDiv.style.display = 'none';
+}
+
+// ══════════════════════════════════════
+//  دوال النموذج المخصص
+// ══════════════════════════════════════
+
+/** تنسيق رقم البطاقة (XXXX XXXX XXXX XXXX) */
+function pmoFormatCard(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 16);
+  input.value = v.replace(/(.{4})/g, '$1 ').trim();
+  // أيقونة نوع البطاقة
+  const icon = document.getElementById('pmo-card-icon');
+  if (icon) {
+    if (v.startsWith('4'))      icon.textContent = '💳'; // Visa
+    else if (v.startsWith('5') || v.startsWith('2')) icon.textContent = '💳'; // MC
+    else if (v.startsWith('3')) icon.textContent = '💳'; // Amex
+    else icon.textContent = '💳';
+  }
+}
+
+/** تنسيق تاريخ الانتهاء (MM/YY) */
+function pmoFormatExpiry(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2);
+  input.value = v;
+}
+
+/** Apple Pay — حالياً يوجّه لنموذج البطاقة */
+function pmoApplePay() {
+  showToast('🍎 Apple Pay قريباً — استخدم البطاقة الآن');
+}
+
+/** Google Pay — حالياً يوجّه لنموذج البطاقة */
+function pmoGooglePay() {
+  showToast('🟢 Google Pay قريباً — استخدم البطاقة الآن');
+}
+
+/** إرسال نموذج البطاقة */
+async function pmoSubmitCard(e) {
+  e.preventDefault();
+
+  const rawNumber = (document.getElementById('pmo-card-number')?.value || '').replace(/\s/g, '');
+  const name      =  document.getElementById('pmo-card-name')?.value.trim()   || '';
+  const expiry    =  document.getElementById('pmo-card-expiry')?.value.trim()  || '';
+  const cvc       =  document.getElementById('pmo-card-cvc')?.value.trim()     || '';
+
+  const errDiv = document.getElementById('pmo-form-error');
+  const showErr = msg => { if(errDiv){ errDiv.textContent = msg; errDiv.style.display = ''; } };
+
+  // ── تحقق أساسي ──
+  if (rawNumber.length < 13) return showErr('❌ رقم البطاقة غير صحيح');
+  if (!name)                  return showErr('❌ يرجى إدخال الاسم الكامل');
+  if (!/^\d{2}\/\d{2}$/.test(expiry)) return showErr('❌ تاريخ الانتهاء غير صحيح (MM/YY)');
+  if (cvc.length < 3)         return showErr('❌ رمز CVC غير صحيح');
+  if (errDiv) errDiv.style.display = 'none';
+
+  const [expMonth, expYear] = expiry.split('/');
+
+  // ── تحضير بيانات المستخدم ──
+  const user = _getLoggedUser();
+  if (!user || !user.id) {
+    window._pendingPaymentAfterLogin = true;
+    pmoClose(); openAuthModal('login'); return;
+  }
+  const nameParts  = (user.name || name).trim().split(/\s+/);
+  const customer = {
+    firstName: nameParts[0]  || name.split(' ')[0] || 'عميل',
+    lastName:  nameParts[1]  || name.split(' ')[1] || 'جديد',
+    email:     user.email    || 'guest@eses.store',
+    phone:    (user.phone    || '+966500000000').replace(/\s/g,''),
+  };
+
+  // ── تعطيل الزر + إظهار loader ──
+  const submitBtn = document.getElementById('pmo-submit-btn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري المعالجة...'; }
+  ipcShow('ipc-loader');
+
+  try {
+    const res = await fetch('/api/paymob', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body: JSON.stringify({
+        customer,
+        card: { number: rawNumber, expMonth, expYear: '20'+expYear, cvc, name },
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `خطأ ${res.status}`);
+
+    if (data.status === 'paid' || data.success) {
+      ipcShowSuccess();
+    } else {
+      throw new Error(data.error || 'فشلت عملية الدفع');
+    }
+  } catch (err) {
+    const errText = document.getElementById('ipc-error-text');
+    if (errText) errText.textContent = err.message;
+    ipcShow('ipc-error');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'الدفع الآن'; }
+  }
 }
 
 // ── مسح الـ timers ──
@@ -7140,9 +7342,8 @@ function ipcStartPolling(orderId) {
 }
 
 // ── الدالة الرئيسية ──
+// startPayment: يفتح المودال مباشرة بالنموذج المخصص
 async function startPayment(customer) {
-  console.log('[IPC] startPayment called', customer);
-
   // ── التحقق من تسجيل الدخول ──
   const user = _getLoggedUser();
   if (!user || !user.id) {
@@ -7154,50 +7355,23 @@ async function startPayment(customer) {
     return;
   }
 
-  // ── تحديث الزر ──
-  const btn = document.getElementById('pricing-cta-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '⏳ جاري تجهيز الدفع...';
-    btn.style.opacity = '0.75';
+  // ملء حقل الاسم تلقائياً من بيانات المستخدم
+  const nameInput = document.getElementById('pmo-card-name');
+  if (nameInput && !nameInput.value && customer?.firstName) {
+    nameInput.value = (customer.firstName + ' ' + (customer.lastName||'')).trim();
   }
 
-  // ── إظهار الـ Loader ──
-  ipcShow('ipc-loader');
+  // افتح المودال مباشرة على نموذج البطاقة
+  ipcShowCardForm();
+
+  // إعادة تفعيل زر الصفحة
+  const btn = document.getElementById('pricing-cta-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '💳 احصل على الباقة — 49.99 ر.س'; btn.style.opacity = ''; }
 
   try {
-    console.log('[IPC] calling /api/paymob ...');
-    const res = await fetch('/api/paymob', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body:    JSON.stringify({ customer }),
-    });
-    let data = {};
-    try { data = await res.json(); } catch(_) {}
-    console.log('[IPC] /api/paymob response:', res.status, data);
-    if (!res.ok) throw new Error(data.error || `خطأ ${res.status} في بوابة الدفع`);
-
-    // ── تحميل iframe ──
-    const iframe = document.getElementById('ipc-iframe');
-    if (!iframe) throw new Error('عنصر iframe غير موجود');
-    iframe.src = data.iframeUrl;
-    window._pendingOrderId = data.ourOrderId;
-
-    // انتظر تحميل iframe ثم اعرضه
-    iframe.onload = () => { ipcShow('ipc-iframe-wrap'); };
-    // fallback: إذا لم يُطلق onload خلال 4 ثوانٍ
-    setTimeout(() => {
-      const wrap = document.getElementById('ipc-iframe-wrap');
-      if (wrap && wrap.style.display === 'none') ipcShow('ipc-iframe-wrap');
-    }, 4000);
-
-    // ── ابدأ الـ Polling ──
-    ipcStartPolling(data.ourOrderId);
-    console.log('[IPC] iframe loaded, polling started for order:', data.ourOrderId);
-
+    // ضع أي منطق مستقبلي هنا
   } catch (err) {
-    const msg = err.message || 'حدث خطأ أثناء الاتصال بخادم الدفع';
-    console.error('[IPC] startPayment error:', msg);
+    const msg = err.message || 'حدث خطأ';
     const errText = document.getElementById('ipc-error-text');
     if (errText) errText.textContent = msg;
     ipcShow('ipc-error');
@@ -8419,52 +8593,102 @@ function authLogout() {
     <!-- جسم المودال -->
     <div class="pmo-body">
 
-      <!-- Loader -->
-      <div id="ipc-loader">
+      <!-- ══ Loader ══ -->
+      <div id="ipc-loader" style="display:none;">
         <div class="ipc-spinner"></div>
-        <p>⏳ جاري تجهيز بوابة الدفع الآمنة...</p>
+        <p>⏳ جاري معالجة الدفع...</p>
       </div>
 
-      <!-- iframe الدفع -->
-      <div id="ipc-iframe-wrap" style="display:none;">
-        <div class="ipc-secure-bar">
-          <span>🔒</span><span>اتصال آمن مشفر SSL</span>
-        </div>
-        <iframe id="ipc-iframe"
-          allow="payment *; camera *"
-          sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-modals"
-          src=""></iframe>
-        <div class="ipc-cancel-row">
-          <button class="ipc-cancel-btn" onclick="pmoClose()">✕ إلغاء العملية</button>
-        </div>
-      </div>
+      <!-- ══ نموذج الدفع المخصص ══ -->
+      <div id="ipc-card-form">
 
-      <!-- نجاح -->
+        <!-- Apple Pay -->
+        <button type="button" class="pmo-apple-btn" onclick="pmoApplePay()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+          <span>Apple Pay</span>
+        </button>
+
+        <!-- Google Pay -->
+        <button type="button" class="pmo-google-btn" onclick="pmoGooglePay()">
+          <svg width="46" height="18" viewBox="0 0 46 18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.6 8.9c0 3-2.3 5.2-5.2 5.2s-5.2-2.2-5.2-5.2 2.3-5.2 5.2-5.2 5.2 2.3 5.2 5.2zm-2.3 0c0-1.9-1.3-3.1-2.9-3.1s-2.9 1.3-2.9 3.1 1.3 3.1 2.9 3.1 2.9-1.2 2.9-3.1z" fill="#EA4335"/>
+            <path d="M32.6 8.9c0 3-2.3 5.2-5.2 5.2s-5.2-2.2-5.2-5.2 2.3-5.2 5.2-5.2 5.2 2.3 5.2 5.2zm-2.3 0c0-1.9-1.3-3.1-2.9-3.1s-2.9 1.3-2.9 3.1 1.3 3.1 2.9 3.1 2.9-1.2 2.9-3.1z" fill="#FBBC05"/>
+            <path d="M43.1 4.1v9.3c0 3.8-2.2 5.4-4.9 5.4-2.5 0-4-1.7-4.6-3.1l2-.8c.4.9 1.2 1.9 2.6 1.9 1.7 0 2.7-1.1 2.7-3.1v-.8h-.1c-.5.6-1.4 1.2-2.6 1.2-2.5 0-4.7-2.2-4.7-5.1 0-2.9 2.2-5.2 4.7-5.2 1.2 0 2.1.5 2.6 1.1h.1V4.1h2.2zm-2 4.9c0-1.8-1.2-3.1-2.7-3.1-1.5 0-2.8 1.3-2.8 3.1s1.3 3.1 2.8 3.1c1.5-.1 2.7-1.4 2.7-3.1z" fill="#4285F4"/>
+            <path d="M47 .5v13.3h-2.3V.5H47z" fill="#34A853"/>
+            <path d="M7.3 7.7V5.5h7.5c.1.4.1.7.1 1.1 0 1.4-.4 3.1-1.6 4.3-1.2 1.3-2.8 2-4.9 2-3.9 0-7.1-3.1-7.1-7.1s3.2-7.1 7.1-7.1c2.1 0 3.6.8 4.7 1.9L11.6 2c-.8-.8-1.9-1.3-3.2-1.3-2.6 0-4.7 2.1-4.7 4.8s2.1 4.8 4.7 4.8c1.7 0 2.7-.7 3.3-1.3.5-.5.8-1.2 1-2.1H7.3z" fill="#4285F4"/>
+          </svg>
+        </button>
+
+        <!-- فاصل -->
+        <div class="pmo-divider"><span>أو ادفع بالبطاقة</span></div>
+
+        <!-- حقول البطاقة -->
+        <form id="pmo-card-form" onsubmit="pmoSubmitCard(event)" autocomplete="off" novalidate>
+
+          <!-- رقم البطاقة -->
+          <div class="pmo-field-wrap">
+            <input id="pmo-card-number" class="pmo-input" type="text"
+              placeholder="رقم البطاقة" maxlength="19"
+              inputmode="numeric" autocomplete="cc-number"
+              oninput="pmoFormatCard(this)">
+            <span class="pmo-field-icon" id="pmo-card-icon">💳</span>
+          </div>
+
+          <!-- الاسم الكامل -->
+          <div class="pmo-field-wrap">
+            <input id="pmo-card-name" class="pmo-input" type="text"
+              placeholder="الاسم الكامل" autocomplete="cc-name"
+              style="text-align:right; direction:rtl;">
+          </div>
+
+          <!-- الصف الأخير: انتهاء + CVC -->
+          <div class="pmo-row">
+            <div class="pmo-field-wrap" style="flex:1;">
+              <input id="pmo-card-expiry" class="pmo-input" type="text"
+                placeholder="MM/YY" maxlength="5"
+                inputmode="numeric" autocomplete="cc-exp"
+                oninput="pmoFormatExpiry(this)">
+            </div>
+            <div class="pmo-field-wrap" style="flex:1;">
+              <input id="pmo-card-cvc" class="pmo-input" type="text"
+                placeholder="CVC" maxlength="4"
+                inputmode="numeric" autocomplete="cc-csc">
+              <span class="pmo-field-icon">🔒</span>
+            </div>
+          </div>
+
+          <!-- رسالة الخطأ -->
+          <div id="pmo-form-error" class="pmo-form-error" style="display:none;"></div>
+
+          <!-- زر الدفع -->
+          <button type="submit" id="pmo-submit-btn" class="pmo-pay-btn">
+            الدفع الآن
+          </button>
+
+        </form>
+
+      </div><!-- /ipc-card-form -->
+
+      <!-- ══ نجاح ══ -->
       <div id="ipc-success" style="display:none;">
         <span class="ipc-success-icon">✅</span>
         <h3>تم الدفع بنجاح! 🎉</h3>
         <p>تمت إضافة <strong style="color:#34D399;">5 نقاط جدوى</strong> إلى حسابك<br>يمكنك الآن إنشاء دراساتك الكاملة</p>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
           <button class="ipc-go-btn" onclick="pmoClose();showPage('tool')">🚀 ابدأ دراستك الآن</button>
           <button class="ipc-go-btn" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);box-shadow:0 6px 20px rgba(59,130,246,0.35);"
             onclick="pmoClose();showPage('dashboard')">📋 لوحة التحكم</button>
         </div>
       </div>
 
-      <!-- انتهاء الوقت -->
-      <div id="ipc-timeout" style="display:none;">
-        <div style="font-size:2.8rem;margin-bottom:10px;">⏱️</div>
-        <h3 style="color:#FCD34D;font-family:'Cairo',sans-serif;font-size:1.1rem;margin:0;">انتهى وقت الانتظار</h3>
-        <p>لم يتم تأكيد الدفع خلال المدة المحددة<br>يرجى المحاولة مرة أخرى</p>
-        <button class="ipc-retry-btn" onclick="pmoClose();startPaymentForStudy()">🔄 إعادة المحاولة</button>
-      </div>
-
-      <!-- خطأ -->
+      <!-- ══ خطأ ══ -->
       <div id="ipc-error" style="display:none;">
         <div style="font-size:2.8rem;margin-bottom:10px;">⚠️</div>
-        <h3 style="color:#F87171;font-family:'Cairo',sans-serif;font-size:1.1rem;margin:0;">حدث خطأ</h3>
-        <p id="ipc-error-text" class="ipc-error-text">خطأ في الاتصال بخادم الدفع</p>
-        <button class="ipc-retry-btn" onclick="pmoClose();startPaymentForStudy()">🔄 إعادة المحاولة</button>
+        <h3 style="color:#F87171;font-family:'Cairo',sans-serif;font-size:1.1rem;margin:0;">فشلت عملية الدفع</h3>
+        <p id="ipc-error-text" class="ipc-error-text">يرجى التحقق من بيانات البطاقة والمحاولة مجدداً</p>
+        <button class="ipc-retry-btn" onclick="ipcShowCardForm()">🔄 إعادة المحاولة</button>
       </div>
 
     </div><!-- /pmo-body -->

@@ -183,13 +183,61 @@ export default async function handler(req, res) {
     }
     const { token: paymentKey } = await payKeyRes.json();
 
-    const iframeUrl = `${BASE}/acceptance/iframes/${IFRAME_ID}?payment_token=${paymentKey}`;
+    // ── 4. الدفع المباشر ببيانات البطاقة ─────────────────────
+    const card = req.body.card || {};
+    const chargeBody = {
+      source: {
+        identifier:   card.number,
+        sourceholder_name: card.name || (customer?.firstName + ' ' + customer?.lastName).trim(),
+        subtype:      'CARD',
+        expiry_month: card.expMonth,
+        expiry_year:  card.expYear,
+        cvn:          card.cvc,
+      },
+      payment_token: paymentKey,
+    };
+
+    const chargeRes = await fetch(`${BASE}/acceptance/payments/pay`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(chargeBody),
+    });
+    const chargeData = await chargeRes.json();
+    console.log('[paymob] charge response:', chargeRes.status, chargeData?.success, chargeData?.txn_response_code);
+
+    const paid = chargeData?.success === true
+      || chargeData?.txn_response_code === 'APPROVED'
+      || chargeData?.pending === false && chargeData?.is_auth;
+
+    // ── تحديث حالة الطلب في DB ────────────────────────────────
+    if (sql && dbOrderId) {
+      const newStatus = paid ? 'paid' : 'failed';
+      await sql`UPDATE orders SET status = ${newStatus}, updated_at = NOW() WHERE id = ${dbOrderId}`;
+
+      // إضافة نقاط للمستخدم عند نجاح الدفع
+      if (paid && userId) {
+        await sql`
+          INSERT INTO user_points (user_id, points, expires_at, source)
+          VALUES (${userId}, 5, NOW() + INTERVAL '6 months', 'purchase')
+          ON CONFLICT (user_id) DO UPDATE
+            SET points     = user_points.points + 5,
+                expires_at = NOW() + INTERVAL '6 months'
+        `.catch(() => {});
+      }
+    }
+
+    if (!paid) {
+      const reason = chargeData?.data?.message
+        || chargeData?.txn_response_code
+        || 'رُفضت البطاقة — تحقق من البيانات وأعد المحاولة';
+      throw new Error(reason);
+    }
 
     return res.status(200).json({
-      iframeUrl,
-      paymentKey,
+      success:      true,
+      status:       'paid',
+      ourOrderId:   dbOrderId,
       paymobOrderId,
-      ourOrderId: dbOrderId,
       amount,
       currency,
     });
