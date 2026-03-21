@@ -7245,18 +7245,50 @@ async function _callGenerateXlsx(title, content, inputData) {
       return showToast('❌ ' + (err.error || 'خطأ في توليد Excel'));
     }
     const blob     = await res.blob();
-    const url      = URL.createObjectURL(blob);
-    const a        = document.createElement('a');
-    a.href         = url;
-    a.download     = `${title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'study'}.xlsx`;
+    const fileName = `${title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'study'}.xlsx`;
+
+    // ── Web Share API (iOS + Android) ──
+    const isIOS    = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent) || isIOS;
+
+    if (isMobile && navigator.canShare) {
+      const file = new File([blob], fileName, {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: title,
+            text: 'دراسة جدوى — منصة ذكاء الأعمال'
+          });
+          showToast('✅ تم مشاركة الملف بنجاح');
+          return;
+        } catch(shareErr) {
+          if (shareErr.name !== 'AbortError') console.warn('Share failed:', shareErr);
+          // المستخدم أغلق نافذة المشاركة — نكمل بالتحميل العادي
+        }
+      }
+    }
+
+    // ── تحميل عادي (Desktop + Android بدون Share) ──
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href    = url;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('✅ تم تحميل ملف Excel بنجاح');
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+    if (isMobile) {
+      showToast('✅ تم تحميل الملف — تجد الملف في مجلد التنزيلات 📂', 5000);
+    } else {
+      showToast('✅ تم تحميل ملف Excel بنجاح');
+    }
   } catch(e) {
     console.error('Excel download error:', e);
-    showToast('حدث خطأ أثناء تحميل Excel');
+    showToast('❌ حدث خطأ أثناء تحميل Excel');
   }
 }
 
