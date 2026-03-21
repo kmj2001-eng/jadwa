@@ -2104,6 +2104,21 @@ input[type=range]::-webkit-slider-thumb {
 .study-viewer-body {
   max-width:900px; margin:0 auto; padding:40px 24px 80px;
 }
+/* ── جداول الـ study viewer على الجوال ── */
+@media(max-width:768px){
+  .study-viewer-body { padding:20px 12px 80px; }
+  .output-body .table-wrap {
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    margin:12px -4px 20px; border-radius:8px;
+  }
+  .output-body table { font-size:0.72rem; min-width:480px; }
+  .output-body th { padding:8px 8px; font-size:0.72rem; min-width:60px; }
+  .output-body td { padding:7px 8px; font-size:0.72rem; min-width:55px; }
+  .output-body h2 { font-size:1rem; padding:10px 12px; }
+  .output-body h3 { font-size:0.9rem; }
+  .study-viewer-actions { gap:6px; flex-wrap:wrap; }
+  .study-viewer-close-btn { font-size:0.75rem; padding:7px 12px; }
+}
 /* Responsive ready page */
 @media(max-width:768px){
   .ready-page { padding:90px 16px 60px; }
@@ -6508,11 +6523,18 @@ async function exportPDF(){
       </div>`;
     }).join('');
 
-    // ── بناء صفحة الطباعة ──
-    const pw = window.open('','_blank','width=960,height=800');
-    if (!pw) { hidePDFLoader(loader); showToast('❌ السماح بالنوافذ المنبثقة مطلوب'); return; }
+    // ── بناء صفحة الطباعة عبر iframe مخفي (يتجاوز حظر النوافذ على الجوال) ──
+    let iframe = document.getElementById('_pdf-print-frame-main');
+    if (iframe) iframe.remove();
+    iframe = document.createElement('iframe');
+    iframe.id = '_pdf-print-frame-main';
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;border:none;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+    const pw = iframe.contentDocument || iframe.contentWindow.document;
+    const printWin = iframe.contentWindow;
 
-    pw.document.write(`<!DOCTYPE html>
+    pw.open();
+    pw.write(`<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
@@ -6733,17 +6755,15 @@ ${cleanBody}
 <div class="study-footer">
   منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي &nbsp;|&nbsp; eses.store
 </div>
-
-<script>
-// طباعة تلقائية بعد تحميل الخطوط
-document.fonts.ready.then(function(){
-  setTimeout(function(){ window.print(); }, 800);
-});
-<\/script>
 </body></html>`);
-    pw.document.close();
+    pw.close();
     hidePDFLoader(loader);
-    showToast('✅ ستفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم انقر حفظ');
+    showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
+    // طباعة تلقائية بعد تحميل الخطوط
+    printWin.document.fonts.ready.then(function(){
+      setTimeout(function(){ printWin.print(); }, 800);
+    });
+    printWin.addEventListener('afterprint', () => iframe.remove());
     return;
 
   } catch(err) {
@@ -7459,10 +7479,8 @@ function exportReadyStudyPDF() {
 }
 
 function _exportReadyStudyPDFPrint(title, body) {
-  const pw = window.open('','_blank','width=960,height=800');
-  if (!pw) { showToast('❌ يرجى السماح بالنوافذ المنبثقة'); return; }
   const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
-  pw.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 @page{size:A4 portrait;margin:22mm 16mm 28mm 16mm;}*{box-sizing:border-box;margin:0;padding:0;}
@@ -7477,7 +7495,6 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
 .table-wrap{display:block;width:100%;overflow:visible;}
 .cover{page-break-after:always;break-after:page;padding:60mm 30mm 30mm;text-align:center;}
 .footer{margin-top:24px;padding-top:10px;border-top:1.5px solid #E2E8F0;text-align:center;color:#94A3B8;font-size:8.5pt;}
-@media print{.no-print{display:none!important;}}
 </style></head><body>
 <div class="cover">
   <div style="font-size:20pt;font-weight:900;color:#1D4ED8;margin-bottom:10px;">${title}</div>
@@ -7486,10 +7503,22 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
 </div>
 <div style="direction:rtl;text-align:right;">${body.innerHTML}</div>
 <div class="footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي | eses.store</div>
-<script>document.fonts.ready.then(()=>setTimeout(()=>window.print(),700));<\/script>
-</body></html>`);
-  pw.document.close();
-  showToast('✅ ستُفتح نافذة الطباعة — اختر "حفظ كـ PDF" ثم "حفظ"');
+<script>document.fonts.ready.then(()=>setTimeout(()=>{window.print();},700));<\/script>
+</body></html>`;
+
+  // ── استخدام iframe مخفي لتجاوز حظر النوافذ على الجوال ──
+  let iframe = document.getElementById('_pdf-print-frame');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = '_pdf-print-frame';
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;border:none;opacity:0;pointer-events:none;';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
+  // بعد الطباعة نزيل الـ iframe
+  iframe.contentWindow.addEventListener('afterprint', () => iframe.remove());
 }
 
 // ═══════════════════════════════════════════════════════════════════
