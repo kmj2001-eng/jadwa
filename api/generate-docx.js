@@ -3,6 +3,7 @@ import {
   AlignmentType, BorderStyle, WidthType, ShadingType, Header, Footer,
   convertInchesToTwip,
 } from 'docx';
+import ExcelJS from 'exceljs';
 
 // ── مساعد: فقرة RTL عربية ─────────────────────────────────
 function rPara(options) {
@@ -29,7 +30,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { title = 'دراسة الجدوى', content = '' } = req.body;
+  const { title = 'دراسة الجدوى', content = '', format = 'docx', meta = {} } = req.body;
+
+  // ── توليد Excel إذا طُلب ──
+  if (format === 'xlsx') {
+    return generateXlsx(req, res, title, content, meta);
+  }
 
   try {
     const children = buildDocxContent(title, content);
@@ -439,11 +445,223 @@ function buildTable(tableHtml) {
 // ════════════════════════════════════════════════════════════
 function stripTags(html) {
   return html
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .trim();
+}
+
+// ════════════════════════════════════════════════════════════
+// EXCEL (ExcelJS) — مدمج هنا لتوفير Serverless Function
+// ════════════════════════════════════════════════════════════
+const XC = {
+  blue:'FF1D4ED8', blueDark:'FF1e3a8a', blueLight:'FFEFF6FF',
+  blueMid:'FFBFDBFE', white:'FFFFFFFF', grayLight:'FFF8FAFC',
+  text:'FF0f172a', textMid:'FF334155', textLight:'FF64748B', gold:'FFFBBF24',
+};
+const XCOLS = 6;
+
+function xRtl(h='right'){ return { horizontal:h, vertical:'middle', wrapText:true, readingOrder:2 }; }
+function xBorder(cell, color='FFBFDBFE', style='thin'){
+  const b={style, color:{argb:color}};
+  cell.border={top:b,bottom:b,left:b,right:b};
+}
+function xMerge(ws,row,f,t){
+  const c=ws.getCell(row,f);
+  if(t>f){ try{ ws.mergeCells(row,f,row,t); }catch(_){} }
+  return c;
+}
+
+async function generateXlsx(req, res, title, content, meta) {
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator='ذكاء الأعمال'; wb.company='eses.store';
+    wb.created=new Date(); wb.modified=new Date();
+
+    const ws = wb.addWorksheet('دراسة الجدوى', {
+      views:[{rightToLeft:true, showGridLines:false}],
+      properties:{tabColor:{argb:XC.blue}},
+    });
+    ws.columns=[
+      {key:'A',width:6},{key:'B',width:42},{key:'C',width:22},
+      {key:'D',width:22},{key:'E',width:22},{key:'F',width:18},
+    ];
+    ws.pageSetup={
+      paperSize:9, orientation:'portrait', fitToPage:true,
+      fitToWidth:1, fitToHeight:0, printTitlesRow:'1:6',
+      horizontalDpi:200, verticalDpi:200,
+      margins:{left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3},
+    };
+    ws.headerFooter={
+      oddHeader:'&R&"Arial,Bold"&9ذكاء الأعمال — دراسات الجدوى&L&9&D',
+      oddFooter:'&C&"Arial"&8eses.store  ·  صفحة &P من &N',
+    };
+
+    let row=1;
+    // ── ترويسة ──
+    ws.getRow(row).height=22;
+    const b=xMerge(ws,row,1,XCOLS);
+    b.value='✦  ذكاء الأعمال  —  دراسات الجدوى الاستثمارية';
+    b.font={name:'Arial',size:11,bold:true,color:{argb:XC.white}};
+    b.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueDark}};
+    b.alignment=xRtl('center'); row++;
+
+    ws.getRow(row).height=4;
+    xMerge(ws,row,1,XCOLS).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.gold}}; row++;
+
+    ws.getRow(row).height=44;
+    const tc=xMerge(ws,row,1,XCOLS);
+    tc.value=title; tc.font={name:'Arial',size:20,bold:true,color:{argb:XC.white}};
+    tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blue}};
+    tc.alignment=xRtl('center'); row++;
+
+    ws.getRow(row).height=22;
+    const dateStr=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+    const metaText=[
+      meta.capital?`💰 رأس المال: ${meta.capital}`:'',
+      meta.employees?`👥 الموظفون: ${meta.employees}`:'',
+      meta.location?`📍 الموقع: ${meta.location}`:'',
+      meta.sector?`🏭 القطاع: ${meta.sector}`:'',
+      `📅 ${dateStr}`,
+    ].filter(Boolean).join('   |   ');
+    const mc=xMerge(ws,row,1,XCOLS);
+    mc.value=metaText; mc.font={name:'Arial',size:9,color:{argb:XC.textLight}};
+    mc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueLight}};
+    mc.alignment=xRtl('center'); row++;
+
+    ws.getRow(row).height=10; row++;
+
+    // ── محتوى ──
+    row=xParseHtml(ws, content, row, XCOLS);
+
+    // ── تذييل ──
+    ws.getRow(row).height=6;
+    xMerge(ws,row,1,XCOLS).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueMid}}; row++;
+    ws.getRow(row).height=20;
+    const fc=xMerge(ws,row,1,XCOLS);
+    fc.value='— نهاية الدراسة —   منصة ذكاء الأعمال  ·  eses.store';
+    fc.font={name:'Arial',size:10,italic:true,color:{argb:XC.textLight}};
+    fc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.grayLight}};
+    fc.alignment=xRtl('center'); row++;
+
+    ws.pageSetup.printArea=`A1:F${row}`;
+    const buf=await wb.xlsx.writeBuffer();
+    const safe=title.replace(/[^\u0600-\u06FFa-zA-Z0-9\s\-_]/g,'').trim()||'study';
+    res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition',`attachment; filename*=UTF-8''${encodeURIComponent(safe)}.xlsx`);
+    res.setHeader('Content-Length', buf.byteLength);
+    return res.status(200).end(Buffer.from(buf));
+  } catch(err) {
+    console.error('XLSX Error:',err);
+    return res.status(500).json({error:err.message});
+  }
+}
+
+function xParseHtml(ws, html, row, cols) {
+  if(!html) return row;
+  let text=html.replace(/\r\n/g,'\n').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  const tableRegex=/<table[^>]*>[\s\S]*?<\/table>/gi;
+  const tPos=[]; let m;
+  while((m=tableRegex.exec(text))!==null) tPos.push({start:m.index,end:m.index+m[0].length,html:m[0]});
+  const parts=[]; let last=0;
+  for(const tp of tPos){
+    if(tp.start>last) parts.push({type:'html',content:text.slice(last,tp.start)});
+    parts.push({type:'table',content:tp.html}); last=tp.end;
+  }
+  if(last<text.length) parts.push({type:'html',content:text.slice(last)});
+  for(const p of parts) row = p.type==='table' ? xWriteTable(ws,p.content,row,cols) : xWriteText(ws,p.content,row,cols);
+  return row;
+}
+
+function xWriteText(ws, html, row, cols) {
+  html=html.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,(_,t)=>{
+    const v=stripTags(t); if(!v) return '';
+    ws.getRow(row).height=8; row++;
+    ws.getRow(row).height=26;
+    const c=xMerge(ws,row,1,cols);
+    c.value='  '+v; c.font={name:'Arial',size:13,bold:true,color:{argb:XC.white}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blue}}; c.alignment=xRtl(); row++; return '';
+  });
+  html=html.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi,(_,t)=>{
+    const v=stripTags(t); if(!v) return '';
+    ws.getRow(row).height=6; row++;
+    ws.getRow(row).height=22;
+    const c=xMerge(ws,row,1,cols);
+    c.value='  ▶  '+v; c.font={name:'Arial',size:11,bold:true,color:{argb:XC.white}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2563EB'}}; c.alignment=xRtl(); row++; return '';
+  });
+  html=html.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi,(_,t)=>{
+    const v=stripTags(t); if(!v) return '';
+    ws.getRow(row).height=20;
+    const c=xMerge(ws,row,1,cols);
+    c.value='  ◆  '+v; c.font={name:'Arial',size:10,bold:true,color:{argb:XC.blueDark}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueLight}}; c.alignment=xRtl(); row++; return '';
+  });
+  html=html.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi,(_,ul)=>{
+    (ul.match(/<li[^>]*>([\s\S]*?)<\/li>/gi)||[]).forEach(li=>{
+      const v=stripTags(li); if(!v.trim()) return;
+      ws.getRow(row).height=18;
+      const c=xMerge(ws,row,1,cols);
+      c.value='    •  '+v.trim(); c.font={name:'Arial',size:10,color:{argb:XC.textMid}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.white}}; c.alignment=xRtl();
+      xBorder(c,'FFe2e8f0','hair'); row++;
+    }); return '';
+  });
+  html=html.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi,(_,ol)=>{
+    (ol.match(/<li[^>]*>([\s\S]*?)<\/li>/gi)||[]).forEach((li,i)=>{
+      const v=stripTags(li); if(!v.trim()) return;
+      ws.getRow(row).height=18;
+      const c=xMerge(ws,row,1,cols);
+      c.value=`    ${i+1}.  `+v.trim(); c.font={name:'Arial',size:10,color:{argb:XC.textMid}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?XC.white:XC.grayLight}}; c.alignment=xRtl(); row++;
+    }); return '';
+  });
+  html=html.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi,(_,t)=>{
+    const v=stripTags(t); if(!v.trim()) return '';
+    ws.getRow(row).height=Math.max(18,Math.min(60,Math.ceil(v.length/80)*16));
+    const c=xMerge(ws,row,1,cols);
+    c.value='  '+v.trim(); c.font={name:'Arial',size:10,color:{argb:XC.text}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.white}}; c.alignment={...xRtl(),wrapText:true}; row++; return '';
+  });
+  const rem=stripTags(html);
+  if(rem.trim()) rem.split('\n').forEach(line=>{
+    const l=line.trim(); if(!l) return;
+    ws.getRow(row).height=16;
+    const c=xMerge(ws,row,1,cols);
+    c.value='  '+l; c.font={name:'Arial',size:10,color:{argb:XC.textMid}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.white}}; c.alignment=xRtl(); row++;
+  });
+  return row;
+}
+
+function xWriteTable(ws, tableHtml, row, cols) {
+  ws.getRow(row).height=6; row++;
+  const trs=tableHtml.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi)||[];
+  if(!trs.length) return row;
+  let maxC=0;
+  trs.forEach(tr=>{ const cs=tr.match(/<t[hd][^>]*>[\s\S]*?<\/t[hd]>/gi)||[]; maxC=Math.max(maxC,cs.length); });
+  maxC=Math.min(maxC,cols);
+  for(let ri=0;ri<trs.length;ri++){
+    const tr=trs[ri]; const isH=/<th[^>]*>/i.test(tr);
+    const cs=tr.match(/<t[hd][^>]*>[\s\S]*?<\/t[hd]>/gi)||[];
+    if(!cs.length) continue;
+    ws.getRow(row).height=isH?22:18;
+    cs.slice(0,maxC).forEach((ch,ci)=>{
+      const v=stripTags(ch); const cell=ws.getCell(row,ci+1);
+      cell.value=v;
+      cell.font={name:'Arial',size:isH?10:9,bold:isH,color:{argb:isH?XC.white:XC.text}};
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:isH?XC.blue:ri%2===0?XC.blueLight:XC.white}};
+      cell.alignment={...xRtl(),wrapText:true};
+      xBorder(cell,isH?XC.blueMid:'FFbfdbfe','thin');
+    });
+    if(maxC<cols){ try{ ws.mergeCells(row,maxC+1,row,cols); ws.getCell(row,maxC+1).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.grayLight}}; }catch(_){} }
+    row++;
+  }
+  ws.getRow(row).height=6; row++;
+  return row;
 }

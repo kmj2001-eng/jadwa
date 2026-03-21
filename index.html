@@ -7162,10 +7162,10 @@ async function _callGenerateXlsx(title, content, inputData) {
       location:  inputData?.location  || '',
       sector:    inputData?.sector    || '',
     };
-    const res = await fetch('/api/generate-xlsx', {
+    const res = await fetch('/api/generate-docx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, meta }),
+      body: JSON.stringify({ title, content, meta, format: 'xlsx' }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
