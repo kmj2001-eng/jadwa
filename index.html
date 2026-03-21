@@ -4951,7 +4951,8 @@ async function openReadyStudy(id) {
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
   overlay.scrollTop = 0;
-  // دراسات جاهزة: PDF + Excel، بدون زر دراسة جديدة
+  // دراسات جاهزة: PDF + Excel مجاناً، بدون اشتراك
+  window._isReadyStudy = true;
   const pdfBtn = document.getElementById('viewer-pdf-btn');
   if (pdfBtn) pdfBtn.style.display = '';
   const xlsxBtnR = document.getElementById('viewer-xlsx-btn');
@@ -6993,6 +6994,7 @@ async function openSavedStudy(id) {
   window._viewerStudyText = study.content;
   window._fullStudyText   = study.content;
 
+  window._isReadyStudy = false; // دراسة مستخدم → تشترط الاشتراك
   const pdfBtn  = document.getElementById('viewer-pdf-btn');
   if (pdfBtn) pdfBtn.style.display = '';
   const xlsxBtn2 = document.getElementById('viewer-xlsx-btn');
@@ -7288,11 +7290,13 @@ function showPDFPaywallModal(type) {
 }
 
 function exportReadyStudyPDF() {
-  // غير مسجّل أو بلا نقاط → مودال الاشتراك
-  if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
-    window._pendingReadyPdfAfterLogin = true;
-    showPDFPaywallModal();
-    return;
+  // الدراسات الجاهزة مجانية — لا حاجة للتحقق من الاشتراك
+  if (!window._isReadyStudy) {
+    if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
+      window._pendingReadyPdfAfterLogin = true;
+      showPDFPaywallModal();
+      return;
+    }
   }
   const body    = document.getElementById('study-viewer-body');
   const titleEl = document.getElementById('study-viewer-title');
