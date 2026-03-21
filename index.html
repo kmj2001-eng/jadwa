@@ -5057,32 +5057,10 @@ function closeStudyViewer() {
 }
 
 function printReadyStudy() {
-  const body = document.getElementById('study-viewer-body');
-  const title = document.getElementById('study-viewer-title');
-  if(!body) return;
-  const pw = window.open('','_blank','width=900,height=700');
-  if(!pw) { showToast('❌ السماح بالنوافذ المنبثقة مطلوب'); return; }
-  pw.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
-  <meta charset="UTF-8"><title>${title ? title.textContent : 'دراسة الجدوى'}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;padding:24mm 20mm;font-size:11pt;line-height:1.8;}
-    h2{color:#1D4ED8;border-bottom:2px solid #1D4ED8;padding-bottom:6px;margin-top:28px;font-size:14pt;}
-    h3{color:#1e3a8a;margin-top:20px;font-size:12pt;}
-    table{width:100%;border-collapse:collapse;margin:16px 0;}
-    th{background:#1D4ED8;color:#fff;padding:9px 12px;text-align:right;font-size:9.5pt;}
-    td{padding:8px 12px;border:1px solid #ddd;font-size:9.5pt;}
-    tr:nth-child(even) td{background:#f8faff;}
-    p{margin:10px 0;color:#333;}
-    ul{padding-right:20px;color:#333;}
-  </style></head><body>
-  <h1 style="color:#1D4ED8;font-size:16pt;text-align:center;margin-bottom:8px;">${title ? title.textContent : ''}</h1>
-  <p style="text-align:center;color:#888;font-size:9pt;margin-bottom:32px;">إعداد: منصة ذكاء الأعمال لدراسات الجدوى الاقتصادية</p>
-  ${body.innerHTML}
-  </body></html>`);
-  pw.document.close();
-  pw.focus();
-  setTimeout(()=>pw.print(), 600);
+  const body  = document.getElementById('study-viewer-body');
+  const titleEl = document.getElementById('study-viewer-title');
+  if (!body) return;
+  _printHtmlWithIframe(titleEl ? titleEl.textContent.trim() : 'دراسة الجدوى', body.innerHTML);
 }
 
 // ─── PAGE SYSTEM ───
@@ -6454,22 +6432,21 @@ function openPDFTemplate(){
     "</body></html>"
   ].join("\n");
 
-  var newTab = window.open('', '_blank');
-  if(newTab){
-    newTab.document.write(html);
-    newTab.document.close();
-    setTimeout(function(){ try{ newTab.print(); }catch(e){} }, 2500);
-    showToast('✅ افتح نافذة الطباعة واختر "حفظ كـ PDF"');
-  } else {
-    var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = title + '.html';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('✅ تم تنزيل ملف HTML — افتحه وافتح نافذة الطباعة لحفظه PDF');
-  }
+  // ── استخدام iframe مخفي لتجاوز حظر النوافذ على الجوال ──
+  var iframe = document.getElementById('_pdf-iframe-template');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = '_pdf-iframe-template';
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;border:none;opacity:0;pointer-events:none;';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
+  iframe.contentDocument.fonts.ready.then(function(){
+    setTimeout(function(){ iframe.contentWindow.print(); }, 800);
+  });
+  iframe.contentWindow.addEventListener('afterprint', function(){ iframe.remove(); });
 }
 
 async function exportPDF(){
@@ -7140,26 +7117,20 @@ async function downloadStudyPdf(id) {
   if (!uid) return showToast('يرجى تسجيل الدخول');
   showToast('⏳ جارٍ تجهيز PDF...');
   try {
-    const r = await fetch(`/api/studies?id=${id}`, { headers: { 'x-user-id': String(uid) } });
+    const r = await fetch(`/api/studies?id=${typeof id === 'string' ? id.replace('db_','') : id}`,
+                          { headers: { 'x-user-id': String(uid) } });
     const data = await r.json();
     const study = data.study;
     if (!study) return showToast('تعذّر تحميل الدراسة');
-    const pr = await fetch('/api/generate-pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: study.title, markdown: study.content })
-    });
-    const pd = await pr.json();
-    if (!pd.html) return showToast('تعذّر توليد PDF');
-    const blob = new Blob([pd.html], { type: 'text/html;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `${study.title}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const title   = study.title || 'دراسة الجدوى';
+    const bodyDiv = document.createElement('div');
+    bodyDiv.innerHTML = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content;
+
+    _printHtmlWithIframe(title, bodyDiv.innerHTML);
   } catch (e) {
-    showToast('حدث خطأ أثناء توليد PDF');
+    console.error('PDF error:', e);
+    showToast('❌ حدث خطأ أثناء توليد PDF');
   }
 }
 
@@ -7510,14 +7481,19 @@ function exportReadyStudyPDF() {
   _exportReadyStudyPDFPrint(title, body);
 }
 
-function _exportReadyStudyPDFPrint(title, body) {
+// ══════════════════════════════════════════════════════════════
+// دالة مشتركة: طباعة HTML عبر iframe مخفي (تتجاوز حظر النوافذ)
+// ══════════════════════════════════════════════════════════════
+function _printHtmlWithIframe(title, bodyHtml) {
   const date = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
   const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-@page{size:A4 portrait;margin:22mm 16mm 28mm 16mm;}*{box-sizing:border-box;margin:0;padding:0;}
+@page{size:A4 portrait;margin:22mm 16mm 28mm 16mm;}
+*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.9;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-h2{font-size:13pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:9px 14px 9px 6px;margin:0 0 11px;background:linear-gradient(to left,#EFF6FF,#fff 70%);page-break-before:always;break-before:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;}h2:first-of-type{page-break-before:avoid;break-before:avoid;}
+h2{font-size:13pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:9px 14px 9px 6px;margin:0 0 11px;background:linear-gradient(to left,#EFF6FF,#fff 70%);page-break-before:always;break-before:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+h2:first-of-type{page-break-before:avoid;break-before:avoid;}
 h3{font-size:11.5pt;font-weight:700;color:#1e3a8a;margin:14px 0 6px;border-bottom:1.5px solid #BFDBFE;padding-bottom:4px;}
 p{margin-bottom:8px;text-align:justify;}ul,ol{padding-right:24px;margin:6px 0 10px;}li{margin-bottom:4px;}
 table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:9.5pt;table-layout:auto;page-break-inside:avoid;}
@@ -7533,24 +7509,29 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
   <div style="color:#475569;font-size:11pt;margin-bottom:12px;">دراسة جدوى استثمارية شاملة</div>
   <div style="font-size:9pt;color:#94A3B8;">📅 ${date} — ذكاء الأعمال · eses.store</div>
 </div>
-<div style="direction:rtl;text-align:right;">${body.innerHTML}</div>
+<div style="direction:rtl;text-align:right;">${bodyHtml}</div>
 <div class="footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي | eses.store</div>
-<script>document.fonts.ready.then(()=>setTimeout(()=>{window.print();},700));<\/script>
 </body></html>`;
 
-  // ── استخدام iframe مخفي لتجاوز حظر النوافذ على الجوال ──
-  let iframe = document.getElementById('_pdf-print-frame');
+  let iframe = document.getElementById('_pdf-iframe-shared');
   if (iframe) iframe.remove();
   iframe = document.createElement('iframe');
-  iframe.id = '_pdf-print-frame';
+  iframe.id = '_pdf-iframe-shared';
   iframe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;border:none;opacity:0;pointer-events:none;';
   document.body.appendChild(iframe);
   iframe.contentDocument.open();
   iframe.contentDocument.write(html);
   iframe.contentDocument.close();
   showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
-  // بعد الطباعة نزيل الـ iframe
+  iframe.contentDocument.fonts.ready.then(() => {
+    setTimeout(() => { iframe.contentWindow.print(); }, 700);
+  });
   iframe.contentWindow.addEventListener('afterprint', () => iframe.remove());
+}
+
+// يستخدم الدالة المشتركة _printHtmlWithIframe
+function _exportReadyStudyPDFPrint(title, body) {
+  _printHtmlWithIframe(title, body.innerHTML);
 }
 
 // ═══════════════════════════════════════════════════════════════════
