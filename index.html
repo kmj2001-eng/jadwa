@@ -446,18 +446,20 @@ nav.scrolled {
 /* ─── AUTH MODAL ─── */
 #auth-modal .mbox { max-width:440px; }
 
-/* ─── AUTH MODAL — mobile fit (no scrollbars) ─── */
+/* ─── AUTH MODAL — mobile fit (centered) ─── */
 @media (max-width:520px) {
   #auth-modal {
     padding:16px;
     align-items:center;
+    justify-content:center;
   }
   #auth-modal .mbox {
     max-width:100%;
     border-radius:20px;
-    max-height:92dvh;
+    max-height:88dvh;
     overflow-y:auto;
     overflow-x:hidden;
+    margin:auto;
   }
   #auth-modal .mbox-head { padding:16px 20px; }
   #auth-modal .mbox-body { padding:16px 20px 24px; }
@@ -2109,6 +2111,29 @@ input[type=range]::-webkit-slider-thumb {
   .ready-table th, .ready-table td { padding:12px 14px; font-size:0.8rem; }
   .ready-hero h1 { font-size:1.6rem; }
 }
+/* ── جدول الدراسات الجاهزة على الجوال ── */
+.ready-sub-row { display:none; }
+@media(max-width:600px){
+  /* أخفِ عمود اسم المشروع في صف البيانات */
+  .ready-table .col-name { display:none; }
+  .ready-table th.col-name { display:none; }
+  /* زرّ مشاهدة: أصغر */
+  .view-study-btn { padding:7px 10px; font-size:0.72rem; }
+  .view-study-btn i { display:none; }
+  /* أظهر صف الاسم المخفي كامل العرض */
+  .ready-sub-row { display:table-row; }
+  .ready-sub-row td {
+    padding:6px 14px 14px;
+    border-bottom:2px solid var(--border);
+  }
+  .ready-sub-row .ready-study-name { font-size:0.82rem; }
+  .ready-sub-row .ready-study-sub  { font-size:0.7rem; margin-top:4px; }
+  /* خلايا البيانات أصغر */
+  .ready-table th, .ready-table td { padding:10px 10px; font-size:0.76rem; }
+  .ready-capital-val { font-size:0.78rem; }
+  .ready-emp-val { font-size:0.76rem; }
+  .ready-num { width:22px; height:22px; font-size:0.7rem; }
+}
 /* Mobile Nav Hamburger */
 .nav-hamburger {
   display:none; flex-direction:column; gap:5px; cursor:pointer;
@@ -2171,10 +2196,6 @@ input[type=range]::-webkit-slider-thumb {
   .study-viewer-topbar-title { font-size:0.8rem; }
   .study-viewer-body { padding:24px 14px 60px; }
 }
-@media(max-width:480px){
-  .ready-table th:nth-child(2), .ready-table td:nth-child(2) { display:none; }
-}
-
 /* ════════════════════════════════════
    DASHBOARD
 ════════════════════════════════════ */
@@ -4192,43 +4213,64 @@ footer {
       <table class="ready-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>اسم المشروع والموقع</th>
+            <th class="col-num">م</th>
+            <th class="col-name">اسم المشروع والموقع</th>
             <th>رأس المال</th>
             <th>عدد الموظفين</th>
-            <th>مشاهدة الدراسة كاملة مجاناً</th>
+            <th>مشاهدة الدراسة</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><span class="ready-num">1</span></td>
-            <td>
+          <!-- دراسة 1 -->
+          <tr class="ready-data-row">
+            <td class="col-num"><span class="ready-num">1</span></td>
+            <td class="col-name">
               <div class="ready-study-name">🎥 محل بيع وصيانة وتركيب كاميرات المراقبة وملحقاتها</div>
               <div class="ready-study-sub">📍 الرياض، المملكة العربية السعودية &nbsp;·&nbsp; قطاع تقنية الأمن والمراقبة</div>
             </td>
             <td><span class="ready-capital-val">200,000 ر.س</span></td>
             <td><span class="ready-emp-val">4 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(1)"><i class="fa-solid fa-eye"></i> مشاهدة مجانية</button></td>
+            <td><button class="view-study-btn" onclick="openReadyStudy(1)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
           </tr>
-          <tr>
-            <td><span class="ready-num">2</span></td>
-            <td>
+          <tr class="ready-sub-row">
+            <td colspan="5">
+              <div class="ready-study-name">🎥 محل بيع وصيانة وتركيب كاميرات المراقبة وملحقاتها</div>
+              <div class="ready-study-sub">📍 الرياض، المملكة العربية السعودية &nbsp;·&nbsp; 🔑 قطاع تقنية الأمن والمراقبة</div>
+            </td>
+          </tr>
+          <!-- دراسة 2 -->
+          <tr class="ready-data-row">
+            <td class="col-num"><span class="ready-num">2</span></td>
+            <td class="col-name">
               <div class="ready-study-name">🍔 مطعم وجبات سريعة سحابي ومحلي</div>
               <div class="ready-study-sub">📍 جدة، محافظة مكة المكرمة &nbsp;·&nbsp; قطاع المطاعم والخدمات الغذائية</div>
             </td>
             <td><span class="ready-capital-val">200,000 ر.س</span></td>
             <td><span class="ready-emp-val">4 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(2)"><i class="fa-solid fa-eye"></i> مشاهدة مجانية</button></td>
+            <td><button class="view-study-btn" onclick="openReadyStudy(2)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
           </tr>
-          <tr>
-            <td><span class="ready-num">3</span></td>
-            <td>
+          <tr class="ready-sub-row">
+            <td colspan="5">
+              <div class="ready-study-name">🍔 مطعم وجبات سريعة سحابي ومحلي</div>
+              <div class="ready-study-sub">📍 جدة، محافظة مكة المكرمة &nbsp;·&nbsp; 🍽️ قطاع المطاعم والخدمات الغذائية</div>
+            </td>
+          </tr>
+          <!-- دراسة 3 -->
+          <tr class="ready-data-row">
+            <td class="col-num"><span class="ready-num">3</span></td>
+            <td class="col-name">
               <div class="ready-study-name">⚙️ ورشة صيانة وإصلاح المواتير والدينموهات الكهربائية</div>
               <div class="ready-study-sub">📍 بريدة، منطقة القصيم &nbsp;·&nbsp; قطاع خدمات الصيانة الكهربائية الصناعية</div>
             </td>
             <td><span class="ready-capital-val">60,000 ر.س</span></td>
             <td><span class="ready-emp-val">2 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(3)"><i class="fa-solid fa-eye"></i> مشاهدة مجانية</button></td>
+            <td><button class="view-study-btn" onclick="openReadyStudy(3)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
+          </tr>
+          <tr class="ready-sub-row">
+            <td colspan="5">
+              <div class="ready-study-name">⚙️ ورشة صيانة وإصلاح المواتير والدينموهات الكهربائية</div>
+              <div class="ready-study-sub">📍 بريدة، منطقة القصيم &nbsp;·&nbsp; 🔧 قطاع خدمات الصيانة الكهربائية الصناعية</div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -4422,7 +4464,7 @@ footer {
           style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--ink3);color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;box-sizing:border-box;direction:rtl;">
         <button type="button" onclick="togglePw('delete-account-password',this)" tabindex="-1"
           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:0.95rem;padding:4px;line-height:1;">
-          <i class="fa-regular fa-eye"></i>
+          <i class="fa-regular fa-eye-slash"></i>
         </button>
       </div>
       <div style="display:flex;gap:10px;">
@@ -7844,10 +7886,11 @@ function closeAuthModal() {
 function togglePw(inputId, btn) {
   const inp = document.getElementById(inputId);
   if (!inp) return;
-  const show = inp.type === 'password';
+  const show = inp.type === 'password'; // true = كانت مخفية → سنظهرها
   inp.type = show ? 'text' : 'password';
   const icon = btn.querySelector('i');
-  if (icon) { icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'; }
+  // eye بلا سلاش = كلمة المرور ظاهرة | eye-slash = مخفية
+  if (icon) { icon.className = show ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'; }
 }
 function resetPwField(inputId) {
   const inp = document.getElementById(inputId);
@@ -7855,7 +7898,7 @@ function resetPwField(inputId) {
   inp.value = '';
   inp.type = 'password';
   const btn = inp.parentElement && inp.parentElement.querySelector('.pw-eye');
-  if (btn) { const ic = btn.querySelector('i'); if (ic) ic.className = 'fa-regular fa-eye'; }
+  if (btn) { const ic = btn.querySelector('i'); if (ic) ic.className = 'fa-regular fa-eye-slash'; }
 }
 function switchAuthScreen(screen) {
   document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
@@ -7881,12 +7924,18 @@ function switchAuthScreen(screen) {
   if (fgEl) { fgEl.value = ''; fgEl.closest('.fgroup').style.display = ''; }
   const fbBtn = document.getElementById('forgot-btn');
   if (fbBtn) { fbBtn.style.display = ''; fbBtn.disabled = true; fbBtn.style.opacity = '0.45'; fbBtn.style.cursor = 'not-allowed'; }
-  // مسح حقول تسجيل الدخول
-  ['login-email','login-password','reg-name','reg-email','reg-phone'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  resetPwField('login-password');
-  resetPwField('reg-password');
+  // مسح جميع الحقول فوراً
+  const _clearFields = () => {
+    ['login-email','login-password','reg-name','reg-email','reg-phone'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    resetPwField('login-password');
+    resetPwField('reg-password');
+  };
+  _clearFields();
+  // إلغاء Chrome Autofill الذي يعمل بعد الـ DOM update
+  setTimeout(_clearFields, 50);
+  setTimeout(_clearFields, 200);
   clearAuthError();
 }
 function toggleNavDropdown(e) {
@@ -8611,7 +8660,7 @@ function authLogout() {
           </div>
           <div class="fgroup">
             <label class="mlabel">كلمة السر</label>
-            <div class="pw-wrap"><input class="minput" id="login-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="current-password"><button type="button" class="pw-eye" onclick="togglePw('login-password',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+            <div class="pw-wrap"><input class="minput" id="login-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="current-password"><button type="button" class="pw-eye" onclick="togglePw('login-password',this)" tabindex="-1"><i class="fa-regular fa-eye-slash"></i></button></div>
           </div>
           <button type="submit" class="auth-submit" id="login-btn">
             <i class="fa-solid fa-right-to-bracket"></i>
@@ -8642,7 +8691,7 @@ function authLogout() {
         </div>
         <div class="fgroup">
           <label class="mlabel">كلمة السر (8 أحرف على الأقل)</label>
-          <div class="pw-wrap"><input class="minput" id="reg-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePw('reg-password',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+          <div class="pw-wrap"><input class="minput" id="reg-password" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePw('reg-password',this)" tabindex="-1"><i class="fa-regular fa-eye-slash"></i></button></div>
         </div>
         <button type="submit" class="auth-submit" id="register-btn">
           <i class="fa-solid fa-user-plus"></i>
@@ -8702,11 +8751,11 @@ function authLogout() {
       <div class="auth-screen" id="screen-reset">
         <div class="fgroup">
           <label class="mlabel">كلمة السر الجديدة</label>
-          <div class="pw-wrap"><input class="minput" id="reset-new-pw" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePw('reset-new-pw',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+          <div class="pw-wrap"><input class="minput" id="reset-new-pw" type="password" placeholder="••••••••" dir="ltr" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePw('reset-new-pw',this)" tabindex="-1"><i class="fa-regular fa-eye-slash"></i></button></div>
         </div>
         <div class="fgroup">
           <label class="mlabel">تأكيد كلمة السر</label>
-          <div class="pw-wrap"><input class="minput" id="reset-confirm-pw" type="password" placeholder="••••••••" dir="ltr"><button type="button" class="pw-eye" onclick="togglePw('reset-confirm-pw',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+          <div class="pw-wrap"><input class="minput" id="reset-confirm-pw" type="password" placeholder="••••••••" dir="ltr"><button type="button" class="pw-eye" onclick="togglePw('reset-confirm-pw',this)" tabindex="-1"><i class="fa-regular fa-eye-slash"></i></button></div>
         </div>
         <button class="auth-submit" id="reset-btn" onclick="doReset()">
           <i class="fa-solid fa-key"></i>
