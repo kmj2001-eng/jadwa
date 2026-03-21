@@ -2,6 +2,7 @@
   "functions": {
     "api/claude.js":        { "maxDuration": 120 },
     "api/generate-docx.js": { "maxDuration": 60 },
+    "api/generate-xlsx.js": { "maxDuration": 60 },
     "api/generate-pdf.js":  { "maxDuration": 120 },
     "api/paymob.js":        { "maxDuration": 30 },
     "api/webhook.js":       { "maxDuration": 30 },
@@ -18,6 +19,7 @@
     { "src": "/api/auth",          "dest": "/api/auth.js" },
     { "src": "/api/webhook",       "dest": "/api/webhook.js" },
     { "src": "/api/generate-docx", "dest": "/api/generate-docx.js" },
+    { "src": "/api/generate-xlsx", "dest": "/api/generate-xlsx.js" },
     { "src": "/api/generate-pdf",  "dest": "/api/generate-pdf.js" },
     { "src": "/api/setup-db",      "dest": "/api/setup-db.js" },
     { "src": "/api/paymob",        "dest": "/api/paymob.js" },

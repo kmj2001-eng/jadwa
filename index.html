@@ -4298,6 +4298,11 @@ footer {
         onclick="closeStudyViewer();goStep(1)">
         <i class="fa-solid fa-rotate-right"></i> دراسة جديدة
       </button>
+      <button class="study-viewer-close-btn" id="viewer-xlsx-btn"
+        style="display:none;background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#34D399;"
+        onclick="downloadStudyExcel()">
+        <i class="fa-solid fa-file-excel"></i> تحميل Excel
+      </button>
       <button class="study-viewer-close-btn" id="viewer-pdf-btn"
         style="display:none;background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60A5FA;"
         onclick="exportReadyStudyPDF()">
@@ -4946,9 +4951,12 @@ async function openReadyStudy(id) {
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
   overlay.scrollTop = 0;
-  // دراسات جاهزة: بدون زر PDF وبدون زر دراسة جديدة
+  // دراسات جاهزة: بدون زر PDF وبدون دراسة جديدة، لكن مع Excel
   const pdfBtn = document.getElementById('viewer-pdf-btn');
   if (pdfBtn) pdfBtn.style.display = 'none';
+  const xlsxBtnR = document.getElementById('viewer-xlsx-btn');
+  if (xlsxBtnR) xlsxBtnR.style.display = '';
+  window._currentStudyMeta = {};
   const newStudyBtn2 = document.getElementById('viewer-new-study-btn');
   if (newStudyBtn2) newStudyBtn2.style.display = 'none';
 
@@ -5772,11 +5780,13 @@ function showResult(text){
   const overlay  = document.getElementById('study-viewer-overlay');
   const titleEl  = document.getElementById('study-viewer-title');
   const pdfBtn   = document.getElementById('viewer-pdf-btn');
+  const xlsxBtn  = document.getElementById('viewer-xlsx-btn');
   const newBtn   = document.getElementById('viewer-new-study-btn');
   const studyTitle = (document.getElementById('output-title') && document.getElementById('output-title').textContent.trim()) || 'دراسة الجدوى';
-  if (titleEl) titleEl.textContent = studyTitle;
-  if (pdfBtn)  pdfBtn.style.display  = '';
-  if (newBtn)  newBtn.style.display  = '';
+  if (titleEl)  titleEl.textContent  = studyTitle;
+  if (pdfBtn)   pdfBtn.style.display  = '';
+  if (xlsxBtn)  xlsxBtn.style.display = '';
+  if (newBtn)   newBtn.style.display  = '';
 
   const outputBody = document.getElementById('study-viewer-body');
   outputBody.innerHTML = '';
@@ -6919,7 +6929,10 @@ async function loadDashboardStudies() {
       <td style="font-size:0.75rem;color:var(--text3);">
         ${isDraft
           ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:3px 10px;font-family:'Cairo',sans-serif;">اشترك</button>`
-          : `<button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.75rem;padding:3px 10px;font-family:'Cairo',sans-serif;">📄 PDF</button>`
+          : `<div style="display:flex;gap:5px;flex-wrap:wrap;">
+               <button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📄 PDF</button>
+               <button onclick="downloadStudyXlsx(${idParam})" title="تحميل Excel" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;color:#34D399;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📊 Excel</button>
+             </div>`
         }
       </td>
       <td style="text-align:center;">
@@ -6980,8 +6993,12 @@ async function openSavedStudy(id) {
   window._viewerStudyText = study.content;
   window._fullStudyText   = study.content;
 
-  const pdfBtn = document.getElementById('viewer-pdf-btn');
+  const pdfBtn  = document.getElementById('viewer-pdf-btn');
   if (pdfBtn) pdfBtn.style.display = '';
+  const xlsxBtn2 = document.getElementById('viewer-xlsx-btn');
+  if (xlsxBtn2) xlsxBtn2.style.display = '';
+  // حفظ input_data للـ Excel
+  window._currentStudyMeta = study.input_data || {};
   const newStudyBtn = document.getElementById('viewer-new-study-btn');
   if (newStudyBtn) newStudyBtn.style.display = 'none';
 
@@ -7102,6 +7119,71 @@ async function downloadStudyPdf(id) {
     URL.revokeObjectURL(url);
   } catch (e) {
     showToast('حدث خطأ أثناء توليد PDF');
+  }
+}
+
+// ── تحميل Excel من الداشبورد (بـ ID) ───────────────────────────
+async function downloadStudyXlsx(id) {
+  const uid = window._currentUser?.id;
+  if (!uid) return showToast('يرجى تسجيل الدخول');
+  showToast('⏳ جارٍ تجهيز ملف Excel...');
+  try {
+    const r    = await fetch(`/api/studies?id=${typeof id === 'string' ? id.replace('db_','') : id}`,
+                             { headers: { 'x-user-id': String(uid) } });
+    const data = await r.json();
+    const study = data.study;
+    if (!study) return showToast('تعذّر تحميل الدراسة');
+    await _callGenerateXlsx(study.title, study.content, study.input_data);
+  } catch(e) {
+    console.error('Excel error:', e);
+    showToast('حدث خطأ أثناء توليد Excel');
+  }
+}
+
+// ── تحميل Excel من عارض الدراسة (الدراسة المفتوحة حالياً) ───────
+async function downloadStudyExcel() {
+  const titleEl = document.getElementById('study-viewer-title');
+  const bodyEl  = document.getElementById('study-viewer-body');
+  if (!bodyEl) return showToast('لا توجد دراسة مفتوحة');
+  const title   = titleEl?.textContent?.trim() || 'دراسة الجدوى';
+  const content = bodyEl.innerHTML;
+  showToast('⏳ جارٍ تجهيز ملف Excel...');
+  // استخراج meta من الدراسة المحفوظة في الذاكرة
+  const meta = window._currentStudyMeta || {};
+  await _callGenerateXlsx(title, content, meta);
+}
+
+// ── الدالة المشتركة لاستدعاء API وتحميل الملف ───────────────────
+async function _callGenerateXlsx(title, content, inputData) {
+  try {
+    const meta = {
+      capital:   inputData?.capital   || '',
+      employees: inputData?.employees || '',
+      location:  inputData?.location  || '',
+      sector:    inputData?.sector    || '',
+    };
+    const res = await fetch('/api/generate-xlsx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content, meta }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return showToast('❌ ' + (err.error || 'خطأ في توليد Excel'));
+    }
+    const blob     = await res.blob();
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    a.href         = url;
+    a.download     = `${title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'study'}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✅ تم تحميل ملف Excel بنجاح');
+  } catch(e) {
+    console.error('Excel download error:', e);
+    showToast('حدث خطأ أثناء تحميل Excel');
   }
 }
 
