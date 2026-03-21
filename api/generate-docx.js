@@ -550,6 +550,21 @@ async function generateXlsx(req, res, title, content, meta) {
     fc.alignment=xRtl('center'); row++;
 
     ws.pageSetup.printArea=`A1:F${row}`;
+
+    // ── ضمان RTL على كل خلية لتوافق تطبيقات الجوال (WPS, Excel Mobile) ──
+    ws.eachRow((r) => {
+      r.eachCell({ includeEmpty: false }, (cell) => {
+        const a = cell.alignment || {};
+        cell.alignment = {
+          ...a,
+          readingOrder: 2,                           // 2 = RTL دائماً
+          horizontal: a.horizontal || 'right',
+          vertical:   a.vertical   || 'middle',
+          wrapText:   a.wrapText   !== false,
+        };
+      });
+    });
+
     const buf=await wb.xlsx.writeBuffer();
     const safe=title.replace(/[^\u0600-\u06FFa-zA-Z0-9\s\-_]/g,'').trim()||'study';
     res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
