@@ -5942,10 +5942,16 @@ function scrollToSection(idx) {
 
 function unlockStudy(){
   window._studyUnlocked = true;
+  window._hasPoints     = true;
   document.querySelectorAll('.section-locked').forEach(s => s.classList.remove('section-locked'));
   const pw = document.getElementById('study-paywall');
   if(pw) pw.remove();
   showToast('🎉 تم الدفع بنجاح! يمكنك الآن عرض الدراسة كاملة وتحميلها.');
+  // ── تشغيل تحميل Excel إن كان المستخدم طلبه قبل الدفع ──
+  if (window._pendingXlsxAfterLogin) {
+    window._pendingXlsxAfterLogin = false;
+    setTimeout(() => downloadStudyExcel(), 800);
+  }
 }
 
 function downloadPDF(){
@@ -7144,15 +7150,47 @@ async function downloadStudyXlsx(id) {
 
 // ── تحميل Excel من عارض الدراسة (الدراسة المفتوحة حالياً) ───────
 async function downloadStudyExcel() {
+  // ── الدراسات الجاهزة: مجانية بدون تحقق ──
+  if (window._isReadyStudy) {
+    const titleEl = document.getElementById('study-viewer-title');
+    const bodyEl  = document.getElementById('study-viewer-body');
+    if (!bodyEl) return showToast('لا توجد دراسة مفتوحة');
+    showToast('⏳ جارٍ تجهيز ملف Excel...');
+    await _callGenerateXlsx(
+      titleEl?.textContent?.trim() || 'دراسة الجدوى',
+      bodyEl.innerHTML,
+      {}
+    );
+    return;
+  }
+
+  // ── دراسات المستخدم: رحلة التحقق الكاملة ──
+  const isLoggedIn = !!localStorage.getItem('user_data');
+
+  // غير مسجّل → احفظ العملية المعلّقة وافتح تسجيل الدخول
+  if (!isLoggedIn) {
+    window._pendingXlsxAfterLogin = true;
+    showExcelPaywallModal('login');
+    return;
+  }
+
+  // مسجّل لكن بلا نقاط → اعرض صندوق الاشتراك
+  if (!window._hasPoints) {
+    window._pendingXlsxAfterLogin = true;
+    showExcelPaywallModal('pay');
+    return;
+  }
+
+  // مسجّل + عنده نقاط → حمّل مباشرة
   const titleEl = document.getElementById('study-viewer-title');
   const bodyEl  = document.getElementById('study-viewer-body');
   if (!bodyEl) return showToast('لا توجد دراسة مفتوحة');
-  const title   = titleEl?.textContent?.trim() || 'دراسة الجدوى';
-  const content = bodyEl.innerHTML;
   showToast('⏳ جارٍ تجهيز ملف Excel...');
-  // استخراج meta من الدراسة المحفوظة في الذاكرة
-  const meta = window._currentStudyMeta || {};
-  await _callGenerateXlsx(title, content, meta);
+  await _callGenerateXlsx(
+    titleEl?.textContent?.trim() || 'دراسة الجدوى',
+    bodyEl.innerHTML,
+    window._currentStudyMeta || {}
+  );
 }
 
 // ── الدالة المشتركة لاستدعاء API وتحميل الملف ───────────────────
@@ -7282,6 +7320,97 @@ function showPDFPaywallModal(type) {
           padding:11px 24px;font-size:0.88rem;
           cursor:pointer;font-family:'Cairo',sans-serif;
         ">إلغاء</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+// ══════════════════════════════════════════════════════
+// مودال Paywall خاص بتحميل Excel — رحلة المستخدم الكاملة
+// mode: 'login' = غير مسجّل | 'pay' = مسجّل بلا نقاط
+// ══════════════════════════════════════════════════════
+function showExcelPaywallModal(mode) {
+  const existing = document.getElementById('excel-paywall-modal');
+  if (existing) existing.remove();
+
+  const isLogin = (mode === 'login');
+
+  // زر الإجراء الرئيسي
+  const actionBtn = isLogin
+    ? `onclick="document.getElementById('excel-paywall-modal').remove();openAuthModal('login')"`
+    : `onclick="document.getElementById('excel-paywall-modal').remove();startPaymentForStudy()"`;
+
+  const actionLabel = isLogin
+    ? '🔑 تسجيل الدخول'
+    : '💳 اشترك الآن — 49.99 ر.س';
+
+  const registerBtn = isLogin ? `
+    <button onclick="document.getElementById('excel-paywall-modal').remove();openAuthModal('register')"
+      style="background:rgba(52,211,153,0.1);color:#34D399;border:1px solid rgba(52,211,153,0.3);
+      border-radius:12px;padding:12px 24px;font-size:0.9rem;font-weight:700;
+      cursor:pointer;font-family:'Cairo',sans-serif;width:100%;">
+      ✨ إنشاء حساب جديد
+    </button>` : '';
+
+  const bodyMsg = isLogin
+    ? `سجّل دخولك أولاً، إن كان عندك نقاط سيُحمَّل الملف فوراً —<br>أو <strong style="color:#34D399;">اشترك</strong> بـ <strong style="color:#34D399;">49.99 ر.س</strong> للوصول الكامل`
+    : `نقاطك انتهت — اشترك بـ <strong style="color:#34D399;">49.99 ر.س</strong> للحصول على<br><strong style="color:#e2e8f0;">5 دراسات جدوى كاملة + تحميل Excel و PDF و Word</strong>`;
+
+  const modal = document.createElement('div');
+  modal.id = 'excel-paywall-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:99999;
+    background:rgba(0,0,0,0.78);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;backdrop-filter:blur(5px);
+    animation:fadeIn 0.2s ease;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:#0f1829;
+      border:1.5px solid rgba(52,211,153,0.28);
+      border-radius:20px;padding:44px 36px 36px;
+      max-width:460px;width:100%;
+      text-align:center;direction:rtl;
+      position:relative;
+      box-shadow:0 32px 80px rgba(0,0,0,0.6);
+      animation:slideUp 0.25s ease;
+    ">
+      <button onclick="document.getElementById('excel-paywall-modal').remove()" style="
+        position:absolute;top:16px;left:16px;
+        background:rgba(255,255,255,0.06);border:none;cursor:pointer;
+        color:#64748b;font-size:1rem;width:30px;height:30px;
+        border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+
+      <div style="font-size:3rem;margin-bottom:16px;">📊🔒</div>
+      <h3 style="font-family:'Cairo',sans-serif;color:#e2e8f0;font-size:1.25rem;font-weight:800;margin-bottom:12px;">
+        تحميل Excel يتطلب ${isLogin ? 'تسجيل الدخول' : 'اشتراكاً'}
+      </h3>
+      <p style="font-family:'Cairo',sans-serif;color:#94a3b8;font-size:0.9rem;line-height:2.1;margin-bottom:28px;">
+        ${bodyMsg}
+      </p>
+      <div style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.18);border-radius:12px;padding:16px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+        <span style="font-size:0.78rem;color:#6ee7b7;background:rgba(52,211,153,0.1);border-radius:8px;padding:5px 12px;">✦ 5 دراسات جدوى</span>
+        <span style="font-size:0.78rem;color:#6ee7b7;background:rgba(52,211,153,0.1);border-radius:8px;padding:5px 12px;">✦ تحميل Excel و PDF و Word</span>
+        <span style="font-size:0.78rem;color:#6ee7b7;background:rgba(52,211,153,0.1);border-radius:8px;padding:5px 12px;">✦ 10 أقسام كاملة</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button ${actionBtn} style="
+          background:linear-gradient(135deg,#059669,#34D399);
+          color:#fff;border:none;border-radius:12px;
+          padding:15px 32px;font-size:1rem;font-weight:700;
+          cursor:pointer;font-family:'Cairo',sans-serif;width:100%;
+          box-shadow:0 4px 20px rgba(52,211,153,0.35);">
+          ${actionLabel}
+        </button>
+        ${registerBtn}
+        <button onclick="document.getElementById('excel-paywall-modal').remove()"
+          style="background:transparent;color:#64748b;border:none;
+          padding:10px;font-size:0.85rem;cursor:pointer;font-family:'Cairo',sans-serif;">
+          إلغاء
+        </button>
       </div>
     </div>
   `;
@@ -7931,6 +8060,17 @@ function setAuthUI(user) {
   if (window._pendingReadyPdfAfterLogin) {
     window._pendingReadyPdfAfterLogin = false;
     setTimeout(()=>{ exportReadyStudyPDF(); }, 600);
+  }
+  // ── تحميل Excel بعد تسجيل الدخول (إن كان عنده نقاط) ──
+  if (window._pendingXlsxAfterLogin) {
+    window._pendingXlsxAfterLogin = false;
+    setTimeout(()=>{
+      if (window._hasPoints) {
+        downloadStudyExcel();
+      } else {
+        showExcelPaywallModal('pay');
+      }
+    }, 600);
   }
   // ── إعادة فتح مودال الدفع بعد تسجيل الدخول ──
   if (window._pendingPaymentAfterLogin) {
