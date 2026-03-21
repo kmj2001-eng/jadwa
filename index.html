@@ -6443,10 +6443,38 @@ function openPDFTemplate(){
   iframe.contentDocument.write(html);
   iframe.contentDocument.close();
   showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
-  iframe.contentDocument.fonts.ready.then(function(){
-    setTimeout(function(){ iframe.contentWindow.print(); }, 800);
-  });
-  iframe.contentWindow.addEventListener('afterprint', function(){ iframe.remove(); });
+
+  var _tplIsIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (_tplIsIOS) {
+    // iOS Safari: inject content into current page + synchronous print()
+    var _tplBody  = iframe.contentDocument.body  ? iframe.contentDocument.body.innerHTML  : '';
+    var _tplStyle = Array.from(iframe.contentDocument.querySelectorAll('style')).map(function(s){ return s.textContent; }).join('\n');
+    iframe.remove();
+    var _tpSOld = document.getElementById('_ios-pdf-style-tpl');
+    var _tpLOld = document.getElementById('_ios-pdf-layer-tpl');
+    if (_tpSOld) _tpSOld.remove();
+    if (_tpLOld) _tpLOld.remove();
+    var _tpS = document.createElement('style');
+    _tpS.id  = '_ios-pdf-style-tpl';
+    _tpS.textContent = '@media print{body>*:not(#_ios-pdf-layer-tpl){display:none!important;}#_ios-pdf-layer-tpl{display:block!important;position:static!important;}}' + _tplStyle;
+    document.head.appendChild(_tpS);
+    var _tpL = document.createElement('div');
+    _tpL.id = '_ios-pdf-layer-tpl';
+    _tpL.style.cssText = 'display:none;direction:rtl;';
+    _tpL.innerHTML = _tplBody;
+    document.body.appendChild(_tpL);
+    window.print();
+    window.addEventListener('afterprint', function _tplClean() {
+      _tpS.remove(); _tpL.remove();
+      window.removeEventListener('afterprint', _tplClean);
+    });
+  } else {
+    // Android / Desktop: iframe + fonts.ready
+    iframe.contentDocument.fonts.ready.then(function(){
+      setTimeout(function(){ iframe.contentWindow.print(); }, 800);
+    });
+    iframe.contentWindow.addEventListener('afterprint', function(){ iframe.remove(); });
+  }
 }
 
 async function exportPDF(){
@@ -6736,11 +6764,38 @@ ${cleanBody}
     pw.close();
     hidePDFLoader(loader);
     showToast('✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
-    // طباعة تلقائية بعد تحميل الخطوط
-    printWin.document.fonts.ready.then(function(){
-      setTimeout(function(){ printWin.print(); }, 800);
-    });
-    printWin.addEventListener('afterprint', () => iframe.remove());
+
+    const _expIsIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (_expIsIOS) {
+      // iOS Safari: print() يجب أن يُستدعى بشكل متزامن من نافذة الصفحة الرئيسية
+      const _epBody  = pw.body  ? pw.body.innerHTML : '';
+      const _epStyle = Array.from(pw.querySelectorAll('style')).map(function(s){ return s.textContent; }).join('\n');
+      iframe.remove();
+      var _epSOld = document.getElementById('_ios-pdf-style-exp');
+      var _epLOld = document.getElementById('_ios-pdf-layer-exp');
+      if (_epSOld) _epSOld.remove();
+      if (_epLOld) _epLOld.remove();
+      var _epS = document.createElement('style');
+      _epS.id  = '_ios-pdf-style-exp';
+      _epS.textContent = '@media print{body>*:not(#_ios-pdf-layer-exp){display:none!important;}#_ios-pdf-layer-exp{display:block!important;position:static!important;}}' + _epStyle;
+      document.head.appendChild(_epS);
+      var _epL = document.createElement('div');
+      _epL.id = '_ios-pdf-layer-exp';
+      _epL.style.cssText = 'display:none;direction:rtl;';
+      _epL.innerHTML = _epBody;
+      document.body.appendChild(_epL);
+      window.print();
+      window.addEventListener('afterprint', function _epClean() {
+        _epS.remove(); _epL.remove();
+        window.removeEventListener('afterprint', _epClean);
+      });
+    } else {
+      // Android / Desktop: iframe + fonts.ready
+      printWin.document.fonts.ready.then(function(){
+        setTimeout(function(){ printWin.print(); }, 800);
+      });
+      printWin.addEventListener('afterprint', function(){ iframe.remove(); });
+    }
     return;
 
   } catch(err) {
