@@ -6455,20 +6455,6 @@ function openPDFTemplate(){
   var _tplIsIOS   = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   var _tplIsMobile= /Mobi|Android/i.test(navigator.userAgent) || _tplIsIOS;
 
-  // ── الجوال: Web Share API (فحص متزامن) ──────────────────────────
-  if (_tplIsMobile && navigator.canShare) {
-    var _tplFullHtml = '<!DOCTYPE html>' + (iframe.contentDocument.documentElement ? iframe.contentDocument.documentElement.outerHTML : html);
-    var _tplFileName = (title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'دراسة') + '.html';
-    var _tplShareFile= new File([new Blob([_tplFullHtml],{type:'text/html'})], _tplFileName, {type:'text/html'});
-    if (navigator.canShare({ files:[_tplShareFile] })) {
-      iframe.remove();
-      showToast('✅ ستظهر نافذة المشاركة');
-      navigator.share({ files:[_tplShareFile], title:title, text:'دراسة جدوى — منصة ذكاء الأعمال' })
-        .then(function(){ showToast('✅ تم مشاركة الملف بنجاح'); })
-        .catch(function(e){ if(e.name!=='AbortError') showToast('❌ تعذّرت المشاركة'); });
-      return;
-    }
-  }
 
   if (_tplIsIOS) {
     // iOS fallback: حقن في الصفحة + print() متزامن
@@ -6792,20 +6778,6 @@ ${cleanBody}
     const _expIsIOS   = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const _expIsMobile= /Mobi|Android/i.test(navigator.userAgent) || _expIsIOS;
 
-    // ── الجوال: Web Share API (فحص متزامن) ──────────────────────────
-    if (_expIsMobile && navigator.canShare) {
-      var _expFullHtml = '<!DOCTYPE html>' + (pw.documentElement ? pw.documentElement.outerHTML : '');
-      var _expFileName = (title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'دراسة') + '.html';
-      var _expFile = new File([new Blob([_expFullHtml],{type:'text/html'})], _expFileName, {type:'text/html'});
-      if (navigator.canShare({ files:[_expFile] })) {
-        iframe.remove();
-        showToast('✅ ستظهر نافذة المشاركة');
-        navigator.share({ files:[_expFile], title:title, text:'دراسة جدوى — منصة ذكاء الأعمال' })
-          .then(function(){ showToast('✅ تم مشاركة الملف بنجاح'); })
-          .catch(function(e){ if(e.name!=='AbortError') showToast('❌ تعذّرت المشاركة'); });
-        return;
-      }
-    }
 
     showToast(_expIsIOS ? '📄 ستظهر معاينة الطباعة — اضغط ↑ للمشاركة أو الحفظ كـ PDF' : '✅ ستظهر نافذة الطباعة — اختر "حفظ كـ PDF"');
 
@@ -7595,16 +7567,22 @@ h3{font-size:11.5pt;font-weight:700;color:#1e3a8a;margin:14px 0 6px;border-botto
 p{margin-bottom:8px;text-align:justify;}ul,ol{padding-right:24px;margin:6px 0 10px;}li{margin-bottom:4px;}
 table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:9.5pt;table-layout:auto;page-break-inside:avoid;}
 th{background:#1D4ED8!important;color:#fff!important;padding:8px 10px;text-align:right;font-weight:700;border:1px solid #1740a8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-td{padding:6px 9px;border:1px solid #CBD5E1;text-align:right;font-size:9pt;vertical-align:top;word-break:break-word;}
-tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+td{background:#ffffff!important;color:#0f172a!important;padding:6px 9px;border:1px solid #CBD5E1;text-align:right;font-size:9pt;vertical-align:top;word-break:break-word;}
+tr:nth-child(even) td{background:#EFF6FF!important;color:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .table-wrap{display:block;width:100%;overflow:visible;}
-.cover{page-break-after:always;break-after:page;padding:60mm 30mm 30mm;text-align:center;}
+.cover{page-break-after:always;break-after:page;text-align:center;overflow:hidden;}
 .footer{margin-top:24px;padding-top:10px;border-top:1.5px solid #E2E8F0;text-align:center;color:#94A3B8;font-size:8.5pt;}`;
 
   const coverHtml = `<div class="cover">
-  <div style="font-size:20pt;font-weight:900;color:#1D4ED8;margin-bottom:10px;">${title}</div>
-  <div style="color:#475569;font-size:11pt;margin-bottom:12px;">دراسة جدوى استثمارية شاملة</div>
-  <div style="font-size:9pt;color:#94A3B8;">📅 ${date} — ذكاء الأعمال · eses.store</div>
+  <div style="background:#1e3a8a;padding:14px 20px;text-align:center;color:#fff;font-size:11pt;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">&#x2736; &#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x623;&#x639;&#x645;&#x627;&#x644; &mdash; &#x62F;&#x631;&#x627;&#x633;&#x627;&#x62A; &#x627;&#x644;&#x62C;&#x62F;&#x648;&#x649; &#x627;&#x644;&#x627;&#x633;&#x62A;&#x62B;&#x645;&#x627;&#x631;&#x64A;&#x629;</div>
+  <div style="background:#FBBF24;height:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+  <div style="background:#1D4ED8;padding:40mm 20mm 30mm;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div style="font-size:22pt;font-weight:900;color:#fff;margin-bottom:12px;">${title}</div>
+    <div style="font-size:11pt;color:#BFDBFE;">&#x62F;&#x631;&#x627;&#x633;&#x629; &#x62C;&#x62F;&#x648;&#x649; &#x627;&#x633;&#x62A;&#x62B;&#x645;&#x627;&#x631;&#x64A;&#x629; &#x634;&#x627;&#x645;&#x644;&#x629;</div>
+  </div>
+  <div style="background:#EFF6FF;padding:14px 20px;text-align:center;border-top:3px solid #BFDBFE;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div style="font-size:9pt;color:#64748B;">&#128197; ${date} &mdash; &#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x623;&#x639;&#x645;&#x627;&#x644; &middot; eses.store</div>
+  </div>
 </div>
 <div style="direction:rtl;text-align:right;">${bodyHtml}</div>
 <div class="footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي | eses.store</div>`;
@@ -7612,19 +7590,6 @@ tr:nth-child(even) td{background:#F0F7FF!important;-webkit-print-color-adjust:ex
   const fullHtml = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>${printCSS}</style></head><body>${coverHtml}</body></html>`;
-
-  // ── الجوال: Web Share API (فحص متزامن ← لا يكسر context الـ iOS) ──
-  if (isMobile && navigator.canShare) {
-    var _cleanName = (title.replace(/[^\u0600-\u06FFa-zA-Z0-9 _-]/g,'').trim() || 'دراسة') + '.html';
-    var _shareFile = new File([new Blob([fullHtml],{type:'text/html'})], _cleanName, {type:'text/html'});
-    if (navigator.canShare({ files:[_shareFile] })) {
-      showToast('✅ ستظهر نافذة المشاركة');
-      navigator.share({ files:[_shareFile], title:title, text:'دراسة جدوى — منصة ذكاء الأعمال' })
-        .then(function(){ showToast('✅ تم مشاركة الملف بنجاح'); })
-        .catch(function(e){ if(e.name!=='AbortError') showToast('❌ تعذّرت المشاركة'); });
-      return;
-    }
-  }
 
   // ── iOS fallback: حقن في الصفحة + print() متزامن ────────────────
   if (isIOS) {
