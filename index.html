@@ -2299,8 +2299,9 @@ input[type=range]::-webkit-slider-thumb {
 .sbadge {
   font-size:0.62rem; font-weight:700; padding:4px 11px; border-radius:20px;
 }
-.sbadge-done  { background:rgba(52,211,153,0.12); color:var(--green); border:1px solid rgba(52,211,153,0.25); }
-.sbadge-draft { background:rgba(251,191,36,0.12); color:#FBB024;    border:1px solid rgba(251,191,36,0.3); }
+.sbadge-done   { background:rgba(52,211,153,0.12); color:var(--green); border:1px solid rgba(52,211,153,0.25); }
+.sbadge-draft  { background:rgba(251,191,36,0.12); color:#FBB024;    border:1px solid rgba(251,191,36,0.3); }
+.sbadge-locked { background:rgba(248,113,113,0.12); color:#F87171;   border:1px solid rgba(248,113,113,0.3); }
 
 /* ════════════════════════════════════
    FOOTER
@@ -4472,7 +4473,8 @@ footer {
         </table>
         <div style="margin-top:14px;padding:10px 14px;background:var(--ink3);border-radius:10px;font-size:0.75rem;color:var(--text3);display:flex;gap:16px;flex-wrap:wrap;">
           <span><span class="sbadge sbadge-done">مدفوعة</span> — الدراسة مفتوحة بالكامل</span>
-          <span><span class="sbadge sbadge-draft">بانتظار الدفع</span> — المحتوى محجوب — اشترك لفتحه</span>
+          <span><span class="sbadge sbadge-locked">غير مدفوعة</span> — محتوى مرئي جزئياً — اشترك لفتح الكامل</span>
+          <span><span class="sbadge sbadge-draft">بانتظار الدفع</span> — الدراسة لم تُولَّد بعد</span>
         </div>
       </div>
     </div>
@@ -7010,7 +7012,9 @@ async function loadDashboardStudies() {
       <td>
         ${isDraft
           ? `<span class="sbadge sbadge-draft">بانتظار الدفع</span>`
-          : `<span class="sbadge sbadge-done">مدفوعة</span>`
+          : window._hasPoints
+            ? `<span class="sbadge sbadge-done">مدفوعة</span>`
+            : `<span class="sbadge sbadge-locked">غير مدفوعة</span>`
         }
       </td>
       <td style="font-size:0.75rem;color:var(--text3);">
