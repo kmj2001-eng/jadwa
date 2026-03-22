@@ -155,7 +155,15 @@ export default async function handler(req, res) {
       }),
     });
     const charge = await chargeRes.json();
-    console.log('[paymob] charge response:', JSON.stringify(charge));
+    // 🔍 تسجيل الرد الكامل لتشخيص المشاكل
+    console.log('[paymob] chargeStatus:', chargeRes.status);
+    console.log('[paymob] charge.success:', charge.success);
+    console.log('[paymob] charge.pending:', charge.pending);
+    console.log('[paymob] charge.txn_response_code:', charge.txn_response_code);
+    console.log('[paymob] charge.data:', JSON.stringify(charge.data || {}));
+    console.log('[paymob] charge.message:', charge.message);
+    console.log('[paymob] charge.detail:', charge.detail);
+    console.log('[paymob] FULL:', JSON.stringify(charge));
 
     // ✅ نجح الدفع فوراً
     if (charge.success === true && charge.pending === false) {
@@ -181,12 +189,17 @@ export default async function handler(req, res) {
       }
     }
 
-    // ❌ رُفضت البطاقة
+    // ❌ رُفضت البطاقة — نجمع كل الحقول الممكنة للتشخيص
     const reason = charge?.data?.message
+                || charge?.data?.reject_reason_message_ar
+                || charge?.data?.reject_reason_message
+                || charge?.data?.txn_response_code
+                || charge?.txn_response_code
                 || charge?.message
                 || charge?.detail
+                || (charge?.data ? JSON.stringify(charge.data) : null)
                 || 'رُفضت البطاقة';
-    return res.status(400).json({ error: reason });
+    return res.status(400).json({ error: reason, _debug: charge });
 
   } catch (err) {
     console.error('[paymob] error:', err.message);
