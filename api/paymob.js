@@ -49,7 +49,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { card, amount = 500 } = req.body || {};
+    const { card, amount = 10000 } = req.body || {};  // 10000 هللة = 100 ر.س
     const currency = 'SAR';
     const userId   = parseInt(req.headers['x-user-id']) || null;
 
