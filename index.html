@@ -2145,7 +2145,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 /* ── بطاقات الدراسات ── */
 .ready-sub-row { display:none; }
-.study-card-td { padding:0 !important; }
+.study-m-cell { display:none !important; padding:0; }
 .study-card-inner { display:flex; align-items:center; gap:14px; padding:10px 14px; }
 .study-card-name { flex:2; min-width:120px; overflow:hidden; }
 .study-card-scroll { display:flex; flex:1; gap:14px; align-items:center; overflow-x:auto; scrollbar-width:none; }
@@ -2162,7 +2162,8 @@ input[type=range]::-webkit-slider-thumb {
     border-radius:14px; border:1px solid var(--border2);
     overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.2);
   }
-  #user-studies-table .study-row td { display:block; }
+  .study-d-cell { display:none !important; }
+  .study-m-cell { display:block !important; }
   .study-card-inner { flex-direction:column; gap:0; padding:0; }
   .study-card-name { width:100%; padding:12px 14px; border-bottom:1px solid var(--border); box-sizing:border-box; }
   .study-card-scroll { width:100%; padding:10px 14px; box-sizing:border-box; }
@@ -7100,30 +7101,32 @@ async function loadDashboardStudies() {
     const irr    = meta.irr || inp.irr || '—';
     const isPaid = s.status === 'completed';
 
+    const badge = isPaid ? '<span class="sbadge sbadge-done">مدفوعة</span>' : '<span class="sbadge sbadge-locked">غير مدفوعة</span>';
+    const delBtn = `<button class="dash-delete-btn" title="حذف" style="background:rgba(255,45,107,0.1);border:1px solid rgba(255,45,107,0.3);border-radius:8px;cursor:pointer;color:#ff2d6b;font-size:0.82rem;padding:5px 12px;font-family:'Cairo',sans-serif;">🗑</button>`;
     tr.innerHTML = `
-      <td colspan="6" class="study-card-td">
+      <td class="study-d-cell"><span class="dash-study-title" style="cursor:pointer;color:var(--gold);font-weight:700;">${s.title}</span></td>
+      <td class="study-d-cell" style="font-size:0.82rem;color:var(--text2);">${sector}</td>
+      <td class="study-d-cell" style="font-size:0.82rem;color:var(--text2);">${capital}</td>
+      <td class="study-d-cell" style="font-size:0.82rem;color:var(--text2);">${irr}</td>
+      <td class="study-d-cell">${badge}</td>
+      <td class="study-d-cell" style="text-align:center;">${delBtn}</td>
+      <td colspan="6" class="study-m-cell">
         <div class="study-card-inner">
-          <div class="study-card-name">
-            <span class="dash-study-title" style="cursor:pointer;color:var(--gold);font-weight:700;font-size:0.88rem;line-height:1.4;">${s.title}</span>
-          </div>
+          <div class="study-card-name"><span class="dash-study-title" style="cursor:pointer;color:var(--gold);font-weight:700;font-size:0.88rem;line-height:1.4;">${s.title}</span></div>
           <div class="study-card-scroll">
             <div class="sc-field"><span class="sc-lbl">القطاع</span><span class="sc-val">${sector}</span></div>
             <div class="sc-field"><span class="sc-lbl">رأس المال</span><span class="sc-val">${capital}</span></div>
             <div class="sc-field"><span class="sc-lbl">IRR</span><span class="sc-val">${irr}</span></div>
-            <div class="sc-field">
-              ${isPaid ? '<span class="sbadge sbadge-done">مدفوعة</span>' : '<span class="sbadge sbadge-locked">غير مدفوعة</span>'}
-            </div>
-            <div class="sc-field">
-              <button class="dash-delete-btn" title="حذف" style="background:rgba(255,45,107,0.1);border:1px solid rgba(255,45,107,0.3);border-radius:8px;cursor:pointer;color:#ff2d6b;font-size:0.78rem;padding:5px 12px;font-family:'Cairo',sans-serif;white-space:nowrap;">🗑 حذف</button>
-            </div>
+            <div class="sc-field">${badge}</div>
+            <div class="sc-field"><button class="dash-delete-btn" title="حذف" style="background:rgba(255,45,107,0.1);border:1px solid rgba(255,45,107,0.3);border-radius:8px;cursor:pointer;color:#ff2d6b;font-size:0.78rem;padding:5px 12px;font-family:'Cairo',sans-serif;white-space:nowrap;">🗑 حذف</button></div>
           </div>
         </div>
       </td>
     `;
 
     // ── ربط الأحداث بـ JS مباشرةً (تجنب مشكلة الـ ID داخل onclick HTML) ──
-    tr.querySelector('.dash-study-title').addEventListener('click', () => openSavedStudy(s.id));
-    tr.querySelector('.dash-delete-btn').addEventListener('click', () => deleteSavedStudy(s.id));
+    tr.querySelectorAll('.dash-study-title').forEach(el => el.addEventListener('click', () => openSavedStudy(s.id)));
+    tr.querySelectorAll('.dash-delete-btn').forEach(el => el.addEventListener('click', () => deleteSavedStudy(s.id)));
 
     tbody.appendChild(tr);
   });
