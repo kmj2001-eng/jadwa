@@ -113,30 +113,51 @@ export default async function handler(req, res) {
     // ── كل المستخدمين ──────────────────────────────────────────
     if (action === 'all-users') {
       const q = req.query.q ? `%${req.query.q}%` : null;
+      // نستخدم subqueries لتجنب تضاعف الصفوف عند الجمع بين user_points و orders
       const rows = q
         ? await sql`
             SELECT u.id, u.name, u.email, u.created_at,
-                   COALESCE(SUM(up.total_points), 0)       AS total_points,
-                   COALESCE(SUM(up.used_points), 0)        AS used_points,
-                   COALESCE(SUM(up.total_points - up.used_points), 0) AS remaining_points,
-                   COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders
+                   COALESCE(pts.total_points, 0)     AS total_points,
+                   COALESCE(pts.used_points, 0)      AS used_points,
+                   COALESCE(pts.remaining_points, 0) AS remaining_points,
+                   COALESCE(ords.paid_orders, 0)     AS paid_orders
             FROM users u
-            LEFT JOIN user_points up ON up.user_id = u.id
-            LEFT JOIN orders o ON o.user_id = u.id
+            LEFT JOIN (
+              SELECT user_id,
+                     SUM(total_points)               AS total_points,
+                     SUM(used_points)                AS used_points,
+                     SUM(total_points - used_points) AS remaining_points
+              FROM user_points
+              GROUP BY user_id
+            ) pts ON pts.user_id = u.id
+            LEFT JOIN (
+              SELECT user_id, COUNT(*) AS paid_orders
+              FROM orders WHERE status = 'paid'
+              GROUP BY user_id
+            ) ords ON ords.user_id = u.id
             WHERE u.email ILIKE ${q} OR u.name ILIKE ${q}
-            GROUP BY u.id, u.name, u.email, u.created_at
             ORDER BY u.created_at DESC
             LIMIT 100`
         : await sql`
             SELECT u.id, u.name, u.email, u.created_at,
-                   COALESCE(SUM(up.total_points), 0)       AS total_points,
-                   COALESCE(SUM(up.used_points), 0)        AS used_points,
-                   COALESCE(SUM(up.total_points - up.used_points), 0) AS remaining_points,
-                   COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders
+                   COALESCE(pts.total_points, 0)     AS total_points,
+                   COALESCE(pts.used_points, 0)      AS used_points,
+                   COALESCE(pts.remaining_points, 0) AS remaining_points,
+                   COALESCE(ords.paid_orders, 0)     AS paid_orders
             FROM users u
-            LEFT JOIN user_points up ON up.user_id = u.id
-            LEFT JOIN orders o ON o.user_id = u.id
-            GROUP BY u.id, u.name, u.email, u.created_at
+            LEFT JOIN (
+              SELECT user_id,
+                     SUM(total_points)               AS total_points,
+                     SUM(used_points)                AS used_points,
+                     SUM(total_points - used_points) AS remaining_points
+              FROM user_points
+              GROUP BY user_id
+            ) pts ON pts.user_id = u.id
+            LEFT JOIN (
+              SELECT user_id, COUNT(*) AS paid_orders
+              FROM orders WHERE status = 'paid'
+              GROUP BY user_id
+            ) ords ON ords.user_id = u.id
             ORDER BY u.created_at DESC
             LIMIT 200`;
       return res.json({ users: rows });
