@@ -8040,15 +8040,24 @@ function ipcShowSuccess() {
 
 // ── Polling: التحقق من حالة الطلب كل 3 ثوانٍ ──
 function ipcStartPolling(orderId) {
+  ipcClearTimers(); // امسح أي timers قديمة قبل البدء
   window._ipcOrderId = orderId;
 
-  // Timeout بعد دقيقتين
+  // Timeout بعد دقيقتين — أعِد نموذج البطاقة بدلاً من الشاشة الفارغة
   window._ipcTimeoutTimer = setTimeout(() => {
     ipcClearTimers();
     const iframe = document.getElementById('ipc-iframe');
     if (iframe) iframe.src = '';
-    ipcShow('ipc-timeout');
-    console.warn('[IPC] Polling timed out after 2 minutes');
+    console.warn('[IPC] Polling timed out after 2 minutes — returning to card form');
+    // أظهر رسالة خطأ واضحة وأعِد النموذج
+    const errDiv = document.getElementById('pmo-form-error');
+    if (errDiv) { errDiv.textContent = '⏱️ انتهت مهلة التحقق — يرجى المحاولة مرة أخرى'; errDiv.style.display = 'block'; }
+    ipcShow('ipc-card-form');
+    const submitBtn = document.getElementById('pmo-submit-btn');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+    const modalCard = document.getElementById('payment-modal-card');
+    if (modalCard) modalCard.scrollTop = 0;
+    if (typeof showToast === 'function') showToast('⏱️ انتهت مهلة التحقق — يرجى المحاولة مرة أخرى');
   }, IPC_TIMEOUT_MS);
 
   // Polling كل 3 ثوانٍ
