@@ -171,6 +171,35 @@ export default async function handler(req, res) {
 
   console.log(`Paymob Webhook: orderId=${paymobOrderId}, txId=${transactionId}, success=${success}, pending=${isPending}`);
 
+  // ── معالجة الرفض (DECLINED) ────────────────────────────────
+  if (!success && !isPending && paymobOrderId) {
+    try {
+      if (process.env.POSTGRES_URL) {
+        const { neon } = await import('@neondatabase/serverless');
+        const sql = neon(process.env.POSTGRES_URL);
+        const merchantOrderId = obj?.order?.merchant_order_id?.toString() || '';
+        const dbIdFromMerchant = merchantOrderId.match(/^jadwa_(\d+)_/)?.[1];
+
+        // تحديث بـ paymob_order_id أو merchant_order_id
+        let failUpdated = await sql`
+          UPDATE orders SET status = 'failed', updated_at = NOW()
+          WHERE paymob_order_id = ${paymobOrderId} AND status = 'pending'
+          RETURNING id
+        `;
+        if (!failUpdated.length && dbIdFromMerchant) {
+          failUpdated = await sql`
+            UPDATE orders SET status = 'failed', paymob_order_id = ${paymobOrderId}, updated_at = NOW()
+            WHERE id = ${parseInt(dbIdFromMerchant)} AND status = 'pending'
+            RETURNING id
+          `;
+        }
+        console.log(`❌ Webhook: DECLINED orderId=${paymobOrderId} | dbUpdated=${failUpdated.length}`);
+      }
+    } catch (e) {
+      console.error('Webhook declined DB error:', e.message);
+    }
+  }
+
   if (success && !isPending) {
     try {
       if (process.env.POSTGRES_URL) {
