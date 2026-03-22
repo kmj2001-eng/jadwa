@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { neon } from "@neondatabase/serverless";
 
 export default async function handler(req, res) {
+  if (req.method === "GET") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
   try {
