@@ -7798,83 +7798,38 @@ const IPC_TIMEOUT_MS     = 120000; // دقيقتان
 //  PAYMENT MODAL — دوال التحكم
 // ══════════════════════════════════════
 
-/** فتح المودال — يعرض iframe Paymob مباشرة */
-async function pmoOpen() {
+/** فتح المودال */
+function pmoOpen() {
+  // ── إعادة ضبط المودال لنموذج البطاقة ──
+  window._pmoSubmitting = false;
   ipcClearTimers();
-
-  // ── فحص تسجيل الدخول ──
-  const user = _getLoggedUser();
-  if (!user || !user.id) {
-    window._pendingPaymentAfterLogin = true;
-    openAuthModal('login');
-    return;
-  }
-
-  // ── أعد تهيئة المودال ──
-  const iframeEl = document.getElementById('ipc-iframe');
-  if (iframeEl) iframeEl.src = '';
+  const iframe = document.getElementById('ipc-iframe');
+  if (iframe) iframe.src = '';
+  // أظهر نموذج البطاقة وأخفِ باقي الحالات
+  ['ipc-loader','ipc-iframe-wrap','ipc-success','ipc-timeout','ipc-error']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  const cardForm = document.getElementById('ipc-card-form');
+  if (cardForm) cardForm.style.display = '';
+  // أعد تفعيل زر الإرسال
+  const submitBtn = document.getElementById('pmo-submit-btn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+  // أخفِ رسائل الخطأ
+  const errDiv = document.getElementById('pmo-form-error');
+  if (errDiv) errDiv.style.display = 'none';
+  // افتح المودال
   const overlay = document.getElementById('payment-modal-overlay');
-  if (overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  // مرِّر للأعلى عند كل فتح
   const modalCard = document.getElementById('payment-modal-card');
   if (modalCard) modalCard.scrollTop = 0;
-
-  // أظهر loader ريثما يُحضَّر الـ iframe
-  ipcShow('ipc-loader');
-  const loaderText = document.getElementById('ipc-loader-text');
-  if (loaderText) loaderText.textContent = '⏳ جاري تحضير بوابة الدفع...';
-
-  try {
-    const res = await fetch('/api/paymob', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body:    JSON.stringify({ amount: 100 }), // 100 هللة = 1 ر.س (اختبار مؤقت)
-    });
-    const data = await res.json();
-    console.log('[PMO] paymob response:', data);
-
-    if (!data.iframeUrl) throw new Error(data.error || 'فشل تحضير بوابة الدفع');
-
-    // احفظ IDs لاستخدامها في الـ polling
-    window._currentPaymobOrderId = data.paymobOrderId;
-    window._currentDbOrderId     = data.dbOrderId;
-
-    // أظهر iframe Paymob
-    if (iframeEl) iframeEl.src = data.iframeUrl;
-    ipcShow('ipc-iframe-wrap');
-
-    // 🔁 ابدأ polling للتحقق من حالة الدفع (كل 3 ثوانٍ)
-    if (data.dbOrderId) {
-      window._pmoPolling = setInterval(async () => {
-        try {
-          // نستخدم GET /api/paymob?id= للتحقق من الطلب عبر DB
-          const chk = await fetch(`/api/paymob?dbOrder=${data.dbOrderId}`);
-          if (!chk.ok) return;
-          const d = await chk.json();
-          if (d.status === 'paid') {
-            clearInterval(window._pmoPolling);
-            ipcShowSuccess();
-          } else if (d.status === 'failed') {
-            clearInterval(window._pmoPolling);
-            const errText = document.getElementById('ipc-error-text');
-            if (errText) errText.textContent = 'تم رفض عملية الدفع';
-            ipcShow('ipc-error');
-          }
-        } catch (_) {}
-      }, 3000);
-    }
-
-  } catch (err) {
-    console.error('[PMO] error:', err.message);
-    const errText = document.getElementById('ipc-error-text');
-    if (errText) errText.textContent = err.message;
-    ipcShow('ipc-error');
-  }
 }
 
 /** إغلاق المودال */
 function pmoClose() {
   ipcClearTimers();
-  if (window._pmoPolling) { clearInterval(window._pmoPolling); window._pmoPolling = null; }
   const iframe = document.getElementById('ipc-iframe');
   if (iframe) iframe.src = '';
   const overlay = document.getElementById('payment-modal-overlay');
@@ -7949,7 +7904,8 @@ function pmoGooglePay() {
 /** إرسال بيانات البطاقة — Direct Charge عبر Paymob */
 async function pmoSubmitCard(e) {
   e.preventDefault();
-  console.log('[PMO] pmoSubmitCard called');
+  if (window._pmoSubmitting) return;
+  window._pmoSubmitting = true;
 
   const errDiv = document.getElementById('pmo-form-error');
   if (errDiv) errDiv.style.display = 'none';
@@ -8029,6 +7985,7 @@ async function pmoSubmitCard(e) {
       // ابدأ polling بـ transactionId
       if (data.transactionId) ipcStartPolling(data.transactionId);
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+      window._pmoSubmitting = false;
       return;
     }
 
@@ -8040,6 +7997,7 @@ async function pmoSubmitCard(e) {
     if (errText) errText.textContent = err.message;
     ipcShow('ipc-error');
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+    window._pmoSubmitting = false;
   }
 }
 
