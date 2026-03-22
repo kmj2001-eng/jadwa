@@ -99,7 +99,7 @@ export default async function handler(req, res) {
                u.email AS user_email
         FROM feasibility_studies fs
         LEFT JOIN users u ON u.id = fs.user_id
-        ORDER BY fs.created_at ASC
+        ORDER BY fs.created_at DESC
       `;
       return res.json({ studies: rows });
     }
