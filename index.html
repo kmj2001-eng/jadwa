@@ -6859,12 +6859,11 @@ async function saveStudy(title, content) {
   if (!metadata.sector  && input_data?.sector)  metadata.sector  = input_data.sector;
   if (!metadata.capital && input_data?.capital) metadata.capital = input_data.capital;
 
-  // ── حفظ فقط إذا كان المستخدم لديه نقاط (لا نحفظ المسودات) ──
-  if (!window._hasPoints) return;
-
-  // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
   const user = _getLoggedUser();
+
   if (user && user.id) {
+    // ── مسجّل دخول — لا نحفظ إلا إذا كان لديه نقاط ──
+    if (!window._hasPoints) return;
     try {
       const res = await fetch('/api/studies', {
         method: 'POST',
@@ -6878,7 +6877,6 @@ async function saveStudy(title, content) {
         }
         return;
       }
-      // تسجيل الخطأ الحقيقي من الخادم لتشخيص المشكلة
       try {
         const errBody = await res.json();
         console.error('[saveStudy] خطأ الخادم:', res.status, errBody);
@@ -6886,20 +6884,22 @@ async function saveStudy(title, content) {
         console.error('[saveStudy] HTTP', res.status, res.statusText);
       }
     } catch(e) { console.warn('[saveStudy] fetch error:', e.message); }
-    // فشل DB — احتياط بـ localStorage
     showToast('⚠️ تعذّر الحفظ في الخادم، حُفظت محلياً');
   }
 
-  // ── احتياط: حفظ في localStorage ──
+  // ── غير مسجّل — احفظ محلياً مع الطابع الزمني (لمدة 30 دقيقة) ──
   try {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     const idx = local.findIndex(s => s.title === title);
     if (idx !== -1) local.splice(idx, 1);
-    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata, status: 'completed' });
-    if (local.length > 30) local.splice(30);
+    local.unshift({
+      id: 'local_' + Date.now(), title, content, date, metadata,
+      input_data, status: 'completed', savedAt: Date.now()
+    });
+    if (local.length > 10) local.splice(10);
     localStorage.setItem('saved_studies', JSON.stringify(local));
     if (!user || !user.id) {
-      showToast('💾 حُفظت محلياً — سجّل دخولك لحفظها في حسابك');
+      showToast('💾 دراستك محفوظة — سجّل دخولك خلال 30 دقيقة لرفعها لحسابك');
     }
   } catch(e) { console.warn('saveStudy local:', e); }
 }
@@ -6913,29 +6913,61 @@ async function migrateLocalStudiesToDB(user) {
   try {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     if (local.length === 0) return;
+
+    const THIRTY_MIN = 30 * 60 * 1000;
+    const now = Date.now();
+
+    // فقط الدراسات المحفوظة خلال آخر 30 دقيقة (أو التي بدون savedAt للتوافق القديم)
+    const recent  = local.filter(s => !s.savedAt || (now - s.savedAt) <= THIRTY_MIN);
+    const expired = local.filter(s =>  s.savedAt && (now - s.savedAt)  > THIRTY_MIN);
+
+    // تحقق من النقاط أولاً
+    let hasPointsNow = window._hasPoints;
+    if (!hasPointsNow) {
+      try {
+        const pr = await fetch('/api/points', { headers: { 'x-user-id': String(user.id) } });
+        if (pr.ok) { const pd = await pr.json(); hasPointsNow = pd.remaining >= 1; }
+      } catch(_) {}
+    }
+
     let migrated = 0;
-    for (const s of local) {
-      if (!s.title && !s.content) continue;
+    for (const s of recent) {
+      if (!s.title || !s.content) continue;
+      // إذا لم يكن لديه نقاط، أبقِ الدراسة محلياً (لا ترفعها)
+      if (!hasPointsNow) continue;
       try {
         const res = await fetch('/api/studies', {
-          method: 'POST',
+          method : 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-          body: JSON.stringify({
-            title     : s.title   || s.project_name || 'دراسة جدوى',
-            content   : s.content || s.ai_output    || '',
-            metadata  : s.metadata  || {},
-            input_data: s.input_data || null
+          body   : JSON.stringify({
+            title     : s.title      || 'دراسة جدوى',
+            content   : s.content    || '',
+            metadata  : s.metadata   || {},
+            input_data: s.input_data || null,
+            status    : 'completed'
           })
         });
         if (res.ok) migrated++;
       } catch(e) { /* تجاهل فشل دراسة واحدة */ }
     }
+
+    // احذف المنتهية وما رُفع بنجاح
+    const remaining = local.filter(s => {
+      const isExpired = s.savedAt && (now - s.savedAt) > THIRTY_MIN;
+      return !isExpired; // أبقِ الحديثة (المرفوعة + غير المرفوعة لحين وجود نقاط)
+    });
+    if (remaining.length !== local.length || migrated > 0) {
+      localStorage.setItem('saved_studies', JSON.stringify(remaining));
+    }
+
     if (migrated > 0) {
-      localStorage.removeItem('saved_studies'); // نظّف localStorage بعد الترحيل
-      showToast('✅ تم ترحيل ' + migrated + ' دراسة إلى حسابك');
+      showToast('✅ تم رفع ' + migrated + ' دراسة إلى حسابك');
       if (document.getElementById('page-dashboard')?.classList.contains('active')) {
         loadDashboardStudies();
       }
+    } else if (expired.length > 0 && recent.length === 0) {
+      // انتهت صلاحية الدراسة المحلية
+      localStorage.removeItem('saved_studies');
     }
   } catch(e) { console.warn('migrateLocalStudiesToDB:', e); }
 }
