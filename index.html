@@ -7982,7 +7982,7 @@ async function pmoSubmitCard(e) {
         ipcShow('ipc-loader');
       }
       // ابدأ polling بـ transactionId
-      if (data.transactionId) ipcStartPolling(data.transactionId);
+      if (data.transactionId) ipcStartPolling(data.transactionId, data.dbOrderId);
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
       window._pmoSubmitting = false;
       return;
@@ -8042,9 +8042,10 @@ function ipcShowSuccess() {
 }
 
 // ── Polling: التحقق من حالة الطلب كل 3 ثوانٍ ──
-function ipcStartPolling(orderId) {
+function ipcStartPolling(orderId, dbOrderId) {
   ipcClearTimers(); // امسح أي timers قديمة قبل البدء
-  window._ipcOrderId = orderId;
+  window._ipcOrderId  = orderId;
+  window._ipcDbOrderId = dbOrderId || null;
 
   // Timeout بعد دقيقتين — أعِد نموذج البطاقة بدلاً من الشاشة الفارغة
   window._ipcTimeoutTimer = setTimeout(() => {
@@ -8066,7 +8067,10 @@ function ipcStartPolling(orderId) {
   // Polling كل 3 ثوانٍ
   window._ipcPollingTimer = setInterval(async () => {
     try {
-      const res  = await fetch(`/api/paymob?id=${orderId}`);
+      const pollUrl = window._ipcDbOrderId
+        ? `/api/paymob?id=${orderId}&order=${window._ipcDbOrderId}`
+        : `/api/paymob?id=${orderId}`;
+      const res  = await fetch(pollUrl);
       if (!res.ok) return; // تجاهل أخطاء الشبكة المؤقتة
       const data = await res.json();
       console.log('[IPC] poll result:', data.status);

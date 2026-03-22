@@ -28,8 +28,24 @@ export default async function handler(req, res) {
       });
       const tx = await txRes.json();
       console.log('[check] id:', id, '| success:', tx.success, '| pending:', tx.pending);
-      if (tx.success === true  && tx.pending === false)
-        return res.json({ status: 'paid',    transactionId: tx.id });
+      if (tx.success === true  && tx.pending === false) {
+        // أضف النقاط إذا تم تمرير dbOrderId
+        const dbOrderId = req.query.order;
+        if (dbOrderId && process.env.POSTGRES_URL) {
+          try {
+            const sql = neon(process.env.POSTGRES_URL);
+            await sql`UPDATE orders SET status = 'paid' WHERE id = ${dbOrderId} AND status != 'paid'`;
+            const order = await sql`SELECT user_id FROM orders WHERE id = ${dbOrderId} LIMIT 1`;
+            if (order[0]?.user_id) {
+              await sql`INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
+                        VALUES (${order[0].user_id}, ${parseInt(dbOrderId)}, 5, 0, NOW() + INTERVAL '6 months')
+                        ON CONFLICT (order_id) DO NOTHING`;
+              console.log('[check] points added for order:', dbOrderId);
+            }
+          } catch (e) { console.error('[check] points error:', e.message); }
+        }
+        return res.json({ status: 'paid', transactionId: tx.id });
+      }
       if (tx.success === false && tx.pending === false)
         return res.json({ status: 'failed',  reason: tx.data?.message });
       return res.json({ status: 'pending' });
@@ -197,10 +213,18 @@ export default async function handler(req, res) {
     // 🔐 يحتاج 3DS — إذا وُجد redirect_url أو كان pending: true
     if (url3ds || charge.pending === true) {
       console.log('[paymob] 3DS required, url:', url3ds);
+      // احفظ paymob_order_id حتى يتمكن webhook والـ polling من إيجاد الطلب
+      try {
+        if (dbOrderId && process.env.POSTGRES_URL) {
+          const sql = neon(process.env.POSTGRES_URL);
+          await sql`UPDATE orders SET paymob_order_id = ${String(paymobOrderId)} WHERE id = ${dbOrderId}`;
+        }
+      } catch (e) { console.error('[paymob] save paymob_order_id error:', e.message); }
       return res.json({
         pending:       true,
         redirectUrl:   url3ds || null,
         transactionId: String(charge.id),
+        dbOrderId:     dbOrderId,
       });
     }
 
