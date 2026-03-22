@@ -590,10 +590,7 @@ async function generateXlsx(req, res, title, content, meta) {
     wb.creator='ذكاء الأعمال'; wb.company='eses.store';
     wb.created=new Date(); wb.modified=new Date();
 
-    // ── فهرس المحتويات (ورقة أولى) ──
     const dateStr=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
-    const tocItems=xExtractTOC(content);
-    if(tocItems.length>1) xAddTOCSheet(wb, tocItems, title, dateStr);
 
     const ws = wb.addWorksheet('دراسة الجدوى', {
       views:[{rightToLeft:true, showGridLines:false}],
@@ -707,7 +704,7 @@ function xParseHtml(ws, html, row, cols) {
 function xWriteText(ws, html, row, cols) {
   html=html.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,(_,t)=>{
     const v=stripTags(t); if(!v) return '';
-    ws.getRow(row).height=8; row++;
+    for(let i=0;i<5;i++){ ws.getRow(row).height=8; row++; }
     ws.getRow(row).height=26;
     const c=xMerge(ws,row,1,cols);
     c.value='  '+v; c.font={name:'Arial',size:13,bold:true,color:{argb:XC.white}};
