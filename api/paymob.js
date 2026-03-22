@@ -206,22 +206,23 @@ export default async function handler(req, res) {
       body:    JSON.stringify(chargeBody),
     });
     const chargeData = await chargeRes.json();
-    console.log('[paymob] charge status:', chargeRes.status,
-      '| success:', chargeData?.success,
-      '| pending:', chargeData?.pending,
-      '| txn_code:', chargeData?.txn_response_code);
+
+    // ── تسجيل كامل للاستجابة لتشخيص المشاكل ────────────────
+    console.log('[paymob] charge HTTP status:', chargeRes.status);
+    console.log('[paymob] charge full response:', JSON.stringify(chargeData));
 
     const isPaid    = chargeData?.success === true && chargeData?.pending !== true;
     const isPending = chargeData?.pending === true;
-    // رابط 3DS إن وُجد
+
+    // رابط 3DS من أي مسار محتمل
     const redirectUrl = chargeData?.redirect_url
       || chargeData?.data?.redirect_url
+      || chargeData?.data?.url
       || null;
 
     // ── تحديث DB عند نجاح فوري ─────────────────────────────
     if (isPaid && sql && dbOrderId) {
       await sql`UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = ${dbOrderId}`;
-      // إضافة نقاط فورية
       if (userId) {
         await sql`
           INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
@@ -249,14 +250,20 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── فشل الدفع ─────────────────────────────────────────────
+    // ── فشل الدفع — استخرج سبب الرفض من كل المسارات الممكنة ─
     if (sql && dbOrderId) {
       sql`UPDATE orders SET status = 'failed', updated_at = NOW() WHERE id = ${dbOrderId}`.catch(() => {});
     }
-    const failReason = chargeData?.data?.message
+    const failReason =
+         chargeData?.data?.message
+      || chargeData?.data?.reject_reason_message_ar
+      || chargeData?.data?.reject_reason_message
       || chargeData?.txn_response_code
       || chargeData?.message
-      || 'رُفضت البطاقة — تحقق من البيانات وأعد المحاولة';
+      || chargeData?.detail
+      || chargeData?.error
+      || (chargeData?.data && JSON.stringify(chargeData.data))
+      || `HTTP ${chargeRes.status} — رُفضت البطاقة`;
     throw new Error(failReason);
 
   } catch (err) {
