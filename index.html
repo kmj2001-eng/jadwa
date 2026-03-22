@@ -7952,8 +7952,10 @@ async function pmoSubmitCard(e) {
       return;
     }
 
-    // ❌ فشل
-    throw new Error(data.error || 'فشلت عملية الدفع');
+    // ❌ فشل — أظهر التفاصيل الكاملة للتشخيص
+    console.error('[PMO] full response:', JSON.stringify(data));
+    const debugInfo = data._debug ? `\n\nPaymob: ${JSON.stringify(data._debug).slice(0,300)}` : '';
+    throw new Error((data.error || 'فشلت عملية الدفع') + debugInfo);
 
   } catch (err) {
     const errText = document.getElementById('ipc-error-text');
