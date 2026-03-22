@@ -200,71 +200,19 @@ export default async function handler(req, res) {
       payment_token: paymentKey,
     };
 
-    const chargeRes  = await fetch(`${BASE}/acceptance/payments/pay`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(chargeBody),
+    // ── 4. إرجاع payment key → يفتح iframe Paymob ───────────
+    // Direct Charge يتطلب تفعيل خاص من Paymob (API Tokenization)
+    // نستخدم iframe بدلاً من ذلك — الـ webhook يُؤكّد الدفع
+    const iframeUrl = `https://ksa.paymob.com/api/acceptance/iframes/${IFRAME_ID}?payment_token=${paymentKey}`;
+    console.log('[paymob] iframe ready, orderId:', dbOrderId, 'paymobOrderId:', paymobOrderId);
+
+    return res.status(200).json({
+      iframeUrl,
+      ourOrderId:   dbOrderId,
+      paymobOrderId,
+      amount,
+      currency,
     });
-    const chargeData = await chargeRes.json();
-
-    // ── تسجيل كامل للاستجابة لتشخيص المشاكل ────────────────
-    console.log('[paymob] charge HTTP status:', chargeRes.status);
-    console.log('[paymob] charge full response:', JSON.stringify(chargeData));
-
-    const isPaid    = chargeData?.success === true && chargeData?.pending !== true;
-    const isPending = chargeData?.pending === true;
-
-    // رابط 3DS من أي مسار محتمل
-    const redirectUrl = chargeData?.redirect_url
-      || chargeData?.data?.redirect_url
-      || chargeData?.data?.url
-      || null;
-
-    // ── تحديث DB عند نجاح فوري ─────────────────────────────
-    if (isPaid && sql && dbOrderId) {
-      await sql`UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = ${dbOrderId}`;
-      if (userId) {
-        await sql`
-          INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
-          VALUES (${userId}, ${dbOrderId}, 5, 0, NOW() + INTERVAL '6 months')
-        `.catch(e => console.error('[paymob] user_points insert error:', e.message));
-      }
-      return res.status(200).json({
-        success:      true,
-        status:       'paid',
-        ourOrderId:   dbOrderId,
-        paymobOrderId,
-        amount,
-        currency,
-      });
-    }
-
-    // ── 3DS مطلوب (pending + redirect) ───────────────────────
-    if (isPending && redirectUrl) {
-      console.log('[paymob] 3DS redirect required:', redirectUrl);
-      return res.status(200).json({
-        pending:      true,
-        redirectUrl,
-        ourOrderId:   dbOrderId,
-        paymobOrderId,
-      });
-    }
-
-    // ── فشل الدفع — استخرج سبب الرفض من كل المسارات الممكنة ─
-    if (sql && dbOrderId) {
-      sql`UPDATE orders SET status = 'failed', updated_at = NOW() WHERE id = ${dbOrderId}`.catch(() => {});
-    }
-    const failReason =
-         chargeData?.data?.message
-      || chargeData?.data?.reject_reason_message_ar
-      || chargeData?.data?.reject_reason_message
-      || chargeData?.txn_response_code
-      || chargeData?.message
-      || chargeData?.detail
-      || chargeData?.error
-      || (chargeData?.data && JSON.stringify(chargeData.data))
-      || `HTTP ${chargeRes.status} — رُفضت البطاقة`;
-    throw new Error(failReason);
 
   } catch (err) {
     console.error('Paymob Integration Error:', err.message);

@@ -1095,6 +1095,9 @@ nav.scrolled {
 /* جسم المودال */
 .pmo-body { padding: 20px 24px; }
 
+/* عند عرض الـ iframe — نحذف الـ padding */
+.pmo-body:has(#ipc-iframe-wrap:not([style*="display:none"])) { padding: 0; }
+
 /* ── Loader ── */
 #ipc-loader {
   display: flex; flex-direction: column;
@@ -7895,87 +7898,54 @@ function pmoGooglePay() {
   showToast('🟢 Google Pay قريباً — استخدم البطاقة الآن');
 }
 
-/** إرسال نموذج البطاقة — Direct Charge مع دعم 3DS */
+/** إرسال — يُنشئ Payment Key ثم يعرض iframe Paymob لإدخال البطاقة */
 async function pmoSubmitCard(e) {
   e.preventDefault();
 
-  const rawNumber = (document.getElementById('pmo-card-number')?.value  || '').replace(/\s/g, '');
-  const name      =  document.getElementById('pmo-card-name')?.value.trim()   || '';
-  const expiry    =  document.getElementById('pmo-card-expiry')?.value.trim()  || '';
-  const cvc       =  document.getElementById('pmo-card-cvc')?.value.trim()     || '';
-
   const errDiv = document.getElementById('pmo-form-error');
-  const showErr = msg => { if(errDiv){ errDiv.textContent = msg; errDiv.style.display = ''; } };
-
-  // ── تحقق أساسي ──
-  if (rawNumber.length < 13) return showErr('❌ رقم البطاقة غير صحيح');
-  if (!name)                  return showErr('❌ يرجى إدخال الاسم الكامل');
-  if (!/^\d{2}\/\d{2}$/.test(expiry)) return showErr('❌ تاريخ الانتهاء غير صحيح (MM/YY)');
-  if (cvc.length < 3)         return showErr('❌ رمز CVC غير صحيح');
   if (errDiv) errDiv.style.display = 'none';
 
-  const [expMonth, expYear] = expiry.split('/');
-
-  // ── تحضير بيانات المستخدم ──
+  // ── تحقق من تسجيل الدخول ──
   const user = _getLoggedUser();
   if (!user || !user.id) {
     window._pendingPaymentAfterLogin = true;
     pmoClose(); openAuthModal('login'); return;
   }
-  const nameParts = (user.name || name).trim().split(/\s+/);
+  const nameParts = (user.name || '').trim().split(/\s+/);
   const customer = {
-    firstName: nameParts[0]  || name.split(' ')[0] || 'عميل',
-    lastName:  nameParts[1]  || name.split(' ')[1] || 'جديد',
-    email:     user.email    || 'guest@eses.store',
-    phone:    (user.phone    || '+966500000000').replace(/\s/g,''),
+    firstName: nameParts[0] || 'عميل',
+    lastName:  nameParts[1] || 'جديد',
+    email:     user.email   || 'guest@eses.store',
+    phone:    (user.phone   || '+966500000000').replace(/\s/g,''),
   };
 
-  // ── تعطيل الزر + إظهار loader ──
   const submitBtn = document.getElementById('pmo-submit-btn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري معالجة الدفع...'; }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري التحضير...'; }
   ipcShow('ipc-loader');
 
   try {
     const res = await fetch('/api/paymob', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body: JSON.stringify({
-        customer,
-        card: {
-          number:   rawNumber,
-          name,
-          expMonth,
-          expYear:  '20' + expYear,   // 4-digit year
-          cvc,
-        },
-      }),
+      body:    JSON.stringify({ customer }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `خطأ ${res.status}`);
+    if (!data.iframeUrl) throw new Error('لم يتم استقبال رابط الدفع');
 
-    // ── نجاح مباشر ──────────────────────────────────────────
-    if (data.success || data.status === 'paid') {
-      ipcShowSuccess();
-      return;
-    }
+    // ── تحميل iframe نموذج البطاقة ──
+    const iframeEl = document.getElementById('ipc-iframe');
+    if (iframeEl) iframeEl.src = data.iframeUrl;
+    ipcShow('ipc-iframe-wrap');
 
-    // ── 3DS مطلوب: فتح iframe التحقق من البنك ──────────────
-    if (data.pending && data.redirectUrl) {
-      const iframeEl = document.getElementById('ipc-iframe');
-      if (iframeEl) iframeEl.src = data.redirectUrl;
-      ipcShow('ipc-iframe-wrap');
-      // بدء Polling — webhook سيُحدّث DB عند إتمام 3DS
-      if (data.ourOrderId) ipcStartPolling(data.ourOrderId);
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'الدفع الآن'; }
-      return;
-    }
-
-    throw new Error(data.error || 'فشلت عملية الدفع');
+    // بدء Polling للتحقق من تأكيد الـ webhook
+    if (data.ourOrderId) ipcStartPolling(data.ourOrderId);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💳 المتابعة لإدخال بيانات البطاقة'; }
   } catch (err) {
     const errText = document.getElementById('ipc-error-text');
     if (errText) errText.textContent = err.message;
     ipcShow('ipc-error');
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'الدفع الآن'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💳 المتابعة لإدخال بيانات البطاقة'; }
   }
 }
 
@@ -9423,78 +9393,61 @@ function authLogout() {
         <p id="ipc-loader-text">⏳ جاري معالجة الدفع...</p>
       </div>
 
-      <!-- ══ نموذج البطاقة المخصص ══ -->
+      <!-- ══ شاشة ما قبل الدفع ══ -->
       <div id="ipc-card-form">
+        <!-- بطاقة بصرية -->
+        <div style="background:linear-gradient(135deg,#1D4ED8,#1e40af);border-radius:14px;padding:22px 20px;margin-bottom:18px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%;"></div>
+          <div style="position:absolute;bottom:-30px;left:10px;width:90px;height:90px;background:rgba(255,255,255,0.05);border-radius:50%;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <span style="color:rgba(255,255,255,0.6);font-size:0.75rem;font-family:'Cairo',sans-serif;">بوابة الدفع الآمنة</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" style="height:18px;filter:brightness(0) invert(1);opacity:0.8;" alt="Visa">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" style="height:22px;opacity:0.8;" alt="Mastercard">
+            </div>
+          </div>
+          <div style="font-family:monospace;color:rgba(255,255,255,0.5);font-size:1.1rem;letter-spacing:3px;margin-bottom:16px;">•••• •••• •••• ••••</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+            <div>
+              <div style="color:rgba(255,255,255,0.5);font-size:0.62rem;font-family:'Cairo',sans-serif;margin-bottom:2px;">اسم حامل البطاقة</div>
+              <div style="color:#fff;font-size:0.82rem;font-family:monospace;letter-spacing:1px;">FULL NAME</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:rgba(255,255,255,0.5);font-size:0.62rem;font-family:'Cairo',sans-serif;margin-bottom:2px;">صالحة حتى</div>
+              <div style="color:#fff;font-size:0.82rem;font-family:monospace;">MM/YY</div>
+            </div>
+          </div>
+        </div>
 
-        <!-- Apple Pay -->
-        <button type="button" class="pmo-apple-btn" onclick="pmoApplePay()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <span>Apple Pay</span>
-        </button>
+        <!-- وصف + شعارات -->
+        <div style="text-align:center;padding:4px 0 12px;direction:rtl;">
+          <p style="color:#94a3b8;font-size:0.82rem;margin:0 0 10px;line-height:1.6;">
+            🔒 ادفع بأمان عبر بوابة <strong style="color:#93c5fd;">Paymob</strong> المعتمدة<br>
+            بياناتك مشفّرة ولا تُحفظ لدينا
+          </p>
+          <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+            <span style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:6px;padding:3px 10px;color:#93c5fd;font-size:0.7rem;">SSL 256-bit</span>
+            <span style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:6px;padding:3px 10px;color:#34D399;font-size:0.7rem;">3D Secure</span>
+            <span style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:6px;padding:3px 10px;color:#FCD34D;font-size:0.7rem;">PCI DSS</span>
+          </div>
+        </div>
 
-        <!-- Google Pay -->
-        <button type="button" class="pmo-google-btn" onclick="pmoGooglePay()">
-          <img src="g-pay.png" alt="Google Pay" style="height:28px;object-fit:contain;">
-        </button>
+        <!-- رسالة الخطأ -->
+        <div id="pmo-form-error" class="pmo-form-error" style="display:none;"></div>
 
-        <!-- فاصل -->
-        <div class="pmo-divider"><span>أو ادفع بالبطاقة</span></div>
-
-        <!-- حقول البطاقة -->
+        <!-- زر الانتقال لبوابة الدفع -->
         <form id="pmo-card-form" onsubmit="pmoSubmitCard(event)" autocomplete="off" novalidate>
-
-          <!-- رقم البطاقة -->
-          <div class="pmo-field-wrap">
-            <input id="pmo-card-number" class="pmo-input" type="text"
-              placeholder="رقم البطاقة" maxlength="19"
-              inputmode="numeric" autocomplete="cc-number"
-              oninput="pmoFormatCard(this)">
-            <span class="pmo-field-icon" id="pmo-card-icon">💳</span>
-          </div>
-
-          <!-- الاسم الكامل -->
-          <div class="pmo-field-wrap">
-            <input id="pmo-card-name" class="pmo-input" type="text"
-              placeholder="الاسم على البطاقة"
-              autocomplete="cc-name"
-              style="text-align:center;direction:ltr;font-family:'Cairo',sans-serif;">
-          </div>
-
-          <!-- انتهاء + CVC -->
-          <div class="pmo-row">
-            <div class="pmo-field-wrap" style="flex:1;">
-              <input id="pmo-card-expiry" class="pmo-input" type="text"
-                placeholder="MM/YY" maxlength="5"
-                inputmode="numeric" autocomplete="cc-exp"
-                oninput="pmoFormatExpiry(this)">
-            </div>
-            <div class="pmo-field-wrap" style="flex:1;">
-              <input id="pmo-card-cvc" class="pmo-input" type="text"
-                placeholder="CVC" maxlength="4"
-                inputmode="numeric" autocomplete="cc-csc">
-              <span class="pmo-field-icon">🔒</span>
-            </div>
-          </div>
-
-          <!-- رسالة الخطأ -->
-          <div id="pmo-form-error" class="pmo-form-error" style="display:none;"></div>
-
-          <!-- زر الدفع -->
           <button type="submit" id="pmo-submit-btn" class="pmo-pay-btn">
-            الدفع الآن
+            💳 المتابعة لإدخال بيانات البطاقة
           </button>
-
         </form>
+
       </div><!-- /ipc-card-form -->
 
-      <!-- ══ 3DS iframe (OTP البنك) ══ -->
+      <!-- ══ iframe نموذج البطاقة (Paymob) ══ -->
       <div id="ipc-iframe-wrap" style="display:none;">
-        <div style="direction:rtl;padding:8px 14px;background:rgba(59,130,246,0.08);border-bottom:1px solid rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span style="color:#93c5fd;font-size:0.8rem;font-family:'Cairo',sans-serif;">🔐 التحقق الأمني — أدخل رمز OTP من البنك</span>
-          <button onclick="ipcShowCardForm()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;font-family:'Cairo',sans-serif;white-space:nowrap;">✕ إلغاء</button>
-        </div>
-        <iframe id="ipc-iframe" src="" width="100%" height="520"
-          style="border:none;display:block;"
+        <iframe id="ipc-iframe" src="" width="100%" height="560"
+          style="border:none;display:block;border-radius:0 0 16px 16px;"
           allow="payment *"
           sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups">
         </iframe>
