@@ -2,7 +2,7 @@ import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-user-id');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -93,6 +93,20 @@ export default async function handler(req, res) {
       }
 
       return res.status(200).json({ id: studyId });
+    }
+
+    // ── PATCH: تحديث حالة الدراسة فقط (بدون الحاجة للمحتوى) ──
+    if (req.method === 'PATCH') {
+      const { id, status } = req.body || {};
+      if (!id || !status) return res.status(400).json({ error: 'id و status مطلوبان' });
+      const newStatus = status === 'completed' ? 'completed' : 'draft';
+      const metaJson  = JSON.stringify({ status: newStatus });
+      await sql`
+        UPDATE feasibility_studies
+        SET metadata = COALESCE(metadata, '{}'::jsonb) || ${metaJson}::jsonb
+        WHERE id = ${parseInt(id)} AND user_id = ${userId}
+      `;
+      return res.status(200).json({ ok: true });
     }
 
     // ── DELETE: حذف دراسة ──

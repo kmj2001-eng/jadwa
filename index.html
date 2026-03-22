@@ -5577,6 +5577,18 @@ async function generateStudy(){
       }
     } catch(_) {}
   }
+  // ── إذا كان لديه نقاط: اخصم نقطة فوراً قبل التوليد ──────────
+  if (_authUser && _authUser.id && window._hasPoints) {
+    try {
+      const _consumeRes = await fetch('/api/points', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': String(_authUser.id) },
+        body   : JSON.stringify({ action: 'consume' })
+      });
+      if (!_consumeRes.ok) window._hasPoints = false; // فشل الخصم
+    } catch(_) { window._hasPoints = false; }
+  }
+
   // توليد جميع الأقسام العشرة دائماً — الحجب يتم في العرض فقط
   const _sectionsToGenerate = sectionMeta;
   const _totalSec = _sectionsToGenerate.length;
@@ -6931,6 +6943,48 @@ async function migrateLocalStudiesToDB(user) {
   } catch(e) { console.warn('migrateLocalStudiesToDB:', e); }
 }
 
+async function _autoUnlockDraftStudies(user, studies) {
+  if (!user || !user.id || !window._hasPoints) return;
+  const drafts = studies.filter(s => s.status === 'draft' && String(s.id).startsWith('db_'));
+  if (!drafts.length) return;
+
+  let unlocked = 0;
+  for (const study of drafts) {
+    // اخصم نقطة
+    const consumeRes = await fetch('/api/points', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body   : JSON.stringify({ action: 'consume' })
+    }).catch(() => null);
+    if (!consumeRes || !consumeRes.ok) break; // لا نقاط متبقية — توقف
+
+    // تحديث حالة الدراسة في DB
+    const dbId = String(study.id).replace('db_', '');
+    await fetch('/api/studies', {
+      method : 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
+      body   : JSON.stringify({ id: dbId, status: 'completed' })
+    }).catch(() => {});
+
+    study.status = 'completed'; // تحديث فوري في المصفوفة المحلية
+    unlocked++;
+  }
+
+  if (unlocked > 0) {
+    showToast('✅ تم فتح ' + unlocked + ' دراسة وخصم ' + unlocked + ' نقطة');
+    // تحديث رصيد النقاط
+    try {
+      const pr = await fetch('/api/points', { headers: { 'x-user-id': String(user.id) } });
+      if (pr.ok) {
+        const pd = await pr.json();
+        window._hasPoints = pd.remaining >= 1;
+        const kpiPts = document.getElementById('kpi-points');
+        if (kpiPts) kpiPts.textContent = pd.remaining;
+      }
+    } catch(_) {}
+  }
+}
+
 async function loadDashboardStudies() {
   const tbody = document.getElementById('user-studies-tbody');
   const noRow = document.getElementById('no-studies-row');
@@ -6982,6 +7036,10 @@ async function loadDashboardStudies() {
   }
 
   if (noRow) noRow.style.display = 'none';
+
+  // ── فتح الدراسات المحجوبة تلقائياً إذا كان المستخدم لديه نقاط ──
+  await _autoUnlockDraftStudies(user, studies);
+
   studies.forEach(s => {
     const tr      = document.createElement('tr');
     tr.className  = 'study-row';
@@ -7098,7 +7156,8 @@ async function openSavedStudy(id) {
   const studyStatus = study.status
     || (study.metadata && study.metadata.status)
     || 'draft';
-  const isPaid = (studyStatus === 'completed');
+  // إذا كان المستخدم لديه نقاط نعامله كمدفوع حتى لو كان status=draft
+  const isPaid = (studyStatus === 'completed') || (window._hasPoints === true);
 
   // ── تحويل المحتوى وتقسيمه لأقسام بنفس منطق showResult ──
   const html = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
