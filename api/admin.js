@@ -43,12 +43,19 @@ export default async function handler(req, res) {
     if (action === 'users') {
       const rows = await sql`
         SELECT u.id, u.name, u.email, u.created_at,
-               COALESCE(SUM(up.total_points - up.used_points), 0) AS remaining_points,
-               COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders
+               COALESCE(pts.remaining_points, 0) AS remaining_points,
+               COALESCE(ords.paid_orders, 0)     AS paid_orders
         FROM users u
-        LEFT JOIN user_points up ON up.user_id = u.id AND up.expires_at > NOW()
-        LEFT JOIN orders o ON o.user_id = u.id
-        GROUP BY u.id, u.name, u.email, u.created_at
+        LEFT JOIN (
+          SELECT user_id, SUM(total_points - used_points) AS remaining_points
+          FROM user_points WHERE expires_at > NOW()
+          GROUP BY user_id
+        ) pts ON pts.user_id = u.id
+        LEFT JOIN (
+          SELECT user_id, COUNT(*) AS paid_orders
+          FROM orders WHERE status = 'paid'
+          GROUP BY user_id
+        ) ords ON ords.user_id = u.id
         ORDER BY u.created_at DESC
         LIMIT 5
       `;
