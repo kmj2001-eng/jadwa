@@ -11,10 +11,24 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-user-id');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // ── GET: التحقق من حالة المعاملة ──────────────────────────
+  // ── GET: التحقق من حالة الطلب ──────────────────────────────
   if (req.method === 'GET') {
-    const { id } = req.query;
-    if (!id) return res.status(400).json({ error: 'Missing transaction id' });
+    const { id, dbOrder } = req.query;
+
+    // ── التحقق من DB مباشرة (الأسرع والأبسط) ──
+    if (dbOrder && process.env.POSTGRES_URL) {
+      try {
+        const sql = neon(process.env.POSTGRES_URL);
+        const rows = await sql`SELECT status FROM orders WHERE id = ${parseInt(dbOrder)} LIMIT 1`;
+        const status = rows[0]?.status || 'pending';
+        return res.json({ status });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ── التحقق من Paymob مباشرة عبر transaction id ──
+    if (!id) return res.status(400).json({ error: 'Missing id or dbOrder' });
     try {
       const API_KEY = process.env.PAYMOB_API_KEY;
       const authRes = await fetch(`${BASE_URL}/auth/tokens`, {
@@ -141,6 +155,7 @@ export default async function handler(req, res) {
       iframeUrl,
       paymobOrderId,
       dbOrderId,
+      ourOrderId: dbOrderId, // للتوافق مع checkPayment
     });
 
   } catch (err) {

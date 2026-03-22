@@ -7834,13 +7834,34 @@ async function pmoOpen() {
 
     if (!data.iframeUrl) throw new Error(data.error || 'فشل تحضير بوابة الدفع');
 
-    // احفظ paymobOrderId لاستخدامه في الـ postMessage
+    // احفظ IDs لاستخدامها في الـ polling
     window._currentPaymobOrderId = data.paymobOrderId;
     window._currentDbOrderId     = data.dbOrderId;
 
     // أظهر iframe Paymob
     if (iframeEl) iframeEl.src = data.iframeUrl;
     ipcShow('ipc-iframe-wrap');
+
+    // 🔁 ابدأ polling للتحقق من حالة الدفع (كل 3 ثوانٍ)
+    if (data.dbOrderId) {
+      window._pmoPolling = setInterval(async () => {
+        try {
+          // نستخدم GET /api/paymob?id= للتحقق من الطلب عبر DB
+          const chk = await fetch(`/api/paymob?dbOrder=${data.dbOrderId}`);
+          if (!chk.ok) return;
+          const d = await chk.json();
+          if (d.status === 'paid') {
+            clearInterval(window._pmoPolling);
+            ipcShowSuccess();
+          } else if (d.status === 'failed') {
+            clearInterval(window._pmoPolling);
+            const errText = document.getElementById('ipc-error-text');
+            if (errText) errText.textContent = 'تم رفض عملية الدفع';
+            ipcShow('ipc-error');
+          }
+        } catch (_) {}
+      }, 3000);
+    }
 
   } catch (err) {
     console.error('[PMO] error:', err.message);
@@ -7853,6 +7874,7 @@ async function pmoOpen() {
 /** إغلاق المودال */
 function pmoClose() {
   ipcClearTimers();
+  if (window._pmoPolling) { clearInterval(window._pmoPolling); window._pmoPolling = null; }
   const iframe = document.getElementById('ipc-iframe');
   if (iframe) iframe.src = '';
   const overlay = document.getElementById('payment-modal-overlay');
