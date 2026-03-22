@@ -50,7 +50,7 @@ export default async function handler(req, res) {
   }
 
   // ── بيانات الطلب ─────────────────────────────────────────────
-  const { customer } = req.body || {};
+  const { customer, card } = req.body || {};
   const amount   = 500;      // 5.00 ر.س بالهللات (للاختبار)
   const currency = 'SAR';
   const plan     = 'basic';  // الباقة الأساسية: 5 دراسات / 6 أشهر
@@ -183,19 +183,81 @@ export default async function handler(req, res) {
     }
     const { token: paymentKey } = await payKeyRes.json();
 
-    // ── 4. إرجاع رابط الـ iframe للمستخدم ────────────────────
-    // الدفع يتم داخل iframe Paymob — الـ webhook يُؤكَّد نجاح الدفع
-    const iframeUrl = `https://ksa.paymob.com/api/acceptance/iframes/${IFRAME_ID}?payment_token=${paymentKey}`;
+    // ── 4. Direct Charge ببيانات البطاقة ─────────────────────
+    if (!card?.number) {
+      throw new Error('بيانات البطاقة مفقودة — يرجى إدخال رقم البطاقة');
+    }
 
-    console.log('[paymob] iframe ready, orderId:', dbOrderId, 'paymobOrderId:', paymobOrderId);
+    const chargeBody = {
+      source: {
+        identifier:        card.number.replace(/\s/g, ''),
+        sourceholder_name: (card.name || `${customer?.firstName || ''} ${customer?.lastName || ''}`).trim() || 'Card Holder',
+        subtype:           'CARD',
+        expiry_month:      card.expMonth,
+        expiry_year:       card.expYear,   // 4-digit e.g. "2027"
+        cvn:               card.cvc,
+      },
+      payment_token: paymentKey,
+    };
 
-    return res.status(200).json({
-      iframeUrl,
-      ourOrderId:   dbOrderId,
-      paymobOrderId,
-      amount,
-      currency,
+    const chargeRes  = await fetch(`${BASE}/acceptance/payments/pay`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(chargeBody),
     });
+    const chargeData = await chargeRes.json();
+    console.log('[paymob] charge status:', chargeRes.status,
+      '| success:', chargeData?.success,
+      '| pending:', chargeData?.pending,
+      '| txn_code:', chargeData?.txn_response_code);
+
+    const isPaid    = chargeData?.success === true && chargeData?.pending !== true;
+    const isPending = chargeData?.pending === true;
+    // رابط 3DS إن وُجد
+    const redirectUrl = chargeData?.redirect_url
+      || chargeData?.data?.redirect_url
+      || null;
+
+    // ── تحديث DB عند نجاح فوري ─────────────────────────────
+    if (isPaid && sql && dbOrderId) {
+      await sql`UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = ${dbOrderId}`;
+      // إضافة نقاط فورية
+      if (userId) {
+        await sql`
+          INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
+          VALUES (${userId}, ${dbOrderId}, 5, 0, NOW() + INTERVAL '6 months')
+        `.catch(e => console.error('[paymob] user_points insert error:', e.message));
+      }
+      return res.status(200).json({
+        success:      true,
+        status:       'paid',
+        ourOrderId:   dbOrderId,
+        paymobOrderId,
+        amount,
+        currency,
+      });
+    }
+
+    // ── 3DS مطلوب (pending + redirect) ───────────────────────
+    if (isPending && redirectUrl) {
+      console.log('[paymob] 3DS redirect required:', redirectUrl);
+      return res.status(200).json({
+        pending:      true,
+        redirectUrl,
+        ourOrderId:   dbOrderId,
+        paymobOrderId,
+      });
+    }
+
+    // ── فشل الدفع ─────────────────────────────────────────────
+    if (sql && dbOrderId) {
+      sql`UPDATE orders SET status = 'failed', updated_at = NOW() WHERE id = ${dbOrderId}`.catch(() => {});
+    }
+    const failReason = chargeData?.data?.message
+      || chargeData?.txn_response_code
+      || chargeData?.message
+      || 'رُفضت البطاقة — تحقق من البيانات وأعد المحاولة';
+    throw new Error(failReason);
 
   } catch (err) {
     console.error('Paymob Integration Error:', err.message);
