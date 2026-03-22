@@ -5689,56 +5689,65 @@ async function generateStudy(){
     return text + suffix;
   }
 
-  // ── التوليد التسلسلي — قسم واحد في كل مرة لضمان الاكتمال والترتيب ──
+  // ── التوليد بالدفعات ─────────────────────────────────────────────────
+  // دفعة 1: 1+2  |  دفعة 2: 3  |  دفعة 3: 4+5
+  // دفعة 4: 6    |  دفعة 5: 7+8  |  دفعة 6: 9+10
+  const BATCHES = [[0,1],[2],[3,4],[5],[6,7],[8,9]];
+
   const sectionTexts = new Array(_totalSec).fill('');
   let doneCount = 0;
 
-  if (iconEl)    iconEl.textContent    = sectionMeta[0].icon;
-  if (sectionEl) sectionEl.textContent = `جاري كتابة: ${sectionMeta[0].label}`;
-  if (statusEl)  statusEl.textContent  = `✍️ القسم 1 من ${_totalSec}...`;
+  if (statusEl) statusEl.textContent = '✍️ جاري بدء التوليد...';
+
+  // دالة توليد قسم واحد مع retry
+  async function _runSection(i) {
+    const meta = _sectionsToGenerate[i];
+    const s    = i + 1;
+    const item = listItems[i];
+
+    item.style.cssText = ACTIVE_STYLE;
+    item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label}</span>`;
+
+    const run = () => streamSection(s, partial => {
+      const wc = partial.trim().split(/\s+/).length;
+      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة</span>`;
+    });
+
+    const secText = await run().catch(async (err1) => {
+      await new Promise(r => setTimeout(r, 3000));
+      return run().catch((err2) => {
+        const msg = err2?.message || err1?.message || 'خطأ';
+        console.error(`[Section ${s}] فشل:`, msg);
+        if (!window._firstSectionError) window._firstSectionError = msg;
+        return '';
+      });
+    });
+
+    sectionTexts[i] = secText ? _closeOpenTableTags(secText) : '';
+
+    doneCount++;
+    item.style.cssText = DONE_STYLE;
+    item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
+    if (barEl)  barEl.style.width  = `${Math.round(doneCount * 100 / _totalSec)}%`;
+    if (textEl) textEl.textContent = `${doneCount} / ${_totalSec} أقسام مكتملة`;
+  }
 
   try {
-    for (let i = 0; i < _sectionsToGenerate.length; i++) {
-      const meta = _sectionsToGenerate[i];
-      const s    = i + 1;
-      const item = listItems[i];
+    for (let b = 0; b < BATCHES.length; b++) {
+      const batch = BATCHES[b];
+      const labels = batch.map(i => sectionMeta[i].label).join(' + ');
+      if (iconEl)    iconEl.textContent    = sectionMeta[batch[0]].icon;
+      if (sectionEl) sectionEl.textContent = `الدفعة ${b+1}: ${labels}`;
+      if (statusEl)  statusEl.textContent  = `✍️ جاري كتابة: ${labels}`;
 
-      // تفعيل القسم الحالي في القائمة
-      item.style.cssText = ACTIVE_STYLE;
-      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label}</span>`;
-      if (iconEl)    iconEl.textContent    = meta.icon;
-      if (sectionEl) sectionEl.textContent = `جاري كتابة: ${meta.label}`;
-      if (statusEl)  statusEl.textContent  = `✍️ القسم ${s} من ${_totalSec}...`;
+      // توليد أقسام الدفعة بالتوازي ثم الانتظار
+      await Promise.all(batch.map(i => _runSection(i)));
 
-      const run = () => streamSection(s, partial => {
-        const wc = partial.trim().split(/\s+/).length;
-        item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة</span>`;
-      });
-
-      let secText = await run().catch(async (err1) => {
-        // إعادة المحاولة مرة واحدة بعد 3 ثوانٍ
-        await new Promise(r => setTimeout(r, 3000));
-        return run().catch((err2) => {
-          const msg = err2?.message || err1?.message || 'خطأ غير معروف';
-          console.error(`[Section ${s}] فشل:`, msg);
-          if (!window._firstSectionError) window._firstSectionError = msg;
-          return '';
-        });
-      });
-
-      // أغلق أي جداول HTML غير مكتملة في نهاية القسم
-      sectionTexts[i] = secText ? _closeOpenTableTags(secText) : '';
-
-      doneCount++;
-      item.style.cssText = DONE_STYLE;
-      item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
-      if (barEl)  barEl.style.width  = `${Math.round(doneCount * 100 / _totalSec)}%`;
-      if (textEl) textEl.textContent = `${doneCount} / ${_totalSec} أقسام مكتملة`;
-      if (statusEl) statusEl.textContent = doneCount < _totalSec
-        ? `✍️ جاري كتابة القسم ${doneCount + 1}...`
-        : '✅ اكتملت جميع الأقسام العشرة!';
-      if (doneCount < _totalSec && iconEl) iconEl.textContent = sectionMeta[doneCount].icon;
+      if (statusEl && doneCount < _totalSec)
+        statusEl.textContent = `✅ الدفعة ${b+1} مكتملة — ${_totalSec - doneCount} أقسام متبقية`;
     }
+
+    if (statusEl) statusEl.textContent = '✅ اكتملت جميع الأقسام العشرة!';
 
     const fullText = sectionTexts.filter(t => t.trim()).join('\n\n');
     hideStudyLoader(studyLoader);
