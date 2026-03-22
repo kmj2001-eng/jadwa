@@ -8062,7 +8062,7 @@ async function pmoSubmitCard(e) {
       headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
       body:    JSON.stringify({
         customer,
-        amount: 100,
+        amount: 10000,
         card: { number: cardNum, name: cardName, expiry, cvv },
       }),
     });
