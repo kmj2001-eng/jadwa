@@ -4461,7 +4461,7 @@ footer {
         </div>
         <table class="data-table" id="user-studies-table">
           <thead>
-            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>تحميل</th><th>اشتراك</th><th>حذف</th></tr>
+            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>حذف</th></tr>
           </thead>
           <tbody id="user-studies-tbody">
             <tr id="no-studies-row">
@@ -7085,21 +7085,6 @@ async function loadDashboardStudies() {
           : `<span class="sbadge sbadge-locked">غير مدفوعة</span>`
         }
       </td>
-      <td style="font-size:0.75rem;">
-        ${isPaid
-          ? `<div style="display:flex;gap:5px;flex-wrap:wrap;">
-               <button class="dash-pdf-btn" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📄 PDF</button>
-               <button class="dash-xlsx-btn" title="تحميل Excel" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;color:#34D399;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📊 Excel</button>
-             </div>`
-          : `<span style="color:var(--text3);font-size:0.75rem;">—</span>`
-        }
-      </td>
-      <td style="text-align:center;">
-        ${isPaid
-          ? `<button disabled style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:6px;color:#34D399;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;cursor:default;opacity:0.6;">✓ مشترك</button>`
-          : `<button class="dash-subscribe-btn" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer;color:#60A5FA;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;font-weight:700;">💳 اشترك</button>`
-        }
-      </td>
       <td style="text-align:center;">
         <button class="dash-delete-btn" title="حذف" style="background:none;border:none;cursor:pointer;color:#ff2d6b;font-size:1.1rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,45,107,0.5));">🗑</button>
       </td>
@@ -7107,13 +7092,6 @@ async function loadDashboardStudies() {
 
     // ── ربط الأحداث بـ JS مباشرةً (تجنب مشكلة الـ ID داخل onclick HTML) ──
     tr.querySelector('.dash-study-title').addEventListener('click', () => openSavedStudy(s.id));
-    if (isPaid) {
-      tr.querySelector('.dash-pdf-btn')?.addEventListener('click',  () => downloadStudyPdf(s.id));
-      tr.querySelector('.dash-xlsx-btn')?.addEventListener('click', () => downloadStudyXlsx(s.id));
-    }
-    if (!isPaid) {
-      tr.querySelector('.dash-subscribe-btn')?.addEventListener('click', () => startPaymentForStudy());
-    }
     tr.querySelector('.dash-delete-btn').addEventListener('click', () => deleteSavedStudy(s.id));
 
     tbody.appendChild(tr);
