@@ -183,23 +183,6 @@ export default async function handler(req, res) {
     }
     const { token: paymentKey } = await payKeyRes.json();
 
-    // ── 4. Direct Charge ببيانات البطاقة ─────────────────────
-    if (!card?.number) {
-      throw new Error('بيانات البطاقة مفقودة — يرجى إدخال رقم البطاقة');
-    }
-
-    const chargeBody = {
-      source: {
-        identifier:        card.number.replace(/\s/g, ''),
-        sourceholder_name: (card.name || `${customer?.firstName || ''} ${customer?.lastName || ''}`).trim() || 'Card Holder',
-        subtype:           'CARD',
-        expiry_month:      card.expMonth,
-        expiry_year:       card.expYear,   // 4-digit e.g. "2027"
-        cvn:               card.cvc,
-      },
-      payment_token: paymentKey,
-    };
-
     // ── 4. إرجاع payment key → يفتح iframe Paymob ───────────
     // Direct Charge يتطلب تفعيل خاص من Paymob (API Tokenization)
     // نستخدم iframe بدلاً من ذلك — الـ webhook يُؤكّد الدفع
