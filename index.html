@@ -7012,6 +7012,7 @@ async function migrateLocalStudiesToDB(user) {
 // _autoUnlockDraftStudies: محذوفة — المنطق الجديد يعتمد على status عند الحفظ فقط
 
 async function loadDashboardStudies() {
+  refreshPointsDisplay();
   const tbody = document.getElementById('user-studies-tbody');
   const noRow = document.getElementById('no-studies-row');
   if (!tbody) return;
@@ -8039,6 +8040,25 @@ function ipcShowSuccess() {
   window._hasPoints     = true;
   window._studyUnlocked = true;
   showToast('🎉 تم الدفع بنجاح! تمت إضافة 5 نقاط جدوى لحسابك');
+  // تحديث عداد النقاط في الداشبورد
+  refreshPointsDisplay();
+}
+
+// ── تحديث عداد النقاط في الداشبورد ──
+async function refreshPointsDisplay() {
+  const user = _getLoggedUser();
+  if (!user || !user.id) return;
+  try {
+    const res = await fetch('/api/points', { headers: { 'x-user-id': String(user.id) } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const el = document.getElementById('kpi-points');
+    if (el) el.textContent = data.remaining ?? 0;
+    window._hasPoints = (parseInt(data.remaining) >= 1);
+    // إخفاء/إظهار بانر الاشتراك
+    const banner = document.getElementById('dash-subscribe-banner');
+    if (banner) banner.style.display = window._hasPoints ? 'none' : '';
+  } catch(_) {}
 }
 
 // ── Polling: التحقق من حالة الطلب كل 3 ثوانٍ ──
