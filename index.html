@@ -4438,16 +4438,16 @@ footer {
       <!-- آدمن فقط -->
       <div id="admin-sidebar-section" style="display:none;margin-top:12px;border-top:1px solid rgba(255,165,0,0.3);padding-top:12px;">
         <div style="font-size:0.65rem;color:#f59e0b;font-weight:700;padding:4px 12px;letter-spacing:1px;">⚙️ لوحة الإدارة</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-stats')" style="color:#f59e0b;"><span class="dicon">📈</span> الإحصائيات</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-users')" style="color:#f59e0b;"><span class="dicon">👥</span> المستخدمون</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
-        <div class="dmenu-item" onclick="adminScrollTo('admin-email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
+        <div class="dmenu-item" onclick="adminShowPage('home')" style="color:#f59e0b;"><span class="dicon">📈</span> الإحصائيات</div>
+        <div class="dmenu-item" onclick="adminShowPage('users')" style="color:#f59e0b;"><span class="dicon">👥</span> المستخدمون</div>
+        <div class="dmenu-item" onclick="adminShowPage('orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
+        <div class="dmenu-item" onclick="adminShowPage('invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
+        <div class="dmenu-item" onclick="adminShowPage('points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
+        <div class="dmenu-item" onclick="adminShowPage('email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
       </div>
     </div>
     <div class="dash-main">
-      <div class="dash-greeting">مرحباً بعودتك 👋</div>
+      <div class="dash-greeting" id="dash-greeting">مرحباً 👋</div>
       <div class="dash-sub">إليك ملخص نشاطك على منصة ذكاء الأعمال</div>
       <div class="dash-kpis">
         <div class="kpi-card"><span class="kpi-card-val" id="kpi-total">0</span><div class="kpi-card-label">دراسات منشأة</div></div>
@@ -4507,97 +4507,137 @@ footer {
 
       <!-- ══ لوحة الإدارة (آدمن فقط) ══ -->
       <div id="admin-panel" style="display:none;margin-top:32px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
-          <div style="font-size:1.5rem;">⚙️</div>
-          <div>
-            <div style="font-size:1.1rem;font-weight:700;color:#f59e0b;">لوحة الإدارة</div>
-            <div style="font-size:0.75rem;color:var(--text3);">مرئية للمسؤول فقط</div>
-          </div>
-        </div>
 
-        <!-- إحصائيات عامة -->
-        <div id="admin-stats" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">📈 الإحصائيات العامة</h3>
-            <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;" onclick="adminLoadAll()">🔄 تحديث</button>
-          </div>
-          <div id="admin-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;padding:16px 0;">
-            <div class="kpi-card"><span class="kpi-card-val" id="astat-users">—</span><div class="kpi-card-label">المستخدمون</div></div>
-            <div class="kpi-card"><span class="kpi-card-val" id="astat-orders" style="color:var(--green);">—</span><div class="kpi-card-label">الطلبات المدفوعة</div></div>
-            <div class="kpi-card"><span class="kpi-card-val" id="astat-studies">—</span><div class="kpi-card-label">الدراسات</div></div>
-            <div class="kpi-card"><span class="kpi-card-val" id="astat-revenue" style="color:#f59e0b;">—</span><div class="kpi-card-label">الإيرادات (هللة)</div></div>
-          </div>
-        </div>
-
-        <!-- كل المستخدمين -->
-        <div id="admin-users" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header">
-            <h3 style="color:#f59e0b;">👥 المستخدمون</h3>
-            <span id="admin-users-count" style="font-size:0.78rem;color:var(--text3);"></span>
-          </div>
-          <div style="display:flex;gap:8px;padding:0 0 12px;flex-wrap:wrap;">
-            <input id="admin-search-input" type="text" placeholder="بحث بالاسم أو الإيميل..." class="minput" style="flex:1;min-width:180px;direction:rtl;" oninput="adminSearch(this.value)">
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table" style="min-width:600px;">
-              <thead><tr><th>الاسم</th><th>الإيميل</th><th>النقاط المتبقية</th><th>المستخدمة</th><th>الطلبات</th><th>التاريخ</th><th>إجراءات</th></tr></thead>
-              <tbody id="admin-users-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- آخر 10 طلبات -->
-        <div id="admin-orders" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">💳 آخر الطلبات</h3></div>
-          <div style="overflow-x:auto;">
-            <table class="data-table" style="min-width:480px;">
-              <thead><tr><th>#</th><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
-              <tbody id="admin-orders-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- الفواتير -->
-        <div id="admin-invoices" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header">
-            <h3 style="color:#f59e0b;">🧾 الفواتير</h3>
-            <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;" onclick="adminLoadInvoices()">🔄</button>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table" style="min-width:560px;">
-              <thead><tr><th>#</th><th>المستخدم</th><th>الإيميل</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
-              <tbody id="admin-invoices-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- آخر 5 نقاط -->
-        <div id="admin-points" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">⭐ آخر النقاط الممنوحة</h3>
-            <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="adminGrantPoints()">+ منح نقاط</button>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table" style="min-width:480px;">
-              <thead><tr><th>المستخدم</th><th>الإجمالي</th><th>المستخدمة</th><th>الصلاحية</th><th>التاريخ</th></tr></thead>
-              <tbody id="admin-points-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- إرسال إيميل -->
-        <div id="admin-email" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">📧 إرسال إيميل</h3></div>
-          <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0;">
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-              <label style="font-size:0.82rem;color:var(--text2);">إلى:</label>
-              <input id="admin-email-to" type="email" placeholder="إيميل المستخدم (اتركه فارغاً للكل)" class="minput" style="flex:1;min-width:200px;direction:ltr;">
-              <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;">
-                <input type="checkbox" id="admin-email-all" onchange="document.getElementById('admin-email-to').disabled=this.checked"> إرسال للجميع
-              </label>
+        <!-- رأس لوحة الإدارة مع breadcrumb -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:1.5rem;">⚙️</div>
+            <div>
+              <div style="font-size:1.1rem;font-weight:700;color:#f59e0b;">لوحة الإدارة
+                <span id="admin-breadcrumb" style="font-size:0.8rem;font-weight:400;color:var(--text3);margin-right:8px;"></span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text3);">مرئية للمسؤول فقط</div>
             </div>
-            <input id="admin-email-subject" type="text" placeholder="موضوع الرسالة" class="minput" style="direction:rtl;">
-            <textarea id="admin-email-body" placeholder="نص الرسالة..." class="minput" style="min-height:100px;resize:vertical;direction:rtl;"></textarea>
-            <button class="btn-next" onclick="adminSendEmail()" style="align-self:flex-start;padding:10px 24px;">📤 إرسال</button>
-            <div id="admin-email-result" style="font-size:0.82rem;color:var(--green);display:none;"></div>
+          </div>
+          <button class="btn-next" style="padding:7px 16px;font-size:0.78rem;" onclick="adminShowPage('home')">🏠 الرئيسية</button>
+        </div>
+
+        <!-- ── الصفحة الرئيسية: إحصائيات + آخر 5 مستخدمين + آخر 5 فواتير ── -->
+        <div id="admin-page-home">
+          <div class="studies-panel" style="margin-bottom:20px;">
+            <div class="panel-header"><h3 style="color:#f59e0b;">📈 الإحصائيات العامة</h3>
+              <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;" onclick="adminLoadStats()">🔄</button>
+            </div>
+            <div id="admin-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;padding:16px 0;">
+              <div class="kpi-card"><span class="kpi-card-val" id="astat-users">—</span><div class="kpi-card-label">المستخدمون</div></div>
+              <div class="kpi-card"><span class="kpi-card-val" id="astat-orders" style="color:var(--green);">—</span><div class="kpi-card-label">الطلبات المدفوعة</div></div>
+              <div class="kpi-card"><span class="kpi-card-val" id="astat-studies">—</span><div class="kpi-card-label">الدراسات</div></div>
+              <div class="kpi-card"><span class="kpi-card-val" id="astat-revenue" style="color:#f59e0b;">—</span><div class="kpi-card-label">الإيرادات ر.س</div></div>
+            </div>
+          </div>
+          <div class="studies-panel" style="margin-bottom:20px;">
+            <div class="panel-header"><h3 style="color:#f59e0b;">👥 آخر 5 مستخدمين</h3>
+              <button onclick="adminShowPage('users')" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;cursor:pointer;font-size:0.78rem;padding:6px 14px;font-family:'Cairo',sans-serif;">عرض الكل ←</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:480px;">
+                <thead><tr><th>الاسم</th><th>الإيميل</th><th>النقاط</th><th>الطلبات</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-home-users-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="studies-panel" style="margin-bottom:20px;">
+            <div class="panel-header"><h3 style="color:#f59e0b;">🧾 آخر 5 فواتير</h3>
+              <button onclick="adminShowPage('invoices')" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;cursor:pointer;font-size:0.78rem;padding:6px 14px;font-family:'Cairo',sans-serif;">عرض الكل ←</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:480px;">
+                <thead><tr><th>#</th><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-home-invoices-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── صفحة المستخدمين ── -->
+        <div id="admin-page-users" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header">
+              <h3 style="color:#f59e0b;">👥 المستخدمون</h3>
+              <span id="admin-users-count" style="font-size:0.78rem;color:var(--text3);"></span>
+            </div>
+            <div style="display:flex;gap:8px;padding:0 0 12px;flex-wrap:wrap;">
+              <input id="admin-search-input" type="text" placeholder="بحث بالاسم أو الإيميل..." class="minput" style="flex:1;min-width:180px;direction:rtl;" oninput="adminSearch(this.value)">
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:600px;">
+                <thead><tr><th>الاسم</th><th>الإيميل</th><th>النقاط المتبقية</th><th>المستخدمة</th><th>الطلبات</th><th>التاريخ</th><th>إجراءات</th></tr></thead>
+                <tbody id="admin-users-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── صفحة الطلبات ── -->
+        <div id="admin-page-orders" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header"><h3 style="color:#f59e0b;">💳 الطلبات</h3></div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:480px;">
+                <thead><tr><th>#</th><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-orders-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── صفحة الفواتير ── -->
+        <div id="admin-page-invoices" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header"><h3 style="color:#f59e0b;">🧾 الفواتير</h3>
+              <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;" onclick="adminLoadInvoices()">🔄</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:560px;">
+                <thead><tr><th>#</th><th>المستخدم</th><th>الإيميل</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-invoices-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── صفحة النقاط ── -->
+        <div id="admin-page-points" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header"><h3 style="color:#f59e0b;">⭐ النقاط الممنوحة</h3>
+              <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="adminGrantPoints()">+ منح نقاط</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:480px;">
+                <thead><tr><th>المستخدم</th><th>الإجمالي</th><th>المستخدمة</th><th>الصلاحية</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-points-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── صفحة إرسال إيميل ── -->
+        <div id="admin-page-email" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header"><h3 style="color:#f59e0b;">📧 إرسال إيميل</h3></div>
+            <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0;">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <label style="font-size:0.82rem;color:var(--text2);">إلى:</label>
+                <input id="admin-email-to" type="email" placeholder="إيميل المستخدم (اتركه فارغاً للكل)" class="minput" style="flex:1;min-width:200px;direction:ltr;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;">
+                  <input type="checkbox" id="admin-email-all" onchange="document.getElementById('admin-email-to').disabled=this.checked"> إرسال للجميع
+                </label>
+              </div>
+              <input id="admin-email-subject" type="text" placeholder="موضوع الرسالة" class="minput" style="direction:rtl;">
+              <textarea id="admin-email-body" placeholder="نص الرسالة..." class="minput" style="min-height:100px;resize:vertical;direction:rtl;"></textarea>
+              <button class="btn-next" onclick="adminSendEmail()" style="align-self:flex-start;padding:10px 24px;">📤 إرسال</button>
+              <div id="admin-email-result" style="font-size:0.82rem;color:var(--green);display:none;"></div>
+            </div>
           </div>
         </div>
 
@@ -7137,6 +7177,7 @@ async function migrateLocalStudiesToDB(user) {
 
 async function loadDashboardStudies() {
   refreshPointsDisplay();
+  _updateDashGreeting();
   const tbody = document.getElementById('user-studies-tbody');
   const noRow = document.getElementById('no-studies-row');
   if (!tbody) return;
@@ -9003,8 +9044,24 @@ function _adminHeaders() {
   return { 'Content-Type': 'application/json', 'x-admin-email': u?.email || '' };
 }
 
-function adminScrollTo(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const _adminPages = ['home','users','orders','invoices','points','email'];
+const _adminPageTitles = { home:'', users:'› المستخدمون', orders:'› الطلبات', invoices:'› الفواتير', points:'› النقاط', email:'› إرسال إيميل' };
+
+function adminShowPage(name) {
+  _adminPages.forEach(p => {
+    const el = document.getElementById('admin-page-' + p);
+    if (el) el.style.display = p === name ? '' : 'none';
+  });
+  const bc = document.getElementById('admin-breadcrumb');
+  if (bc) bc.textContent = _adminPageTitles[name] || '';
+  // تحميل البيانات عند فتح الصفحة لأول مرة
+  if (name === 'home')     { adminLoadStats(); adminLoadHomeUsers(); adminLoadHomeInvoices(); }
+  if (name === 'users')    adminLoadUsers();
+  if (name === 'orders')   adminLoadOrders();
+  if (name === 'invoices') adminLoadInvoices();
+  if (name === 'points')   adminLoadPoints();
+  // التمرير للأعلى
+  document.getElementById('admin-panel')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 async function adminLoadStats() {
@@ -9119,12 +9176,46 @@ async function adminDeleteUser(userId, userName, userEmail) {
   } catch(e) { showToast('❌ خطأ في الاتصال'); }
 }
 
+async function adminLoadHomeUsers() {
+  const tbody = document.getElementById('admin-home-users-tbody');
+  if (!tbody) return;
+  try {
+    const res  = await fetch('/api/admin?action=users', { headers: _adminHeaders() });
+    const data = await res.json();
+    const users = data.users || [];
+    if (!users.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);">لا يوجد مستخدمون</td></tr>`; return; }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td style="font-size:0.82rem;">${u.name || '—'}</td>
+        <td style="font-size:0.76rem;direction:ltr;text-align:right;color:var(--text2);">${u.email}</td>
+        <td style="color:#34D399;font-weight:700;">${u.remaining_points ?? 0}</td>
+        <td>${u.paid_orders ?? 0}</td>
+        <td style="font-size:0.75rem;color:var(--text3);">${new Date(u.created_at).toLocaleDateString('ar-SA')}</td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+async function adminLoadHomeInvoices() {
+  const tbody = document.getElementById('admin-home-invoices-tbody');
+  if (!tbody) return;
+  try {
+    const res  = await fetch('/api/admin?action=orders', { headers: _adminHeaders() });
+    const data = await res.json();
+    const rows = data.orders || [];
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);">لا توجد فواتير</td></tr>`; return; }
+    tbody.innerHTML = rows.map(o => `
+      <tr>
+        <td style="font-size:0.78rem;color:var(--text3);">#${o.id}</td>
+        <td style="font-size:0.82rem;">${o.user_name || o.user_email || '—'}</td>
+        <td style="color:#f59e0b;font-weight:700;">${(o.amount/100).toFixed(2)} ر.س</td>
+        <td>${o.status === 'paid' ? '<span class="sbadge sbadge-done">مدفوعة</span>' : '<span class="sbadge sbadge-locked">معلقة</span>'}</td>
+        <td style="font-size:0.75rem;color:var(--text3);">${new Date(o.created_at).toLocaleDateString('ar-SA')}</td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
 function adminLoadAll() {
-  adminLoadStats();
-  adminLoadUsers();
-  adminLoadOrders();
-  adminLoadInvoices();
-  adminLoadPoints();
+  adminShowPage('home');
 }
 
 let _adminSearchTimer;
@@ -9134,10 +9225,12 @@ function adminSearch(val) {
 }
 
 function adminEmailUser(email) {
-  document.getElementById('admin-email-to').value = email;
-  document.getElementById('admin-email-all').checked = false;
-  document.getElementById('admin-email-to').disabled = false;
-  adminScrollTo('admin-email');
+  adminShowPage('email');
+  setTimeout(() => {
+    const inp = document.getElementById('admin-email-to');
+    if (inp) { inp.value = email; inp.disabled = false; }
+    document.getElementById('admin-email-all').checked = false;
+  }, 50);
 }
 
 async function adminSendEmail() {
@@ -9232,6 +9325,15 @@ async function adminGrantPointsSubmit() {
   } catch(e) { errEl.textContent = '❌ خطأ في الاتصال'; errEl.style.display = ''; }
 }
 
+// ── تحديث تحية الداشبورد بالاسم ──
+function _updateDashGreeting() {
+  const el   = document.getElementById('dash-greeting');
+  if (!el) return;
+  const user = _getLoggedUser();
+  const name = user?.name?.trim() || user?.email || '';
+  el.textContent = name ? `مرحباً ${name} 👋` : 'مرحباً 👋';
+}
+
 // ── تفعيل الآدمن بعد تسجيل الدخول ──
 function _checkAdminAccess() {
   if (!_isAdmin()) return;
@@ -9239,7 +9341,7 @@ function _checkAdminAccess() {
   const sidebar = document.getElementById('admin-sidebar-section');
   if (panel)   panel.style.display   = '';
   if (sidebar) sidebar.style.display = '';
-  adminLoadAll();
+  adminShowPage('home');
 }
 </script>
 
