@@ -477,11 +477,123 @@ function xMerge(ws,row,f,t){
   return c;
 }
 
+// ── استخراج عناوين الفهرس من HTML ──
+function xExtractTOC(html) {
+  const items = [];
+  const reg = /<h([234])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m, counter = 0;
+  while ((m = reg.exec(html)) !== null) {
+    const level = parseInt(m[1]);
+    const text = m[2].replace(/<[^>]+>/g,'').replace(/&[a-z]+;/gi,'').trim();
+    if (text) { counter++; items.push({ level, text, num: counter }); }
+  }
+  return items;
+}
+
+// ── ورقة الفهرس ──
+function xAddTOCSheet(wb, tocItems, title, dateStr) {
+  const wt = wb.addWorksheet('فهرس المحتويات', {
+    views:[{rightToLeft:true, showGridLines:false}],
+    properties:{tabColor:{argb:XC.gold}},
+  });
+  wt.columns=[
+    {key:'A',width:6},{key:'B',width:8},{key:'C',width:56},{key:'D',width:12},
+    {key:'E',width:12},{key:'F',width:14},
+  ];
+
+  let r = 1;
+  // شريط علوي
+  wt.getRow(r).height=22;
+  const h1=xMerge(wt,r,1,6);
+  h1.value='✦  ذكاء الأعمال  —  دراسات الجدوى الاستثمارية';
+  h1.font={name:'Arial',size:11,bold:true,color:{argb:XC.white}};
+  h1.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueDark}};
+  h1.alignment=xRtl('center'); r++;
+
+  wt.getRow(r).height=4;
+  xMerge(wt,r,1,6).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.gold}}; r++;
+
+  // عنوان الدراسة
+  wt.getRow(r).height=38;
+  const tc=xMerge(wt,r,1,6);
+  tc.value=title;
+  tc.font={name:'Arial',size:18,bold:true,color:{argb:XC.white}};
+  tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blue}};
+  tc.alignment=xRtl('center'); r++;
+
+  // تاريخ
+  wt.getRow(r).height=18;
+  const dc=xMerge(wt,r,1,6);
+  dc.value=`📅 ${dateStr}`;
+  dc.font={name:'Arial',size:9,color:{argb:XC.textLight}};
+  dc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueLight}};
+  dc.alignment=xRtl('center'); r++;
+
+  wt.getRow(r).height=8; r++;
+
+  // رأس الفهرس
+  wt.getRow(r).height=22;
+  const fh=xMerge(wt,r,1,6);
+  fh.value='فهرس المحتويات';
+  fh.font={name:'Arial',size:13,bold:true,color:{argb:XC.white}};
+  fh.fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blue}};
+  fh.alignment=xRtl('center');
+  xBorder(fh, XC.blueMid); r++;
+
+  wt.getRow(r).height=4;
+  xMerge(wt,r,1,6).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.gold}}; r++;
+
+  // بنود الفهرس
+  tocItems.forEach((it) => {
+    wt.getRow(r).height = it.level===2 ? 20 : 17;
+    const numCell = wt.getCell(r, 1);
+    numCell.value = it.num;
+    numCell.font = {name:'Arial', size: it.level===2?10:9, bold: it.level===2,
+      color:{argb: it.level===2 ? XC.blue : XC.textMid}};
+    numCell.fill = {type:'pattern',pattern:'solid',
+      fgColor:{argb: it.level===2 ? XC.blueLight : XC.grayLight}};
+    numCell.alignment = xRtl('center');
+    xBorder(numCell, XC.blueMid);
+
+    const txtCell = xMerge(wt,r,2,6);
+    const indent = it.level===2 ? '' : it.level===3 ? '    ' : '        ';
+    txtCell.value = indent + it.text;
+    txtCell.font = {
+      name:'Arial',
+      size: it.level===2 ? 11 : 9.5,
+      bold: it.level===2,
+      color:{argb: it.level===2 ? XC.blueDark : it.level===3 ? XC.textMid : XC.textLight},
+    };
+    txtCell.fill = {type:'pattern',pattern:'solid',
+      fgColor:{argb: it.level===2 ? XC.blueLight : XC.grayLight}};
+    txtCell.alignment = xRtl('right');
+    xBorder(txtCell, XC.blueMid);
+    r++;
+  });
+
+  wt.getRow(r).height=6;
+  xMerge(wt,r,1,6).fill={type:'pattern',pattern:'solid',fgColor:{argb:XC.blueMid}}; r++;
+
+  // تطبيق RTL على كل الخلايا
+  wt.eachRow((row) => {
+    row.eachCell({includeEmpty:false}, (cell) => {
+      const a=cell.alignment||{};
+      cell.alignment={...a,readingOrder:2,horizontal:a.horizontal||'right',
+        vertical:a.vertical||'middle',wrapText:a.wrapText!==false};
+    });
+  });
+}
+
 async function generateXlsx(req, res, title, content, meta) {
   try {
     const wb = new ExcelJS.Workbook();
     wb.creator='ذكاء الأعمال'; wb.company='eses.store';
     wb.created=new Date(); wb.modified=new Date();
+
+    // ── فهرس المحتويات (ورقة أولى) ──
+    const dateStr=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+    const tocItems=xExtractTOC(content);
+    if(tocItems.length>1) xAddTOCSheet(wb, tocItems, title, dateStr);
 
     const ws = wb.addWorksheet('دراسة الجدوى', {
       views:[{rightToLeft:true, showGridLines:false}],
@@ -521,7 +633,6 @@ async function generateXlsx(req, res, title, content, meta) {
     tc.alignment=xRtl('center'); row++;
 
     ws.getRow(row).height=22;
-    const dateStr=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
     const metaText=[
       meta.capital?`💰 رأس المال: ${meta.capital}`:'',
       meta.employees?`👥 الموظفون: ${meta.employees}`:'',

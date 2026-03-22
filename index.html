@@ -7661,17 +7661,51 @@ function _printHtmlWithIframe(title, bodyHtml) {
 @page{size:A4 portrait;margin:22mm 16mm 28mm 16mm;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body,#_ios-print-layer{font-family:'Cairo',Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;font-size:10.5pt;line-height:1.9;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-h2{font-size:13pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:9px 14px 9px 6px;margin:0 0 11px;background:linear-gradient(to left,#EFF6FF,#fff 70%);page-break-before:always;break-before:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+h2{font-size:13pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:9px 14px 9px 6px;margin:24px 0 11px;background:linear-gradient(to left,#EFF6FF,#fff 70%);page-break-before:always;break-before:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 h2:first-of-type{page-break-before:avoid;break-before:avoid;}
 h3{font-size:11.5pt;font-weight:700;color:#1e3a8a;margin:14px 0 6px;border-bottom:1.5px solid #BFDBFE;padding-bottom:4px;}
 p{margin-bottom:8px;text-align:justify;}ul,ol{padding-right:24px;margin:6px 0 10px;}li{margin-bottom:4px;}
-table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:9.5pt;table-layout:auto;page-break-inside:avoid;}
-th{background:#1D4ED8!important;color:#fff!important;padding:8px 10px;text-align:right;font-weight:700;border:1px solid #1740a8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-td{background:#ffffff!important;color:#0f172a!important;padding:6px 9px;border:1px solid #CBD5E1;text-align:right;font-size:9pt;vertical-align:top;word-break:break-word;}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:9.5pt;table-layout:fixed;page-break-inside:auto;break-inside:auto;}
+thead{display:table-header-group;}
+tr{page-break-inside:avoid;break-inside:avoid;}
+th{background:#1D4ED8!important;color:#fff!important;padding:8px 10px;text-align:right;font-weight:700;border:1px solid #1740a8;word-break:break-word;overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+td{background:#ffffff!important;color:#0f172a!important;padding:6px 9px;border:1px solid #CBD5E1;text-align:right;font-size:9pt;vertical-align:top;word-break:break-word;overflow-wrap:anywhere;}
 tr:nth-child(even) td{background:#EFF6FF!important;color:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.table-wrap{display:block;width:100%;overflow:visible;}
+.table-wrap{display:block;width:100%;overflow:visible;page-break-inside:auto;}
 .cover{page-break-after:always;break-after:page;text-align:center;overflow:hidden;}
+.toc-page{page-break-after:always;break-after:page;padding:10mm 0;}
+.toc-head{font-size:15pt;font-weight:800;color:#1D4ED8;border-right:6px solid #1D4ED8;padding:8px 14px;background:linear-gradient(to left,#EFF6FF,#fff 70%);margin-bottom:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.toc-item{display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px dashed #CBD5E1;}
+.toc-h2{font-weight:800;font-size:10.5pt;color:#1D4ED8;}
+.toc-h3{font-size:9.5pt;color:#334155;padding-right:18px;}
+.toc-h4{font-size:9pt;color:#64748B;padding-right:34px;}
+.toc-title{flex:1;text-align:right;}
+.toc-dots{flex:1;border-bottom:1px dotted #94A3B8;min-width:20px;height:0;margin:0 6px;}
+.toc-num{color:#1D4ED8;font-weight:700;font-size:9pt;white-space:nowrap;text-align:left;}
 .footer{margin-top:24px;padding-top:10px;border-top:1.5px solid #E2E8F0;text-align:center;color:#94A3B8;font-size:8.5pt;}`;
+
+  // ── استخراج العناوين من المحتوى لبناء الفهرس ──────────────────────
+  var _tocItems = [];
+  var _hReg = /<h([234])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  var _hm, _hCounter = 0;
+  while ((_hm = _hReg.exec(bodyHtml)) !== null) {
+    var _hLevel = parseInt(_hm[1]);
+    var _hText  = _hm[2].replace(/<[^>]+>/g, '').replace(/&[a-z]+;/gi,'').trim();
+    if (_hText) { _hCounter++; _tocItems.push({ level: _hLevel, text: _hText, num: _hCounter }); }
+  }
+  var tocHtml = '';
+  if (_tocItems.length > 1) {
+    tocHtml = '<div class="toc-page">'
+      + '<div class="toc-head">\u0641\u0647\u0631\u0633 \u0627\u0644\u0645\u062d\u062a\u0648\u064a\u0627\u062a</div>'
+      + _tocItems.map(function(it){
+          return '<div class="toc-item toc-h' + it.level + '">'
+            + '<span class="toc-title">' + it.text + '</span>'
+            + '<span class="toc-dots"></span>'
+            + '<span class="toc-num">' + it.num + '</span>'
+          + '</div>';
+        }).join('')
+      + '</div>';
+  }
 
   const coverHtml = `<div class="cover">
   <div style="background:#1e3a8a;padding:14px 20px;text-align:center;color:#fff;font-size:11pt;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">&#x2736; &#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x623;&#x639;&#x645;&#x627;&#x644; &mdash; &#x62F;&#x631;&#x627;&#x633;&#x627;&#x62A; &#x627;&#x644;&#x62C;&#x62F;&#x648;&#x649; &#x627;&#x644;&#x627;&#x633;&#x62A;&#x62B;&#x645;&#x627;&#x631;&#x64A;&#x629;</div>
@@ -7684,8 +7718,9 @@ tr:nth-child(even) td{background:#EFF6FF!important;color:#0f172a!important;-webk
     <div style="font-size:9pt;color:#64748B;">&#128197; ${date} &mdash; &#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x623;&#x639;&#x645;&#x627;&#x644; &middot; eses.store</div>
   </div>
 </div>
+${tocHtml}
 <div style="direction:rtl;text-align:right;">${bodyHtml}</div>
-<div class="footer">منصة ذكاء الأعمال — دراسات جدوى بالذكاء الاصطناعي | eses.store</div>`;
+<div class="footer">&#x645;&#x646;&#x635;&#x629; &#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x623;&#x639;&#x645;&#x627;&#x644; &mdash; &#x62F;&#x631;&#x627;&#x633;&#x627;&#x62A; &#x62C;&#x62F;&#x648;&#x649; &#x628;&#x627;&#x644;&#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x627;&#x635;&#x637;&#x646;&#x627;&#x639;&#x64A; | eses.store</div>`;
 
   const fullHtml = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
