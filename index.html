@@ -6068,33 +6068,16 @@ function startPaymentForStudy(){
   console.log('[Jadwa] startPaymentForStudy called');
 
   // ── فحص تسجيل الدخول ──────────────────────────────────────
-  const token    = localStorage.getItem('jwt_token');
-  const stored   = localStorage.getItem('user_data');
+  const token  = localStorage.getItem('jwt_token');
+  const stored = localStorage.getItem('user_data');
   if (!token || !stored) {
-    // المستخدم غير مسجّل — احفظ النية وافتح نافذة الدخول
     window._pendingPaymentAfterLogin = true;
     openAuthModal('login');
     return;
   }
 
-  try {
-    // بناء بيانات المستخدم من localStorage
-    let customer = { firstName:'عميل', lastName:'جديد', email:'guest@eses.store', phone:'+966500000000' };
-    try {
-      const u = JSON.parse(stored);
-      const parts = (u.name || 'عميل جديد').trim().split(/\s+/);
-      customer = {
-        firstName: parts[0]  || 'عميل',
-        lastName:  parts[1]  || 'جديد',
-        email:     u.email   || 'guest@eses.store',
-        phone:    (u.phone   || '+966500000000').replace(/\s/g, ''),
-      };
-    } catch(e) { console.warn('[Jadwa] parse user_data error:', e); }
-    startPayment(customer);
-  } catch(err) {
-    console.error('[Jadwa] startPaymentForStudy error:', err);
-    alert('خطأ: ' + err.message);
-  }
+  // ── فتح مودال الدفع المخصص ──────────────────────────────
+  pmoOpen();
 }
   function showStudyLoader() {
   const overlay = document.createElement('div');
