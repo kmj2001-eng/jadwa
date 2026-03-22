@@ -64,8 +64,18 @@ export default async function handler(req, res) {
         items: [],
       }),
     });
-    const orderData = await orderRes.json();
-    if (!orderData.id) throw new Error('فشل إنشاء Order في Paymob');
+    const orderData     = await orderRes.json();
+    const paymobOrderId = String(orderData.id || '');
+    if (!paymobOrderId) throw new Error('فشل إنشاء Order في Paymob');
+
+    // احفظ paymob_order_id في DB حتى يجده الـ webhook
+    try {
+      if (dbOrderId && process.env.POSTGRES_URL) {
+        const sql = neon(process.env.POSTGRES_URL);
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS paymob_order_id TEXT`;
+        await sql`UPDATE orders SET paymob_order_id = ${paymobOrderId} WHERE id = ${dbOrderId}`;
+      }
+    } catch (_) {}
 
     // ── 3. Payment Key ────────────────────────────────────────
     const pkRes  = await fetch(`${BASE_URL}/acceptance/payment_keys`, {
