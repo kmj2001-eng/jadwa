@@ -7898,7 +7898,7 @@ function pmoGooglePay() {
   showToast('🟢 Google Pay قريباً — استخدم البطاقة الآن');
 }
 
-/** إرسال — يُنشئ Payment Key ثم يعرض iframe Paymob لإدخال البطاقة */
+/** إرسال بيانات البطاقة — Direct Charge عبر Paymob */
 async function pmoSubmitCard(e) {
   e.preventDefault();
 
@@ -7911,8 +7911,25 @@ async function pmoSubmitCard(e) {
     window._pendingPaymentAfterLogin = true;
     pmoClose(); openAuthModal('login'); return;
   }
+
+  // ── قراءة بيانات البطاقة ──
+  const cardNum  = (document.getElementById('pmo-card-num')?.value  || '').replace(/\s/g,'');
+  const cardName = (document.getElementById('pmo-card-name')?.value || '').trim();
+  const expiry   = (document.getElementById('pmo-expiry')?.value    || '').trim();
+  const cvv      = (document.getElementById('pmo-cvc')?.value       || '').trim();
+
+  // ── validation ──
+  const showFieldErr = (msg) => {
+    if (errDiv) { errDiv.textContent = msg; errDiv.style.display = 'block'; }
+  };
+  if (cardNum.length < 16)        return showFieldErr('⚠️ رقم البطاقة غير مكتمل');
+  if (!cardName)                  return showFieldErr('⚠️ أدخل الاسم على البطاقة');
+  if (!expiry.includes('/') || expiry.length < 5)
+                                  return showFieldErr('⚠️ أدخل تاريخ الانتهاء (MM/YY)');
+  if (cvv.length < 3)             return showFieldErr('⚠️ أدخل رمز CVV');
+
   const nameParts = (user.name || '').trim().split(/\s+/);
-  const customer = {
+  const customer  = {
     firstName: nameParts[0] || 'عميل',
     lastName:  nameParts[1] || 'جديد',
     email:     user.email   || 'guest@eses.store',
@@ -7920,32 +7937,46 @@ async function pmoSubmitCard(e) {
   };
 
   const submitBtn = document.getElementById('pmo-submit-btn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري التحضير...'; }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري معالجة الدفع...'; }
   ipcShow('ipc-loader');
 
   try {
     const res = await fetch('/api/paymob', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body:    JSON.stringify({ customer }),
+      body:    JSON.stringify({
+        customer,
+        amount: 500,
+        card: { number: cardNum, name: cardName, expiry, cvv },
+      }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `خطأ ${res.status}`);
-    if (!data.iframeUrl) throw new Error('لم يتم استقبال رابط الدفع');
 
-    // ── تحميل iframe نموذج البطاقة ──
-    const iframeEl = document.getElementById('ipc-iframe');
-    if (iframeEl) iframeEl.src = data.iframeUrl;
-    ipcShow('ipc-iframe-wrap');
+    // ✅ نجح الدفع مباشرة
+    if (data.success === true) {
+      ipcShowSuccess();
+      return;
+    }
 
-    // بدء Polling للتحقق من تأكيد الـ webhook
-    if (data.ourOrderId) ipcStartPolling(data.ourOrderId);
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💳 المتابعة لإدخال بيانات البطاقة'; }
+    // 🔐 يحتاج 3DS — اعرض صفحة البنك في iframe
+    if (data.pending === true && data.redirectUrl) {
+      const iframeEl = document.getElementById('ipc-iframe');
+      if (iframeEl) iframeEl.src = data.redirectUrl;
+      ipcShow('ipc-iframe-wrap');
+      // ابدأ polling بـ transactionId
+      if (data.transactionId) ipcStartPolling(data.transactionId);
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+      return;
+    }
+
+    // ❌ فشل
+    throw new Error(data.error || 'فشلت عملية الدفع');
+
   } catch (err) {
     const errText = document.getElementById('ipc-error-text');
     if (errText) errText.textContent = err.message;
     ipcShow('ipc-error');
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💳 المتابعة لإدخال بيانات البطاقة'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
   }
 }
 
@@ -9443,10 +9474,43 @@ function authLogout() {
         <!-- رسالة الخطأ -->
         <div id="pmo-form-error" class="pmo-form-error" style="display:none;"></div>
 
-        <!-- زر الانتقال لبوابة الدفع -->
+        <!-- نموذج البطاقة المخصص -->
         <form id="pmo-card-form" onsubmit="pmoSubmitCard(event)" autocomplete="off" novalidate>
+
+          <!-- رقم البطاقة -->
+          <div class="pmo-field-wrap">
+            <span class="pmo-field-icon" id="pmo-card-icon">💳</span>
+            <input id="pmo-card-num" class="pmo-input" type="tel"
+              placeholder="رقم البطاقة" maxlength="19"
+              oninput="pmoFormatCard(this)"
+              autocomplete="cc-number" inputmode="numeric">
+          </div>
+
+          <!-- اسم حامل البطاقة -->
+          <div class="pmo-field-wrap">
+            <input id="pmo-card-name" class="pmo-input" type="text"
+              placeholder="الاسم على البطاقة"
+              autocomplete="cc-name"
+              oninput="this.value=this.value.toUpperCase()">
+          </div>
+
+          <!-- الانتهاء + CVV -->
+          <div class="pmo-row">
+            <div class="pmo-field-wrap">
+              <input id="pmo-expiry" class="pmo-input" type="tel"
+                placeholder="MM/YY" maxlength="5"
+                oninput="pmoFormatExpiry(this)"
+                autocomplete="cc-exp" inputmode="numeric">
+            </div>
+            <div class="pmo-field-wrap">
+              <input id="pmo-cvc" class="pmo-input" type="tel"
+                placeholder="CVV" maxlength="4"
+                autocomplete="cc-csc" inputmode="numeric">
+            </div>
+          </div>
+
           <button type="submit" id="pmo-submit-btn" class="pmo-pay-btn">
-            💳 المتابعة لإدخال بيانات البطاقة
+            🔒 ادفع الآن
           </button>
         </form>
 
