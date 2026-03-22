@@ -2151,6 +2151,43 @@ input[type=range]::-webkit-slider-thumb {
   .ready-table th, .ready-table td { padding:12px 14px; font-size:0.8rem; }
   .ready-hero h1 { font-size:1.6rem; }
 }
+@media(max-width:640px){
+  /* تحويل جدول الدراسات الجاهزة إلى بطاقات */
+  .ready-table-wrap { overflow-x:visible; background:transparent; border:none; box-shadow:none; }
+  .ready-table, .ready-table tbody { display:block; }
+  .ready-table thead { display:none; }
+  .ready-table tbody { display:flex; flex-direction:column; gap:14px; }
+  .ready-sub-row { display:none !important; }
+  .ready-table .ready-data-row {
+    display:block;
+    background:var(--panel); border-radius:16px;
+    border:1px solid var(--border2); overflow:hidden;
+    box-shadow:0 2px 12px rgba(0,0,0,0.25);
+  }
+  .ready-table .ready-data-row td { display:none; padding:0; }
+  /* رأس البطاقة: الرقم + الاسم */
+  .ready-table .ready-data-row .col-num,
+  .ready-table .ready-data-row .col-name {
+    display:inline-block; vertical-align:middle;
+    padding:14px 12px; box-sizing:border-box;
+    border-bottom:1px solid var(--border2);
+  }
+  .ready-table .ready-data-row .col-num { width:52px; text-align:center; }
+  .ready-table .ready-data-row .col-name { width:calc(100% - 52px); padding-right:0; }
+  /* صف البيانات: رأس المال + الموظفين */
+  .ready-table .ready-data-row td.ready-cap-td,
+  .ready-table .ready-data-row td.ready-emp-td {
+    display:inline-block; width:50%; box-sizing:border-box;
+    padding:10px 14px; vertical-align:middle;
+    border-bottom:1px solid var(--border2);
+  }
+  .ready-table .ready-data-row td.ready-cap-td { border-left:1px solid var(--border2); }
+  /* زر المشاهدة */
+  .ready-table .ready-data-row td.ready-btn-td {
+    display:flex; justify-content:center; padding:12px 14px;
+  }
+  .ready-table .ready-data-row td.ready-btn-td .view-study-btn { width:100%; justify-content:center; }
+}
 /* ── بطاقات الدراسات ── */
 .ready-sub-row { display:none; }
 .study-m-cell { display:none !important; padding:0; }
@@ -4388,15 +4425,9 @@ footer {
               <div class="ready-study-name">🎥 محل بيع وصيانة وتركيب كاميرات المراقبة وملحقاتها</div>
               <div class="ready-study-sub">📍 الرياض، المملكة العربية السعودية &nbsp;·&nbsp; قطاع تقنية الأمن والمراقبة</div>
             </td>
-            <td><span class="ready-capital-val">200,000 ر.س</span></td>
-            <td><span class="ready-emp-val">4 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(1)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
-          </tr>
-          <tr class="ready-sub-row">
-            <td colspan="5">
-              <div class="ready-study-name">🎥 محل بيع وصيانة وتركيب كاميرات المراقبة وملحقاتها</div>
-              <div class="ready-study-sub">📍 الرياض، المملكة العربية السعودية &nbsp;·&nbsp; 🔑 قطاع تقنية الأمن والمراقبة</div>
-            </td>
+            <td class="ready-cap-td"><span class="ready-capital-val">200,000 ر.س</span></td>
+            <td class="ready-emp-td"><span class="ready-emp-val">4 موظفين</span></td>
+            <td class="ready-btn-td"><button class="view-study-btn" onclick="openReadyStudy(1)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
           </tr>
           <!-- دراسة 2 -->
           <tr class="ready-data-row">
@@ -4405,15 +4436,9 @@ footer {
               <div class="ready-study-name">🍔 مطعم وجبات سريعة سحابي ومحلي</div>
               <div class="ready-study-sub">📍 جدة، محافظة مكة المكرمة &nbsp;·&nbsp; قطاع المطاعم والخدمات الغذائية</div>
             </td>
-            <td><span class="ready-capital-val">200,000 ر.س</span></td>
-            <td><span class="ready-emp-val">4 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(2)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
-          </tr>
-          <tr class="ready-sub-row">
-            <td colspan="5">
-              <div class="ready-study-name">🍔 مطعم وجبات سريعة سحابي ومحلي</div>
-              <div class="ready-study-sub">📍 جدة، محافظة مكة المكرمة &nbsp;·&nbsp; 🍽️ قطاع المطاعم والخدمات الغذائية</div>
-            </td>
+            <td class="ready-cap-td"><span class="ready-capital-val">200,000 ر.س</span></td>
+            <td class="ready-emp-td"><span class="ready-emp-val">4 موظفين</span></td>
+            <td class="ready-btn-td"><button class="view-study-btn" onclick="openReadyStudy(2)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
           </tr>
           <!-- دراسة 3 -->
           <tr class="ready-data-row">
@@ -4422,15 +4447,9 @@ footer {
               <div class="ready-study-name">⚙️ ورشة صيانة وإصلاح المواتير والدينموهات الكهربائية</div>
               <div class="ready-study-sub">📍 بريدة، منطقة القصيم &nbsp;·&nbsp; قطاع خدمات الصيانة الكهربائية الصناعية</div>
             </td>
-            <td><span class="ready-capital-val">60,000 ر.س</span></td>
-            <td><span class="ready-emp-val">2 موظفين</span></td>
-            <td><button class="view-study-btn" onclick="openReadyStudy(3)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
-          </tr>
-          <tr class="ready-sub-row">
-            <td colspan="5">
-              <div class="ready-study-name">⚙️ ورشة صيانة وإصلاح المواتير والدينموهات الكهربائية</div>
-              <div class="ready-study-sub">📍 بريدة، منطقة القصيم &nbsp;·&nbsp; 🔧 قطاع خدمات الصيانة الكهربائية الصناعية</div>
-            </td>
+            <td class="ready-cap-td"><span class="ready-capital-val">60,000 ر.س</span></td>
+            <td class="ready-emp-td"><span class="ready-emp-val">2 موظفين</span></td>
+            <td class="ready-btn-td"><button class="view-study-btn" onclick="openReadyStudy(3)"><i class="fa-solid fa-eye"></i> مشاهدة</button></td>
           </tr>
         </tbody>
       </table>
