@@ -7054,9 +7054,7 @@ async function loadDashboardStudies() {
   studies.forEach(s => {
     const tr      = document.createElement('tr');
     tr.className  = 'study-row';
-    const idParam = JSON.stringify(s.id);
     const meta    = s.metadata || {};
-    // محاولة استخراج من input_data إذا كانت metadata فارغة
     const inp     = s.input_data || {};
     const sector  = meta.sector  || inp.sector  || '—';
     const rawCap  = meta.capital || inp.capital || null;
@@ -7067,12 +7065,12 @@ async function loadDashboardStudies() {
               ? Number(String(rawCap).replace(/[^\d]/g,'')).toLocaleString('ar-SA') + ' ر.س'
               : rawCap)
       : '—';
-    const irr     = meta.irr || inp.irr || '—';
-    // isPaid يعتمد على حالة الدراسة المحفوظة فقط (لا يتغير بتغيّر نقاط المستخدم)
+    const irr    = meta.irr || inp.irr || '—';
     const isPaid = s.status === 'completed';
+
     tr.innerHTML = `
       <td>
-        <span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span>
+        <span class="dash-study-title" style="cursor:pointer;color:var(--gold);font-weight:700;">${s.title}</span>
       </td>
       <td style="font-size:0.8rem;color:var(--text2);">${sector}</td>
       <td style="font-size:0.8rem;color:var(--text2);">${capital}</td>
@@ -7086,8 +7084,8 @@ async function loadDashboardStudies() {
       <td style="font-size:0.75rem;">
         ${isPaid
           ? `<div style="display:flex;gap:5px;flex-wrap:wrap;">
-               <button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📄 PDF</button>
-               <button onclick="downloadStudyXlsx(${idParam})" title="تحميل Excel" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;color:#34D399;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📊 Excel</button>
+               <button class="dash-pdf-btn" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📄 PDF</button>
+               <button class="dash-xlsx-btn" title="تحميل Excel" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;color:#34D399;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📊 Excel</button>
              </div>`
           : `<span style="color:var(--text3);font-size:0.75rem;">—</span>`
         }
@@ -7095,13 +7093,25 @@ async function loadDashboardStudies() {
       <td style="text-align:center;">
         ${isPaid
           ? `<button disabled style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:6px;color:#34D399;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;cursor:default;opacity:0.6;">✓ مشترك</button>`
-          : `<button onclick="startPaymentForStudy()" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer;color:#60A5FA;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;font-weight:700;">💳 اشترك</button>`
+          : `<button class="dash-subscribe-btn" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer;color:#60A5FA;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;font-weight:700;">💳 اشترك</button>`
         }
       </td>
       <td style="text-align:center;">
-        <button onclick="deleteSavedStudy(${idParam})" title="حذف" style="background:none;border:none;cursor:pointer;color:#ff2d6b;font-size:1.1rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,45,107,0.5));">🗑</button>
+        <button class="dash-delete-btn" title="حذف" style="background:none;border:none;cursor:pointer;color:#ff2d6b;font-size:1.1rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,45,107,0.5));">🗑</button>
       </td>
     `;
+
+    // ── ربط الأحداث بـ JS مباشرةً (تجنب مشكلة الـ ID داخل onclick HTML) ──
+    tr.querySelector('.dash-study-title').addEventListener('click', () => openSavedStudy(s.id));
+    if (isPaid) {
+      tr.querySelector('.dash-pdf-btn')?.addEventListener('click',  () => downloadStudyPdf(s.id));
+      tr.querySelector('.dash-xlsx-btn')?.addEventListener('click', () => downloadStudyXlsx(s.id));
+    }
+    if (!isPaid) {
+      tr.querySelector('.dash-subscribe-btn')?.addEventListener('click', () => startPaymentForStudy());
+    }
+    tr.querySelector('.dash-delete-btn').addEventListener('click', () => deleteSavedStudy(s.id));
+
     tbody.appendChild(tr);
   });
   const paidCount = studies.filter(s => s.status === 'completed').length;
@@ -7258,7 +7268,8 @@ async function openSavedStudy(id) {
 }
 
 async function downloadStudyPdf(id) {
-  const uid = window._currentUser?.id;
+  const _cu = _getLoggedUser();
+  const uid = _cu?.id;
   if (!uid) return showToast('يرجى تسجيل الدخول');
   showToast('⏳ جارٍ تجهيز PDF...');
   try {
@@ -7281,7 +7292,8 @@ async function downloadStudyPdf(id) {
 
 // ── تحميل Excel من الداشبورد (بـ ID) ───────────────────────────
 async function downloadStudyXlsx(id) {
-  const uid = window._currentUser?.id;
+  const _cu = _getLoggedUser();
+  const uid = _cu?.id;
   if (!uid) return showToast('يرجى تسجيل الدخول');
   showToast('⏳ جارٍ تجهيز ملف Excel...');
   try {
