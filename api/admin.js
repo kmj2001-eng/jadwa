@@ -105,6 +105,22 @@ export default async function handler(req, res) {
       return res.json({ studies: rows });
     }
 
+    // ── جلب دراسة واحدة كاملة ────────────────────────────────
+    if (action === 'get-study') {
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: 'id مطلوب' });
+      const rows = await sql`
+        SELECT fs.id, fs.project_name, fs.ai_output, fs.created_at,
+               u.name AS user_name, u.email AS user_email
+        FROM feasibility_studies fs
+        LEFT JOIN users u ON u.id = fs.user_id
+        WHERE fs.id = ${id}
+        LIMIT 1
+      `;
+      if (!rows[0]) return res.status(404).json({ error: 'الدراسة غير موجودة' });
+      return res.json({ study: rows[0] });
+    }
+
     // ── آخر 5 نقاط ─────────────────────────────────────────────
     if (action === 'points') {
       const rows = await sql`

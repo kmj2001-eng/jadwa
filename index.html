@@ -4733,7 +4733,7 @@ footer {
             </div>
             <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
               <table class="data-table" style="min-width:540px;">
-                <thead><tr><th>الاسم</th><th>الإيميل</th><th>اسم المشروع</th><th>رأس المال</th><th>التاريخ</th></tr></thead>
+                <thead><tr><th>الاسم</th><th>الإيميل</th><th>اسم المشروع</th><th>رأس المال</th><th>التاريخ</th><th></th></tr></thead>
                 <tbody id="admin-studies-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
               </table>
             </div>
@@ -9271,16 +9271,36 @@ async function adminLoadAllStudies() {
     const list = data.studies || [];
     if (!list.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);">لا توجد دراسات</td></tr>`; return; }
     tbody.innerHTML = list.map(s => {
-      const capital = s.capital ? `${Number(s.capital).toLocaleString('ar-SA')} ${s.currency || ''}` : '—';
+      const num = parseFloat(s.capital);
+      const capital = s.capital && !isNaN(num)
+        ? `${num.toLocaleString('ar-SA')} ${s.currency || 'ر.س'}`
+        : (s.capital || '—');
       return `<tr>
         <td style="font-size:0.82rem;">${s.user_name || '—'}</td>
         <td style="font-size:0.78rem;color:var(--text3);direction:ltr;">${s.user_email || '—'}</td>
         <td style="font-weight:600;">${s.project_name || '—'}</td>
         <td style="color:var(--gold);font-weight:700;">${capital}</td>
         <td style="font-size:0.75rem;color:var(--text3);">${new Date(s.created_at).toLocaleDateString('ar-SA')}</td>
+        <td><button onclick="adminViewStudy(${s.id})" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;color:#60A5FA;cursor:pointer;font-size:0.72rem;padding:4px 10px;font-family:'Cairo',sans-serif;">👁 عرض</button></td>
       </tr>`;
     }).join('');
   } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
+}
+
+async function adminViewStudy(id) {
+  const modal = document.getElementById('admin-study-modal');
+  const body  = document.getElementById('admin-study-modal-body');
+  const title = document.getElementById('admin-study-modal-title');
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px;">جاري التحميل...</div>';
+  try {
+    const res  = await fetch(`/api/admin?action=get-study&id=${id}`, { headers: _adminHeaders() });
+    const data = await res.json();
+    const s    = data.study;
+    if (!s) { body.innerHTML = '<p style="color:#F87171;">لم يتم العثور على الدراسة</p>'; return; }
+    title.textContent = `📋 ${s.project_name || 'دراسة الجدوى'} — ${s.user_name || s.user_email || ''}`;
+    body.innerHTML = `<div class="output-body" style="background:transparent;border:none;padding:0;">${mdToHtml ? mdToHtml(s.ai_output || '') : (s.ai_output || '').replace(/\n/g,'<br>')}</div>`;
+  } catch(e) { body.innerHTML = '<p style="color:#F87171;">خطأ في التحميل</p>'; }
 }
 
 async function adminLoadInvoices() {
@@ -9922,6 +9942,19 @@ function _checkAdminAccess() {
 <!-- ════════════════════════════════════
      ADMIN GRANT POINTS MODAL
 ════════════════════════════════════ -->
+<!-- ══ موديال عرض دراسة الجدوى (آدمن) ══ -->
+<div class="moverlay" id="admin-study-modal" onclick="if(event.target===this)document.getElementById('admin-study-modal').style.display='none';" style="display:none;">
+  <div class="mbox" style="max-width:860px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="mbox-head" style="flex-shrink:0;">
+      <div class="mbox-title" id="admin-study-modal-title">📋 دراسة الجدوى</div>
+      <button class="mbox-close" onclick="document.getElementById('admin-study-modal').style.display='none';">✕</button>
+    </div>
+    <div id="admin-study-modal-body" style="overflow-y:auto;padding:20px 24px;flex:1;font-family:'Cairo',sans-serif;font-size:0.88rem;line-height:1.9;color:var(--text2);">
+      <div style="text-align:center;color:var(--text3);">جاري التحميل...</div>
+    </div>
+  </div>
+</div>
+
 <div class="moverlay" id="admin-grant-modal">
   <div class="mbox">
     <div class="mbox-head">
