@@ -113,7 +113,7 @@ export default async function handler(req, res) {
           await sql`
             INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
             VALUES (${order.user_id}, ${order.id}, 5, 0, NOW() + INTERVAL '6 months')
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (order_id) DO NOTHING
           `;
         } catch (_) {}
 
@@ -123,7 +123,7 @@ export default async function handler(req, res) {
           await sql`
             INSERT INTO invoices (order_id, user_id, amount, currency, status, invoice_number)
             VALUES (${order.id}, ${order.user_id}, ${order.amount}, ${order.currency}, 'paid', ${invoiceNumber})
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (order_id) DO NOTHING
           `;
 
           // جلب بيانات المستخدم لإرسال الإيميل
