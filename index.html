@@ -6014,6 +6014,11 @@ function unlockStudy(){
   document.querySelectorAll('.section-locked').forEach(s => s.classList.remove('section-locked'));
   const pw = document.getElementById('study-paywall');
   if(pw) pw.remove();
+  // إظهار أزرار التحميل بعد فتح المحتوى
+  const pdfBtn  = document.getElementById('viewer-pdf-btn');
+  const xlsxBtn = document.getElementById('viewer-xlsx-btn');
+  if (pdfBtn)  pdfBtn.style.display  = '';
+  if (xlsxBtn) xlsxBtn.style.display = '';
   showToast('🎉 تم الدفع بنجاح! يمكنك الآن عرض الدراسة كاملة وتحميلها.');
   // ── تشغيل تحميل Excel إن كان المستخدم طلبه قبل الدفع ──
   if (window._pendingXlsxAfterLogin) {
@@ -7176,11 +7181,12 @@ async function openSavedStudy(id) {
   const studyStatus = study.status || (study.metadata && study.metadata.status) || 'unpaid';
   const isPaid = studyStatus === 'completed';
 
-  // أزرار التحميل: مرئية فقط للدراسات المدفوعة
+  // أزرار التحميل: مرئية فقط إذا كانت الدراسة مدفوعة والمحتوى مفتوح (لديه نقاط)
+  const canDownload = isPaid && (window._hasPoints === true);
   const pdfBtn  = document.getElementById('viewer-pdf-btn');
-  if (pdfBtn) pdfBtn.style.display = isPaid ? '' : 'none';
+  if (pdfBtn) pdfBtn.style.display = canDownload ? '' : 'none';
   const xlsxBtn2 = document.getElementById('viewer-xlsx-btn');
-  if (xlsxBtn2) xlsxBtn2.style.display = isPaid ? '' : 'none';
+  if (xlsxBtn2) xlsxBtn2.style.display = canDownload ? '' : 'none';
   // حفظ input_data للـ Excel
   window._currentStudyMeta = study.input_data || {};
   const newStudyBtn = document.getElementById('viewer-new-study-btn');
