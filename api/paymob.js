@@ -168,8 +168,8 @@ export default async function handler(req, res) {
       currency,
       integration_id:   Number(INTEGRATION_ID),
       billing_data:     billing,
-      // إعادة التوجيه بعد الدفع خارج iframe — Paymob يُضيف ?success=true&id=...
-      redirect_url:     `${SITE_URL}/`,
+      // Paymob يُضيف ?success=true&id=... عند إعادة التوجيه
+      redirect_url:     `${SITE_URL}/?payment=done`,
     };
 
     const payKeyRes = await fetch(`${BASE}/acceptance/payment_keys`, {

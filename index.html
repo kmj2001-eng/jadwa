@@ -8287,7 +8287,6 @@ window.addEventListener('message', function(e) {
 (function checkPaymentRedirect() {
   const params  = new URLSearchParams(window.location.search);
   const isDone  = params.get('payment') === 'done';
-  // Paymob قد يُعيد التوجيه مباشرةً لـ /?success=true&... بدون payment=done
   const hasSuccessParam = params.has('success') && params.has('id');
 
   if (!isDone && !hasSuccessParam) return;
@@ -8297,21 +8296,30 @@ window.addEventListener('message', function(e) {
 
   const success = params.get('success');
   const pending = params.get('pending');
+  const orderId = params.get('merchant_order_id') || params.get('id');
 
-  if ((success === 'true' || (isDone && success === null)) && pending !== 'true') {
-    window._hasPoints     = true;
-    window._studyUnlocked = true;
-    // نُظهر الصفحة بعد اكتمال تحميل الـ DOM
-    window.addEventListener('DOMContentLoaded', function() {
-      showPage('payment-success', false);
-    }, { once: true });
-    // إن كان الـ DOM محمّلاً بالفعل
-    if (document.readyState !== 'loading') showPage('payment-success', false);
-  } else if (success === 'false') {
-    window.addEventListener('DOMContentLoaded', function() {
-      showPage('payment-failed', false);
-    }, { once: true });
-    if (document.readyState !== 'loading') showPage('payment-failed', false);
+  const run = () => {
+    if (success === 'true' && pending !== 'true') {
+      // نجاح — تحديث حالة التطبيق + إظهار صفحة النجاح
+      window._hasPoints     = true;
+      window._studyUnlocked = true;
+      if (typeof showToast === 'function') showToast('🎉 تم الدفع بنجاح! تمت إضافة 5 نقاط جدوى');
+      if (typeof showPage  === 'function') showPage('payment-success', false);
+    } else if (success === 'false' || success === null) {
+      // فشل — أعِد فتح المودال مع رسالة الخطأ بدلاً من صفحة خطأ مستقلة
+      if (typeof startPaymentForStudy === 'function') {
+        showToast('⚠️ لم يكتمل الدفع — يرجى المحاولة مرة أخرى');
+        setTimeout(() => startPaymentForStudy(), 800);
+      } else {
+        if (typeof showPage === 'function') showPage('payment-failed', false);
+      }
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
   }
 })();
 </script>
@@ -9449,7 +9457,7 @@ function authLogout() {
         <iframe id="ipc-iframe" src="" width="100%" height="560"
           style="border:none;display:block;border-radius:0 0 16px 16px;"
           allow="payment *"
-          sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups">
+          referrerpolicy="origin">
         </iframe>
       </div><!-- /ipc-iframe-wrap -->
 
