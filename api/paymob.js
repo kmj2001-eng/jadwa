@@ -1,13 +1,42 @@
 // api/paymob.js — Paymob KSA Direct Charge
+// POST /api/paymob        → إنشاء جلسة دفع + Direct Charge
+// GET  /api/paymob?id=TX  → التحقق من حالة المعاملة (مدمج من check-order)
 import { neon } from '@neondatabase/serverless';
 
 const BASE_URL = 'https://ksa.paymob.com/api';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-user-id');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // ── GET: التحقق من حالة المعاملة (check-order مدمج) ──────
+  if (req.method === 'GET') {
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'Missing transaction id' });
+    try {
+      const API_KEY = process.env.PAYMOB_API_KEY;
+      const authRes = await fetch(`${BASE_URL}/auth/tokens`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ api_key: API_KEY }),
+      });
+      const { token } = await authRes.json();
+      const txRes = await fetch(`${BASE_URL}/acceptance/transactions/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const tx = await txRes.json();
+      console.log('[check] id:', id, '| success:', tx.success, '| pending:', tx.pending);
+      if (tx.success === true  && tx.pending === false)
+        return res.json({ status: 'paid',    transactionId: tx.id });
+      if (tx.success === false && tx.pending === false)
+        return res.json({ status: 'failed',  reason: tx.data?.message });
+      return res.json({ status: 'pending' });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
 
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Method Not Allowed' });
