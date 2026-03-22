@@ -172,9 +172,25 @@ export default async function handler(req, res) {
       try {
         if (dbOrderId && process.env.POSTGRES_URL) {
           const sql = neon(process.env.POSTGRES_URL);
-          await sql`UPDATE orders SET status = 'paid' WHERE id = ${dbOrderId}`;
+
+          // تحديث الطلب + حفظ paymob_order_id
+          await sql`
+            UPDATE orders
+            SET status = 'paid', paymob_order_id = ${paymobOrderId}
+            WHERE id = ${dbOrderId}
+          `;
+
+          // ── إضافة 5 نقاط للمستخدم (صالحة 6 أشهر) ──
+          const order = await sql`SELECT user_id FROM orders WHERE id = ${dbOrderId} LIMIT 1`;
+          if (order[0]?.user_id) {
+            await sql`
+              INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
+              VALUES (${order[0].user_id}, ${dbOrderId}, 5, 0, NOW() + INTERVAL '6 months')
+              ON CONFLICT (order_id) DO NOTHING
+            `;
+          }
         }
-      } catch (_) {}
+      } catch (e) { console.error('[paymob] points error:', e.message); }
       return res.json({ success: true, transactionId: String(charge.id) });
     }
 

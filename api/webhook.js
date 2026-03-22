@@ -97,11 +97,11 @@ export default async function handler(req, res) {
       }
 
       if (order) {
-        // ── منح 5 نقاط للمستخدم (مرة واحدة) ──
+        // ── منح 5 نقاط للمستخدم صالحة 6 أشهر (مرة واحدة) ──
         try {
           await sql`
-            INSERT INTO user_points (user_id, order_id, total_points, used_points)
-            VALUES (${order.user_id}, ${order.id}, 5, 0)
+            INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
+            VALUES (${order.user_id}, ${order.id}, 5, 0, NOW() + INTERVAL '6 months')
             ON CONFLICT (order_id) DO NOTHING
           `;
         } catch (_) {}
