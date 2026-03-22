@@ -1827,29 +1827,29 @@ input[type=range]::-webkit-slider-thumb {
   padding-bottom:8px;
 }
 .output-body .table-wrap {
-  display:block; width:fit-content; max-width:100%; clear:both;
+  display:block; width:100%; clear:both;
   overflow-x:auto; -webkit-overflow-scrolling:touch;
-  margin:18px auto 26px; border-radius:10px;
+  margin:20px 0 28px; border-radius:10px;
   box-shadow:0 2px 14px rgba(0,0,0,0.10);
   border:1px solid #BFDBFE;
 }
 .output-body table {
-  display:table; width:auto; min-width:520px; max-width:100%;
+  display:table; width:max-content; min-width:100%;
   table-layout:auto; border-collapse:collapse;
-  font-size:0.8rem; background:#ffffff;
-  word-break:break-word;
+  font-size:0.82rem; background:#ffffff;
 }
 .output-body th {
   background:#1D4ED8 !important; color:#ffffff !important;
-  padding:10px 14px; text-align:center;
-  border:1px solid #2563EB; font-weight:700; font-size:0.8rem;
-  white-space:normal; word-break:break-word; overflow-wrap:anywhere;
+  padding:10px 16px; text-align:center;
+  border:1px solid #2563EB; font-weight:700; font-size:0.82rem;
+  white-space:nowrap; /* عناوين الأعمدة لا تُكسر */
 }
 .output-body td {
   padding:8px 14px; border:1px solid #DBEAFE;
   color:#1e293b !important; background:#ffffff !important;
-  font-size:0.8rem; white-space:normal; text-align:center;
-  vertical-align:middle; word-break:break-word; overflow-wrap:anywhere;
+  font-size:0.82rem; white-space:normal; text-align:right;
+  vertical-align:top; min-width:90px;
+  word-break:break-word; overflow-wrap:break-word;
 }
 .output-body tr:nth-child(even) td { background:#EFF6FF !important; color:#1e293b !important; }
 .output-body tr:hover td { background:#DBEAFE !important; transition:background 0.15s; }
@@ -5667,59 +5667,79 @@ async function generateStudy(){
     return item;
   });
 
-  // ── التشغيل المتوازي — كل الأقسام تبدأ في نفس الوقت ──────
+  // ── إغلاق جداول HTML المفتوحة في نص القسم ──────────────────
+  function _closeOpenTableTags(text) {
+    const stack = [];
+    const re = /<(\/?)(table|thead|tbody|tfoot|tr|td|th)(\s[^>]*)?\s*>/gi;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const tag = m[2].toLowerCase();
+      if (m[1] === '/') {
+        // إغلاق: أزل آخر عنصر مطابق من المكدس
+        for (let k = stack.length - 1; k >= 0; k--) {
+          if (stack[k] === tag) { stack.splice(k, 1); break; }
+        }
+      } else {
+        stack.push(tag);
+      }
+    }
+    // أغلق بالترتيب العكسي
+    let suffix = '';
+    while (stack.length) suffix += `</${stack.pop()}>`;
+    return text + suffix;
+  }
+
+  // ── التوليد التسلسلي — قسم واحد في كل مرة لضمان الاكتمال والترتيب ──
   const sectionTexts = new Array(_totalSec).fill('');
   let doneCount = 0;
 
-  // تشغيل كل الأقسام نشطة فوراً
-  if (iconEl)    iconEl.textContent    = '⚡';
-  if (sectionEl) sectionEl.textContent = 'جميع الأقسام العشرة تُكتب الآن...';
-  if (statusEl)  statusEl.textContent  = '✍️ جاري التوليد المتوازي...';
+  if (iconEl)    iconEl.textContent    = sectionMeta[0].icon;
+  if (sectionEl) sectionEl.textContent = `جاري كتابة: ${sectionMeta[0].label}`;
+  if (statusEl)  statusEl.textContent  = `✍️ القسم 1 من ${_totalSec}...`;
 
-  const LOCKED_STYLE = 'display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:6px 12px;font-size:0.75rem;color:#475569;direction:rtl;';
-  listItems.forEach((item, i) => {
-    const m = sectionMeta[i];
-    // جميع الأقسام تُولَّد — الحجب في العرض فقط
-    item.style.cssText = ACTIVE_STYLE;
-    item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${m.icon} ${m.label}</span>`;
-  });
+  try {
+    for (let i = 0; i < _sectionsToGenerate.length; i++) {
+      const meta = _sectionsToGenerate[i];
+      const s    = i + 1;
+      const item = listItems[i];
 
-  const sectionPromises = _sectionsToGenerate.map((meta, i) => {
-    const s = i + 1;
-    const item = listItems[i];
+      // تفعيل القسم الحالي في القائمة
+      item.style.cssText = ACTIVE_STYLE;
+      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label}</span>`;
+      if (iconEl)    iconEl.textContent    = meta.icon;
+      if (sectionEl) sectionEl.textContent = `جاري كتابة: ${meta.label}`;
+      if (statusEl)  statusEl.textContent  = `✍️ القسم ${s} من ${_totalSec}...`;
 
-    const run = () => streamSection(s, partial => {
-      const wc = partial.trim().split(/\s+/).length;
-      item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة</span>`;
-    });
+      const run = () => streamSection(s, partial => {
+        const wc = partial.trim().split(/\s+/).length;
+        item.innerHTML = `<span style="font-size:0.9rem;">✍️</span><span>${meta.icon} ${meta.label} — ${wc.toLocaleString('ar-EG')} كلمة</span>`;
+      });
 
-    return run()
-      .catch(async (err1) => {
-        // إعادة المحاولة مرة واحدة بعد ثانية ونصف
-        await new Promise(r => setTimeout(r, 1500));
+      let secText = await run().catch(async (err1) => {
+        // إعادة المحاولة مرة واحدة بعد 3 ثوانٍ
+        await new Promise(r => setTimeout(r, 3000));
         return run().catch((err2) => {
-          // سجّل الخطأ للتشخيص
           const msg = err2?.message || err1?.message || 'خطأ غير معروف';
           console.error(`[Section ${s}] فشل:`, msg);
           if (!window._firstSectionError) window._firstSectionError = msg;
           return '';
         });
-      })
-      .then(text => {
-        sectionTexts[i] = text || '';
-        doneCount++;
-        item.style.cssText = DONE_STYLE;
-        item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
-        if (barEl)  barEl.style.width  = `${Math.round(doneCount * 100 / _totalSec)}%`;
-        if (textEl) textEl.textContent = `${doneCount} / ${_totalSec} أقسام مكتملة`;
-        if (statusEl) statusEl.textContent = doneCount < _totalSec
-          ? `✍️ جاري إنهاء ${_totalSec - doneCount} أقسام متبقية...`
-          : '✅ اكتملت جميع الأقسام!';
       });
-  });
 
-  try {
-    await Promise.all(sectionPromises);
+      // أغلق أي جداول HTML غير مكتملة في نهاية القسم
+      sectionTexts[i] = secText ? _closeOpenTableTags(secText) : '';
+
+      doneCount++;
+      item.style.cssText = DONE_STYLE;
+      item.innerHTML = `<span style="font-size:1rem;line-height:1;">✓</span><span>${meta.icon} ${meta.label}</span>`;
+      if (barEl)  barEl.style.width  = `${Math.round(doneCount * 100 / _totalSec)}%`;
+      if (textEl) textEl.textContent = `${doneCount} / ${_totalSec} أقسام مكتملة`;
+      if (statusEl) statusEl.textContent = doneCount < _totalSec
+        ? `✍️ جاري كتابة القسم ${doneCount + 1}...`
+        : '✅ اكتملت جميع الأقسام العشرة!';
+      if (doneCount < _totalSec && iconEl) iconEl.textContent = sectionMeta[doneCount].icon;
+    }
+
     const fullText = sectionTexts.filter(t => t.trim()).join('\n\n');
     hideStudyLoader(studyLoader);
     if (!fullText.trim()) {
@@ -5774,20 +5794,24 @@ function _fixStudyTables(container) {
     t.querySelectorAll('th').forEach(th => {
       th.style.setProperty('background','#1D4ED8','important');
       th.style.setProperty('color','#ffffff','important');
-      th.style.wordBreak = 'break-word';
-      th.style.overflowWrap = 'anywhere';
-      th.style.whiteSpace = 'normal';
+      th.style.whiteSpace = 'nowrap';
+      th.style.padding = '10px 16px';
     });
     t.querySelectorAll('td').forEach(td => {
       td.style.wordBreak = 'break-word';
-      td.style.overflowWrap = 'anywhere';
-      td.style.whiteSpace = 'normal';
-      td.style.minWidth = '0';
+      td.style.overflowWrap = 'break-word';
+      td.style.minWidth = '90px';
+      td.style.textAlign = 'right';
+      td.style.verticalAlign = 'top';
     });
+    t.style.width = 'max-content';
+    t.style.minWidth = '100%';
+    t.style.tableLayout = 'auto';
+    t.style.borderCollapse = 'collapse';
 
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
-    wrap.style.cssText = 'display:block;width:100%;max-width:100%;clear:both;overflow-x:auto;';
+    wrap.style.cssText = 'display:block;width:100%;clear:both;overflow-x:auto;margin:20px 0 28px;border-radius:10px;border:1px solid #BFDBFE;';
     t.parentNode.insertBefore(wrap, t);
     wrap.appendChild(t);
 
