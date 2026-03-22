@@ -97,6 +97,16 @@ export default async function handler(req, res) {
         order = byMerchant[0];
       }
 
+      // إذا كان الطلب موجوداً لكن مدفوعاً مسبقاً (عبر polling) — نجلبه للتأكد من إضافة النقاط
+      if (!order && dbId) {
+        const existing = await sql`SELECT * FROM orders WHERE id = ${parseInt(dbId)} LIMIT 1`;
+        order = existing[0] || null;
+      }
+      if (!order && paymobOrderId) {
+        const existing = await sql`SELECT * FROM orders WHERE paymob_order_id = ${paymobOrderId} LIMIT 1`;
+        order = existing[0] || null;
+      }
+
       if (order) {
         // ── منح 5 نقاط للمستخدم صالحة 6 أشهر (مرة واحدة) ──
         try {
