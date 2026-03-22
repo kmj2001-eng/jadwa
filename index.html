@@ -7941,11 +7941,19 @@ async function pmoSubmitCard(e) {
       return;
     }
 
-    // 🔐 يحتاج 3DS — اعرض صفحة البنك في iframe
-    if (data.pending === true && data.redirectUrl) {
-      const iframeEl = document.getElementById('ipc-iframe');
-      if (iframeEl) iframeEl.src = data.redirectUrl;
-      ipcShow('ipc-iframe-wrap');
+    // 🔐 يحتاج 3DS
+    if (data.pending === true) {
+      if (data.redirectUrl) {
+        // اعرض صفحة البنك (OTP) في iframe
+        const iframeEl = document.getElementById('ipc-iframe');
+        if (iframeEl) iframeEl.src = data.redirectUrl;
+        ipcShow('ipc-iframe-wrap');
+      } else {
+        // لا يوجد redirect — أظهر شاشة انتظار وابدأ polling
+        const loaderText = document.getElementById('ipc-loader-text');
+        if (loaderText) loaderText.textContent = '🔐 جارٍ التحقق مع البنك... قد يستغرق دقيقة';
+        ipcShow('ipc-loader');
+      }
       // ابدأ polling بـ transactionId
       if (data.transactionId) ipcStartPolling(data.transactionId);
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }

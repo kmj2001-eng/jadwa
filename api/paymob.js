@@ -177,16 +177,23 @@ export default async function handler(req, res) {
       return res.json({ success: true, transactionId: String(charge.id) });
     }
 
-    // 🔐 يحتاج 3DS (OTP)
+    // 🔐 يحتاج 3DS (OTP) — ابحث في كل الحقول الممكنة
     if (charge.pending === true) {
-      const url3ds = charge.redirect_url || charge?.data?.redirect_url;
-      if (url3ds) {
-        return res.json({
-          pending:       true,
-          redirectUrl:   url3ds,
-          transactionId: String(charge.id),
-        });
-      }
+      const url3ds = charge.redirect_url
+                  || charge.redirection_url
+                  || charge?.data?.redirect_url
+                  || charge?.data?.redirection_url
+                  || charge?.data?.url
+                  || charge?.data?.three_d_secure_url;
+
+      console.log('[paymob] 3DS url found:', url3ds || 'NONE');
+
+      // سواء وُجد الـ URL أم لا — أرجع pending ليتحقق الـ polling
+      return res.json({
+        pending:       true,
+        redirectUrl:   url3ds || null,
+        transactionId: String(charge.id),
+      });
     }
 
     // ❌ رُفضت البطاقة — نجمع كل الحقول الممكنة للتشخيص
