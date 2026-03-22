@@ -9,7 +9,7 @@ import {
   checkBonusAlreadyUsed,
   recordBonusUsed,
   grantWelcomePoint
-} from './db.js';
+} from './_db.js';
 
 // ──────────────────────────────────────────────────────────
 //  JWT Helpers (بدون مكتبات خارجية)
