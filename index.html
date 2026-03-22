@@ -5814,8 +5814,8 @@ function showResult(text){
     outputBody.appendChild(tocEl);
   }
 
-  // ── عرض الأقسام — كاملة إن كان لديه نقاط، وإلا 7 أقسام + غلاف حجب شفاف ──
-  const _freeSections = 7;
+  // ── عرض الأقسام — كاملة إن كان لديه نقاط، وإلا 3 أقسام + غلاف حجب على القسم الرابع فما بعد ──
+  const _freeSections = 3;
   const _loggedUser = _getLoggedUser();
 
   // إزالة شريط التحذير القديم إن وجد
@@ -7134,7 +7134,7 @@ async function openSavedStudy(id) {
     body.appendChild(tocEl);
   }
 
-  const _freeSections = 7;
+  const _freeSections = 3; // أول 3 أقسام مجانية، من القسم الرابع حجب
   const _loggedUser   = _getLoggedUser();
 
   if (isPaid) {
