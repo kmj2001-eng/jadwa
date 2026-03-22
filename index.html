@@ -7409,8 +7409,24 @@ async function _callGenerateXlsx(title, content, inputData) {
   }
 }
 
+let _pendingDeleteId = null;
+function _cancelDelete() {
+  _pendingDeleteId = null;
+  document.getElementById('delete-confirm-modal').style.display = 'none';
+}
+function _confirmDelete() {
+  document.getElementById('delete-confirm-modal').style.display = 'none';
+  if (_pendingDeleteId !== null) {
+    const id = _pendingDeleteId;
+    _pendingDeleteId = null;
+    _doDeleteStudy(id);
+  }
+}
 async function deleteSavedStudy(id) {
-  if (!confirm('هل تريد حذف هذه الدراسة؟')) return;
+  _pendingDeleteId = id;
+  document.getElementById('delete-confirm-modal').style.display = 'flex';
+}
+async function _doDeleteStudy(id) {
 
   if (typeof id === 'string' && id.startsWith('db_')) {
     const dbId = id.replace('db_', '');
@@ -9143,6 +9159,21 @@ function authLogout() {
 
   </div><!-- /legal-layout -->
 </div><!-- /page-terms -->
+
+<!-- ════════════════════════════════════
+     DELETE CONFIRM MODAL
+════════════════════════════════════ -->
+<div class="moverlay" id="delete-confirm-modal" style="display:none;z-index:9999;" onclick="if(event.target===this)_cancelDelete()">
+  <div style="background:#0f172a;border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:32px 28px;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+    <div style="font-size:2.2rem;margin-bottom:12px;">🗑️</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:8px;">حذف الدراسة</div>
+    <div style="font-size:0.9rem;color:#94a3b8;margin-bottom:28px;">هل أنت متأكد من حذف هذه الدراسة؟<br>لا يمكن التراجع عن هذه العملية.</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="_cancelDelete()" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-family:'Cairo',sans-serif;font-size:0.95rem;cursor:pointer;">إلغاء</button>
+      <button onclick="_confirmDelete()" style="flex:1;padding:10px 0;border-radius:10px;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-family:'Cairo',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;">حذف</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════
      AUTH MODAL
