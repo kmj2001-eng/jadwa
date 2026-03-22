@@ -165,9 +165,18 @@ export default async function handler(req, res) {
     console.log('[paymob] charge.detail:', charge.detail);
     console.log('[paymob] FULL:', JSON.stringify(charge));
 
+    // ── ابحث عن redirect_url في كل الحقول الممكنة (3DS / MIGS) ──
+    const url3ds = charge.redirect_url
+                || charge.redirection_url
+                || charge?.data?.redirect_url
+                || charge?.data?.redirection_url
+                || charge?.data?.url
+                || charge?.data?.three_d_secure_url;
+
+    console.log('[paymob] 3DS url:', url3ds || 'NONE');
+
     // ✅ نجح الدفع فوراً
-    if (charge.success === true && charge.pending === false) {
-      // تحديث DB
+    if (charge.success === true) {
       try {
         if (dbOrderId && process.env.POSTGRES_URL) {
           const sql = neon(process.env.POSTGRES_URL);
@@ -177,18 +186,9 @@ export default async function handler(req, res) {
       return res.json({ success: true, transactionId: String(charge.id) });
     }
 
-    // 🔐 يحتاج 3DS (OTP) — ابحث في كل الحقول الممكنة
-    if (charge.pending === true) {
-      const url3ds = charge.redirect_url
-                  || charge.redirection_url
-                  || charge?.data?.redirect_url
-                  || charge?.data?.redirection_url
-                  || charge?.data?.url
-                  || charge?.data?.three_d_secure_url;
-
-      console.log('[paymob] 3DS url found:', url3ds || 'NONE');
-
-      // سواء وُجد الـ URL أم لا — أرجع pending ليتحقق الـ polling
+    // 🔐 يحتاج 3DS — إذا وُجد redirect_url أو كان pending: true
+    if (url3ds || charge.pending === true) {
+      console.log('[paymob] 3DS required, url:', url3ds);
       return res.json({
         pending:       true,
         redirectUrl:   url3ds || null,
@@ -196,7 +196,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // ❌ رُفضت البطاقة — نجمع كل الحقول الممكنة للتشخيص
+    // ❌ رُفضت البطاقة
     const reason = charge?.data?.message
                 || charge?.data?.reject_reason_message_ar
                 || charge?.data?.reject_reason_message
@@ -204,8 +204,8 @@ export default async function handler(req, res) {
                 || charge?.txn_response_code
                 || charge?.message
                 || charge?.detail
-                || (charge?.data ? JSON.stringify(charge.data) : null)
                 || 'رُفضت البطاقة';
+
     return res.status(400).json({ error: reason, _debug: charge });
 
   } catch (err) {
