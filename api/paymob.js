@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
   // ── بيانات الطلب ─────────────────────────────────────────────
   const { customer } = req.body || {};
-  const amount   = 4999;     // 49.99 ر.س بالهللات
+  const amount   = 100;      // 1.00 ر.س بالهللات (للاختبار)
   const currency = 'SAR';
   const plan     = 'basic';  // الباقة الأساسية: 5 دراسات / 6 أشهر
 
