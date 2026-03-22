@@ -4458,11 +4458,11 @@ footer {
         </div>
         <table class="data-table" id="user-studies-table">
           <thead>
-            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>اشتراك/تحميل</th><th>حذف</th></tr>
+            <tr><th>اسم المشروع</th><th>القطاع</th><th>رأس المال</th><th>IRR</th><th>الحالة</th><th>تحميل</th><th>اشتراك</th><th>حذف</th></tr>
           </thead>
           <tbody id="user-studies-tbody">
             <tr id="no-studies-row">
-              <td colspan="7" style="text-align:center;padding:48px 24px;color:var(--text3);">
+              <td colspan="8" style="text-align:center;padding:48px 24px;color:var(--text3);">
                 <div style="font-size:2rem;margin-bottom:12px;">📋</div>
                 <div style="font-weight:700;margin-bottom:8px;color:var(--text2);">لا توجد دراسات بعد</div>
                 <div style="font-size:0.8rem;margin-bottom:16px;">ابدأ بإنشاء دراستك الأولى الآن</div>
@@ -4472,9 +4472,8 @@ footer {
           </tbody>
         </table>
         <div style="margin-top:14px;padding:10px 14px;background:var(--ink3);border-radius:10px;font-size:0.75rem;color:var(--text3);display:flex;gap:16px;flex-wrap:wrap;">
-          <span><span class="sbadge sbadge-done">مدفوعة</span> — الدراسة مفتوحة بالكامل</span>
+          <span><span class="sbadge sbadge-done">مدفوعة</span> — الدراسة مفتوحة بالكامل مع تحميل PDF و Excel</span>
           <span><span class="sbadge sbadge-locked">غير مدفوعة</span> — محتوى مرئي جزئياً — اشترك لفتح الكامل</span>
-          <span><span class="sbadge sbadge-draft">بانتظار الدفع</span> — الدراسة لم تُولَّد بعد</span>
         </div>
       </div>
     </div>
@@ -6860,6 +6859,9 @@ async function saveStudy(title, content) {
   if (!metadata.sector  && input_data?.sector)  metadata.sector  = input_data.sector;
   if (!metadata.capital && input_data?.capital) metadata.capital = input_data.capital;
 
+  // ── حفظ فقط إذا كان المستخدم لديه نقاط (لا نحفظ المسودات) ──
+  if (!window._hasPoints) return;
+
   // ── حفظ في قاعدة البيانات إن كان المستخدم مسجلاً ──
   const user = _getLoggedUser();
   if (user && user.id) {
@@ -6867,14 +6869,10 @@ async function saveStudy(title, content) {
       const res = await fetch('/api/studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-        body: JSON.stringify({
-          title, content, metadata, input_data,
-          status: window._hasPoints ? 'completed' : 'draft'
-        })
+        body: JSON.stringify({ title, content, metadata, input_data, status: 'completed' })
       });
       if (res.ok) {
-        const statusLabel = window._hasPoints ? '✅ تم حفظ الدراسة في حسابك' : '💾 حُفظت كمسودة — اشترك لفتح المحتوى كاملاً';
-        showToast(statusLabel);
+        showToast('✅ تم حفظ الدراسة في حسابك');
         if (document.getElementById('page-dashboard')?.classList.contains('active')) {
           loadDashboardStudies();
         }
@@ -6897,8 +6895,7 @@ async function saveStudy(title, content) {
     const local = JSON.parse(localStorage.getItem('saved_studies') || '[]');
     const idx = local.findIndex(s => s.title === title);
     if (idx !== -1) local.splice(idx, 1);
-    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata,
-                    status: window._hasPoints ? 'completed' : 'draft' });
+    local.unshift({ id: 'local_' + Date.now(), title, content, date, metadata, status: 'completed' });
     if (local.length > 30) local.splice(30);
     localStorage.setItem('saved_studies', JSON.stringify(local));
     if (!user || !user.id) {
@@ -7035,6 +7032,16 @@ async function loadDashboardStudies() {
     return;
   }
 
+  // ── إخفاء الدراسات المسودة (لا تُعرض في الداشبورد) ──
+  studies = studies.filter(s => s.status !== 'draft');
+
+  if (studies.length === 0) {
+    if (noRow) noRow.style.display = '';
+    document.getElementById('kpi-total').textContent = '0';
+    document.getElementById('kpi-done').textContent  = '0';
+    return;
+  }
+
   if (noRow) noRow.style.display = 'none';
 
   // ── فتح الدراسات المحجوبة تلقائياً إذا كان المستخدم لديه نقاط ──
@@ -7057,31 +7064,33 @@ async function loadDashboardStudies() {
               : rawCap)
       : '—';
     const irr     = meta.irr || inp.irr || '—';
-    const isDraft = s.status === 'draft';
+    const isPaid = window._hasPoints || s.status === 'completed';
     tr.innerHTML = `
       <td>
-        <span style="cursor:pointer;color:${isDraft ? 'var(--text2)' : 'var(--gold)'};font-weight:700;${isDraft ? 'opacity:0.75;' : ''}" onclick="openSavedStudy(${idParam})">
-          ${isDraft ? '🔒 ' : ''}${s.title}
-        </span>
+        <span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span>
       </td>
       <td style="font-size:0.8rem;color:var(--text2);">${sector}</td>
       <td style="font-size:0.8rem;color:var(--text2);">${capital}</td>
       <td style="font-size:0.8rem;color:var(--text2);">${irr}</td>
       <td>
-        ${isDraft
-          ? `<span class="sbadge sbadge-draft">بانتظار الدفع</span>`
-          : window._hasPoints
-            ? `<span class="sbadge sbadge-done">مدفوعة</span>`
-            : `<span class="sbadge sbadge-locked">غير مدفوعة</span>`
+        ${isPaid
+          ? `<span class="sbadge sbadge-done">مدفوعة</span>`
+          : `<span class="sbadge sbadge-locked">غير مدفوعة</span>`
         }
       </td>
-      <td style="font-size:0.75rem;color:var(--text3);">
-        ${isDraft
-          ? `<button onclick="closeStudyViewer();showPage('pricing')" title="اشترك لفتح الدراسة" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;color:#3B82F6;font-size:0.75rem;padding:3px 10px;font-family:'Cairo',sans-serif;">اشترك</button>`
-          : `<div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <td style="font-size:0.75rem;">
+        ${isPaid
+          ? `<div style="display:flex;gap:5px;flex-wrap:wrap;">
                <button onclick="downloadStudyPdf(${idParam})" title="تحميل PDF" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;color:#F87171;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📄 PDF</button>
                <button onclick="downloadStudyXlsx(${idParam})" title="تحميل Excel" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;color:#34D399;font-size:0.72rem;padding:3px 8px;font-family:'Cairo',sans-serif;">📊 Excel</button>
              </div>`
+          : `<span style="color:var(--text3);font-size:0.75rem;">—</span>`
+        }
+      </td>
+      <td style="text-align:center;">
+        ${isPaid
+          ? `<button disabled style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:6px;color:#34D399;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;cursor:default;opacity:0.6;">✓ مشترك</button>`
+          : `<button onclick="startPaymentForStudy()" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer;color:#60A5FA;font-size:0.72rem;padding:3px 10px;font-family:'Cairo',sans-serif;font-weight:700;">💳 اشترك</button>`
         }
       </td>
       <td style="text-align:center;">
@@ -7090,7 +7099,7 @@ async function loadDashboardStudies() {
     `;
     tbody.appendChild(tr);
   });
-  const paidCount = studies.filter(s => s.status !== 'draft').length;
+  const paidCount = studies.filter(s => window._hasPoints || s.status === 'completed').length;
   document.getElementById('kpi-total').textContent = studies.length;
   document.getElementById('kpi-done').textContent  = paidCount;
 
