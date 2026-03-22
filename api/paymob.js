@@ -39,7 +39,7 @@ export default async function handler(req, res) {
             if (order[0]?.user_id) {
               await sql`INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
                         VALUES (${order[0].user_id}, ${parseInt(dbOrderId)}, 5, 0, NOW() + INTERVAL '6 months')
-                        ON CONFLICT (order_id) DO NOTHING`;
+                        ON CONFLICT DO NOTHING`;
               console.log('[check] points added for order:', dbOrderId);
             }
           } catch (e) { console.error('[check] points error:', e.message); }
@@ -202,7 +202,7 @@ export default async function handler(req, res) {
             await sql`
               INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
               VALUES (${order[0].user_id}, ${dbOrderId}, 5, 0, NOW() + INTERVAL '6 months')
-              ON CONFLICT (order_id) DO NOTHING
+              ON CONFLICT DO NOTHING
             `;
           }
         }

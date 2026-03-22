@@ -113,7 +113,7 @@ export default async function handler(req, res) {
           await sql`
             INSERT INTO user_points (user_id, order_id, total_points, used_points, expires_at)
             VALUES (${order.user_id}, ${order.id}, 5, 0, NOW() + INTERVAL '6 months')
-            ON CONFLICT (order_id) DO NOTHING
+            ON CONFLICT DO NOTHING
           `;
         } catch (_) {}
 
