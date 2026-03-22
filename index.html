@@ -6337,20 +6337,6 @@ function unlockStudy(){
 }
 
 function downloadPDF(){
-  const isLoggedIn = !!localStorage.getItem('user_data');
-  // غير مسجّل → مودال تسجيل الدخول
-  if (!isLoggedIn) {
-    window._pendingPdfAfterLogin = true;
-    showPDFPaywallModal('login');
-    return;
-  }
-  // مسجّل بلا نقاط → مودال الاشتراك
-  if (!window._hasPoints) {
-    window._pendingPdfAfterLogin = true;
-    showPDFPaywallModal('pay');
-    return;
-  }
-  // مسجّل + عنده نقاط → تحميل مباشر
   exportPDF();
 }
 
@@ -7972,14 +7958,6 @@ function showExcelPaywallModal(mode) {
 }
 
 function exportReadyStudyPDF() {
-  // الدراسات الجاهزة مجانية — لا حاجة للتحقق من الاشتراك
-  if (!window._isReadyStudy) {
-    if(!localStorage.getItem('user_data') || !window._hasPoints || !window._studyUnlocked){
-      window._pendingReadyPdfAfterLogin = true;
-      showPDFPaywallModal();
-      return;
-    }
-  }
   const body    = document.getElementById('study-viewer-body');
   const titleEl = document.getElementById('study-viewer-title');
   const title   = (titleEl && titleEl.textContent.trim()) || 'دراسة الجدوى';
@@ -8785,14 +8763,7 @@ function setAuthUI(user) {
   // ── تنفيذ إجراء PDF المعلق بعد تسجيل الدخول ──
   if (window._pendingPdfAfterLogin) {
     window._pendingPdfAfterLogin = false;
-    setTimeout(()=>{
-      if (window._hasPoints) {
-        showToast('✅ تم تسجيل الدخول — جاري تصدير PDF...');
-        exportPDF();
-      } else {
-        showPDFPaywallModal('pay');
-      }
-    }, 600);
+    setTimeout(()=>{ exportPDF(); }, 600);
   }
   if (window._pendingReadyPdfAfterLogin) {
     window._pendingReadyPdfAfterLogin = false;
