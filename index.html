@@ -7800,6 +7800,22 @@ const IPC_TIMEOUT_MS     = 120000; // دقيقتان
 
 /** فتح المودال */
 function pmoOpen() {
+  // ── إعادة ضبط المودال لنموذج البطاقة ──
+  ipcClearTimers();
+  const iframe = document.getElementById('ipc-iframe');
+  if (iframe) iframe.src = '';
+  // أظهر نموذج البطاقة وأخفِ باقي الحالات
+  ['ipc-loader','ipc-iframe-wrap','ipc-success','ipc-timeout','ipc-error']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  const cardForm = document.getElementById('ipc-card-form');
+  if (cardForm) cardForm.style.display = '';
+  // أعد تفعيل زر الإرسال
+  const submitBtn = document.getElementById('pmo-submit-btn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔒 ادفع الآن'; }
+  // أخفِ رسائل الخطأ
+  const errDiv = document.getElementById('pmo-form-error');
+  if (errDiv) errDiv.style.display = 'none';
+  // افتح المودال
   const overlay = document.getElementById('payment-modal-overlay');
   if (overlay) {
     overlay.classList.add('open');
