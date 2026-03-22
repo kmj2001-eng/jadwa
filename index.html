@@ -7821,6 +7821,9 @@ function pmoOpen() {
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
+  // مرِّر للأعلى عند كل فتح
+  const modalCard = document.getElementById('payment-modal-card');
+  if (modalCard) modalCard.scrollTop = 0;
 }
 
 /** إغلاق المودال */
@@ -7900,6 +7903,7 @@ function pmoGooglePay() {
 /** إرسال بيانات البطاقة — Direct Charge عبر Paymob */
 async function pmoSubmitCard(e) {
   e.preventDefault();
+  console.log('[PMO] pmoSubmitCard called');
 
   const errDiv = document.getElementById('pmo-form-error');
   if (errDiv) errDiv.style.display = 'none';
@@ -7907,9 +7911,11 @@ async function pmoSubmitCard(e) {
   // ── تحقق من تسجيل الدخول ──
   const user = _getLoggedUser();
   if (!user || !user.id) {
+    console.log('[PMO] user not logged in — opening auth modal');
     window._pendingPaymentAfterLogin = true;
     pmoClose(); openAuthModal('login'); return;
   }
+  console.log('[PMO] user:', user.email || user.id);
 
   // ── قراءة بيانات البطاقة ──
   const cardNum  = (document.getElementById('pmo-card-num')?.value  || '').replace(/\s/g,'');
@@ -7919,7 +7925,11 @@ async function pmoSubmitCard(e) {
 
   // ── validation ──
   const showFieldErr = (msg) => {
+    // أظهر الخطأ في الـ div + scroll للأعلى + toast
     if (errDiv) { errDiv.textContent = msg; errDiv.style.display = 'block'; }
+    const modalCard = document.getElementById('payment-modal-card');
+    if (modalCard) modalCard.scrollTop = 0;
+    if (typeof showToast === 'function') showToast(msg);
   };
   if (cardNum.length < 16)        return showFieldErr('⚠️ رقم البطاقة غير مكتمل');
   if (!cardName)                  return showFieldErr('⚠️ أدخل الاسم على البطاقة');
