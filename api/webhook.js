@@ -107,7 +107,7 @@ export default async function handler(req, res) {
           `;
         } catch (_) {}
 
-        // ── إنشاء فاتورة ──
+        // ── إنشاء فاتورة + إرسال إيميل ──
         try {
           const invoiceNumber = String(order.id).padStart(5, "0");
           await sql`
@@ -115,7 +115,73 @@ export default async function handler(req, res) {
             VALUES (${order.id}, ${order.user_id}, ${order.amount}, ${order.currency}, 'paid', ${invoiceNumber})
             ON CONFLICT DO NOTHING
           `;
-        } catch (_) {}
+
+          // جلب بيانات المستخدم لإرسال الإيميل
+          const users = await sql`SELECT name, email FROM users WHERE id = ${order.user_id} LIMIT 1`;
+          const user  = users[0];
+          const amountSAR = (order.amount / 100).toFixed(2);
+          const dateStr   = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+
+          if (user?.email && process.env.RESEND_API_KEY) {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: `ذكاء الأعمال <${process.env.SENDER_EMAIL || 'support@eses.store'}>`,
+                to:   [user.email],
+                subject: `🧾 فاتورة رقم #${invoiceNumber} — ذكاء الأعمال`,
+                html: `
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><style>
+  body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+  .card { background: #fff; max-width: 560px; margin: auto; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+  .header { background: linear-gradient(135deg,#1e3a5f,#2563eb); padding: 32px 24px; text-align: center; color: #fff; }
+  .header h1 { margin: 0; font-size: 22px; }
+  .header p  { margin: 6px 0 0; opacity: .8; font-size: 14px; }
+  .body { padding: 28px 24px; }
+  .greeting { font-size: 16px; color: #1e293b; margin-bottom: 20px; }
+  .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #475569; }
+  .row span:last-child { font-weight: bold; color: #1e293b; }
+  .amount-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; text-align: center; margin: 20px 0; }
+  .amount-box .label { font-size: 13px; color: #16a34a; margin-bottom: 4px; }
+  .amount-box .value { font-size: 28px; font-weight: bold; color: #15803d; }
+  .points { background: #eff6ff; border-radius: 8px; padding: 14px 16px; font-size: 14px; color: #1d4ed8; margin-bottom: 20px; }
+  .footer { background: #f8fafc; padding: 20px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  .footer a { color: #2563eb; text-decoration: none; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>🧾 فاتورة ذكاء الأعمال</h1>
+    <p>شكراً لثقتك بنا!</p>
+  </div>
+  <div class="body">
+    <p class="greeting">مرحباً ${user.name || 'عزيزنا'}،<br>تم استلام دفعتك بنجاح.</p>
+    <div class="row"><span>رقم الفاتورة</span><span>#${invoiceNumber}</span></div>
+    <div class="row"><span>التاريخ</span><span>${dateStr}</span></div>
+    <div class="row"><span>الخطة</span><span>باقة دراسات الجدوى — 5 دراسات (6 أشهر)</span></div>
+    <div class="row"><span>العملة</span><span>${order.currency || 'SAR'}</span></div>
+    <div class="amount-box">
+      <div class="label">المبلغ المدفوع</div>
+      <div class="value">${amountSAR} ر.س</div>
+    </div>
+    <div class="points">🎉 تمت إضافة <strong>5 نقاط جدوى</strong> إلى حسابك — ابدأ دراستك الآن!</div>
+  </div>
+  <div class="footer">
+    <p>منصة ذكاء الأعمال · <a href="https://eses.store">eses.store</a></p>
+    <p>للتواصل: <a href="mailto:support@eses.store">support@eses.store</a></p>
+  </div>
+</div>
+</body></html>`,
+              }),
+            });
+            console.log(`📧 Invoice email sent to: ${user.email}`);
+          }
+        } catch (e) { console.error('[webhook] invoice/email error:', e.message); }
 
         console.log(`✅ Payment success: orderId=${paymobOrderId} | dbOrder=${order.id} | user=${order.user_id}`);
       } else {
