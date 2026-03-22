@@ -148,7 +148,7 @@ export default async function handler(req, res) {
           sourceholder_name: card.name || 'Card Holder',
           subtype:           'CARD',
           expiry_month:      expMonth.trim(),
-          expiry_year:       '20' + expYear.trim(),
+          expiry_year:       expYear.trim(),   // رقمان فقط: "27" وليس "2027"
           cvn:               card.cvv,
         },
         payment_token: paymentKey,
