@@ -78,12 +78,29 @@ export default async function handler(req, res) {
     // ── آخر 5 دراسات ───────────────────────────────────────────
     if (action === 'studies') {
       const rows = await sql`
-        SELECT fs.id, fs.title, fs.status, fs.created_at,
+        SELECT fs.id, fs.project_name AS title, fs.created_at,
                u.name AS user_name, u.email AS user_email
         FROM feasibility_studies fs
         LEFT JOIN users u ON u.id = fs.user_id
         ORDER BY fs.created_at DESC
         LIMIT 5
+      `;
+      return res.json({ studies: rows });
+    }
+
+    // ── كل دراسات الجدوى (للإدارة) ─────────────────────────────
+    if (action === 'all-studies') {
+      const rows = await sql`
+        SELECT fs.id, fs.project_name,
+               fs.input_data->>'capital'  AS capital,
+               fs.input_data->>'currency' AS currency,
+               fs.created_at,
+               u.name  AS user_name,
+               u.email AS user_email
+        FROM feasibility_studies fs
+        LEFT JOIN users u ON u.id = fs.user_id
+        ORDER BY fs.created_at DESC
+        LIMIT 500
       `;
       return res.json({ studies: rows });
     }

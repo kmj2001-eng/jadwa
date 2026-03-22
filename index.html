@@ -4543,6 +4543,7 @@ footer {
           <div class="dmenu-item" onclick="adminShowPage('orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
           <div class="dmenu-item" onclick="adminShowPage('invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
           <div class="dmenu-item" onclick="adminShowPage('points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
+          <div class="dmenu-item" onclick="adminShowPage('studies-admin')" style="color:#f59e0b;"><span class="dicon">📋</span> دراسات الجدوى</div>
           <div class="dmenu-item" onclick="adminShowPage('email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
         </div>
       </div>
@@ -4723,6 +4724,22 @@ footer {
         </div>
 
         <!-- ── صفحة إرسال إيميل ── -->
+        <!-- ── صفحة دراسات الجدوى ── -->
+        <div id="admin-page-studies-admin" style="display:none;">
+          <div class="studies-panel">
+            <div class="panel-header">
+              <h3 style="color:#f59e0b;">📋 دراسات الجدوى</h3>
+              <button onclick="adminLoadAllStudies()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;cursor:pointer;font-size:0.78rem;padding:6px 14px;font-family:'Cairo',sans-serif;">🔄 تحديث</button>
+            </div>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+              <table class="data-table" style="min-width:540px;">
+                <thead><tr><th>الاسم</th><th>الإيميل</th><th>اسم المشروع</th><th>رأس المال</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-studies-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div id="admin-page-email" style="display:none;">
           <div class="studies-panel">
             <div class="panel-header"><h3 style="color:#f59e0b;">📧 إرسال إيميل</h3></div>
@@ -9145,8 +9162,8 @@ function _adminHeaders() {
   return { 'Content-Type': 'application/json', 'x-admin-email': u?.email || '' };
 }
 
-const _adminPages = ['home','users','orders','invoices','points','email'];
-const _adminPageTitles = { home:'', users:'› المستخدمون', orders:'› الطلبات', invoices:'› الفواتير', points:'› النقاط', email:'› إرسال إيميل' };
+const _adminPages = ['home','users','orders','invoices','points','studies-admin','email'];
+const _adminPageTitles = { home:'', users:'› المستخدمون', orders:'› الطلبات', invoices:'› الفواتير', points:'› النقاط', 'studies-admin':'› دراسات الجدوى', email:'› إرسال إيميل' };
 
 function adminShowPage(name) {
   _adminPages.forEach(p => {
@@ -9160,7 +9177,8 @@ function adminShowPage(name) {
   if (name === 'users')    adminLoadUsers();
   if (name === 'orders')   adminLoadOrders();
   if (name === 'invoices') adminLoadInvoices();
-  if (name === 'points')   adminLoadPoints();
+  if (name === 'points')        adminLoadPoints();
+  if (name === 'studies-admin') adminLoadAllStudies();
   // التمرير للأعلى
   document.getElementById('admin-panel')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
@@ -9241,6 +9259,27 @@ async function adminLoadPoints() {
         <td style="font-size:0.75rem;color:var(--text3);">${new Date(p.expires_at).toLocaleDateString('ar-SA')}</td>
         <td style="font-size:0.75rem;color:var(--text3);">${new Date(p.created_at).toLocaleDateString('ar-SA')}</td>
       </tr>`).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
+}
+
+async function adminLoadAllStudies() {
+  const tbody = document.getElementById('admin-studies-tbody');
+  if (!tbody) return;
+  try {
+    const res  = await fetch('/api/admin?action=all-studies', { headers: _adminHeaders() });
+    const data = await res.json();
+    const list = data.studies || [];
+    if (!list.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);">لا توجد دراسات</td></tr>`; return; }
+    tbody.innerHTML = list.map(s => {
+      const capital = s.capital ? `${Number(s.capital).toLocaleString('ar-SA')} ${s.currency || ''}` : '—';
+      return `<tr>
+        <td style="font-size:0.82rem;">${s.user_name || '—'}</td>
+        <td style="font-size:0.78rem;color:var(--text3);direction:ltr;">${s.user_email || '—'}</td>
+        <td style="font-weight:600;">${s.project_name || '—'}</td>
+        <td style="color:var(--gold);font-weight:700;">${capital}</td>
+        <td style="font-size:0.75rem;color:var(--text3);">${new Date(s.created_at).toLocaleDateString('ar-SA')}</td>
+      </tr>`;
+    }).join('');
   } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
 }
 
