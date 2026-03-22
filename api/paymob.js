@@ -155,15 +155,7 @@ export default async function handler(req, res) {
       }),
     });
     const charge = await chargeRes.json();
-    // 🔍 تسجيل الرد الكامل لتشخيص المشاكل
-    console.log('[paymob] chargeStatus:', chargeRes.status);
-    console.log('[paymob] charge.success:', charge.success);
-    console.log('[paymob] charge.pending:', charge.pending);
-    console.log('[paymob] charge.txn_response_code:', charge.txn_response_code);
-    console.log('[paymob] charge.data:', JSON.stringify(charge.data || {}));
-    console.log('[paymob] charge.message:', charge.message);
-    console.log('[paymob] charge.detail:', charge.detail);
-    console.log('[paymob] FULL:', JSON.stringify(charge));
+    console.log('[paymob] charge success:', charge.success, '| pending:', charge.pending);
 
     // ── ابحث عن redirect_url في كل الحقول الممكنة (3DS / MIGS) ──
     const url3ds = charge.redirect_url
@@ -206,7 +198,7 @@ export default async function handler(req, res) {
                 || charge?.detail
                 || 'رُفضت البطاقة';
 
-    return res.status(400).json({ error: reason, _debug: charge });
+    return res.status(400).json({ error: reason });
 
   } catch (err) {
     console.error('[paymob] error:', err.message);
