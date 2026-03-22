@@ -2552,6 +2552,8 @@ footer {
   .dash-kpis{grid-template-columns:1fr 1fr;}
   .dash-main{padding:24px 16px;min-width:0;overflow-x:hidden;}
   .footer-inner{grid-template-columns:1fr 1fr;}
+  .footer-brand{grid-column:1/-1;}
+  .footer-col:last-child{grid-column:1/-1; justify-self:center; text-align:center; width:50%;}
   .articles-grid,.samples-grid{padding:0 20px;}
   .inner-hero{padding:100px 20px 48px;}
 }
@@ -2572,7 +2574,13 @@ footer {
   .section-title{font-size:1.4rem;}
   .inner-hero{padding:90px 16px 40px;}
   .inner-hero-inner h1{font-size:1.5rem;}
-  .footer-inner{grid-template-columns:1fr 1fr;}
+  .footer-inner{grid-template-columns:1fr 1fr; gap:20px 16px;}
+  .footer-brand{grid-column:1/-1;}
+  .footer-col:last-child{grid-column:1/-1; justify-self:center; text-align:center; width:50%;}
+  footer{padding:32px 16px 24px;}
+  .footer-bottom{flex-direction:column;align-items:center;text-align:center;gap:6px;font-size:0.65rem;}
+  .footer-col h4{font-size:0.65rem;margin-bottom:10px;}
+  .footer-col a{font-size:0.7rem;margin-bottom:8px;}
 
   /* ── nav ── */
   nav{padding:0 12px;}
