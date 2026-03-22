@@ -5499,6 +5499,15 @@ let _studyGenerating = false;
 async function generateStudy(){
   // منع أي تشغيل متزامن مطلقاً
   if (_studyGenerating) return;
+
+  // ── إجبار تسجيل الدخول قبل التوليد ──────────────────────────────
+  if (!_getLoggedUser()?.id) {
+    window._pendingGenerate = true;
+    openAuthModal('login');
+    showToast('🔐 سجّل دخولك أولاً لبدء توليد الدراسة');
+    return;
+  }
+
   _studyGenerating = true;
   const genBtn = document.querySelector('.btn-next[onclick="generateStudy()"]');
   if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.5'; genBtn.style.pointerEvents = 'none'; }
@@ -5802,8 +5811,9 @@ function showResult(text){
   const newBtn   = document.getElementById('viewer-new-study-btn');
   const studyTitle = (document.getElementById('output-title') && document.getElementById('output-title').textContent.trim()) || 'دراسة الجدوى';
   if (titleEl)  titleEl.textContent  = studyTitle;
-  if (pdfBtn)   pdfBtn.style.display  = '';
-  if (xlsxBtn)  xlsxBtn.style.display = '';
+  // أزرار التحميل: مرئية فقط إن كانت الدراسة مدفوعة (نقطة خُصمت)
+  if (pdfBtn)   pdfBtn.style.display  = window._hasPoints ? '' : 'none';
+  if (xlsxBtn)  xlsxBtn.style.display = window._hasPoints ? '' : 'none';
   if (newBtn)   newBtn.style.display  = '';
 
   const outputBody = document.getElementById('study-viewer-body');
@@ -5851,31 +5861,30 @@ function showResult(text){
     });
 
     if (sections.length > _freeSections) {
-      // رابط الاشتراك حسب حالة تسجيل الدخول
-      const payAction = _loggedUser
-        ? `onclick="closeStudyViewer();showPage('pricing')"`
-        : `onclick="closeStudyViewer();openAuthModal('login')"`;
+      // رابط الاشتراك يذهب دائماً لصفحة التسعير (المستخدم مسجّل بالفعل)
+      const payAction = `onclick="closeStudyViewer();showPage('pricing')"`;
 
-      // المحتوى المضبّب (الأقسام 3-10)
+      // المحتوى المضبّب (الأقسام 4-10)
       const blurredContent = document.createElement('div');
       blurredContent.className = 'paywall-blur-content';
       sections.forEach((sec, idx) => {
         if (idx >= _freeSections) blurredContent.appendChild(sec);
       });
 
-      // الغلاف الشفاف مع رسالة الاشتراك
+      // الغلاف مع رسالة الاشتراك
       const overlayDiv = document.createElement('div');
       overlayDiv.className = 'paywall-overlay';
       overlayDiv.innerHTML = `
         <div class="paywall-overlay-inner">
           <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
           <p class="paywall-overlay-msg">
-            عزيزي المستخدم يجب عليكم
-            <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
-            بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
-            لنتمكن من إزالة الحجب عن المحتوى
+            اشترك لفتح الدراسة الكاملة
+            <strong style="color:#34D399;font-size:1.1rem;"> — فقط 49.99 ر.س</strong>
           </p>
-          <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+          <button class="paywall-overlay-btn" ${payAction}
+            style="text-align:center;display:block;margin:12px auto 0;">
+            💳 اشترك الآن — 49.99 ر.س
+          </button>
         </div>
       `;
 
@@ -6862,16 +6871,19 @@ async function saveStudy(title, content) {
   const user = _getLoggedUser();
 
   if (user && user.id) {
-    // ── مسجّل دخول — لا نحفظ إلا إذا كان لديه نقاط ──
-    if (!window._hasPoints) return;
+    // ── مسجّل دخول — احفظ دائماً: مدفوعة إن خُصمت نقطة، وإلا غير مدفوعة ──
+    const _saveStatus = window._hasPoints ? 'completed' : 'unpaid';
     try {
       const res = await fetch('/api/studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-        body: JSON.stringify({ title, content, metadata, input_data, status: 'completed' })
+        body: JSON.stringify({ title, content, metadata, input_data, status: _saveStatus })
       });
       if (res.ok) {
-        showToast('✅ تم حفظ الدراسة في حسابك');
+        const _toastMsg = _saveStatus === 'completed'
+          ? '✅ تم حفظ الدراسة في حسابك'
+          : '💾 دراستك محفوظة — اشترك لفتح المحتوى الكامل';
+        showToast(_toastMsg);
         if (document.getElementById('page-dashboard')?.classList.contains('active')) {
           loadDashboardStudies();
         }
@@ -6972,47 +6984,7 @@ async function migrateLocalStudiesToDB(user) {
   } catch(e) { console.warn('migrateLocalStudiesToDB:', e); }
 }
 
-async function _autoUnlockDraftStudies(user, studies) {
-  if (!user || !user.id || !window._hasPoints) return;
-  const drafts = studies.filter(s => s.status === 'draft' && String(s.id).startsWith('db_'));
-  if (!drafts.length) return;
-
-  let unlocked = 0;
-  for (const study of drafts) {
-    // اخصم نقطة
-    const consumeRes = await fetch('/api/points', {
-      method : 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body   : JSON.stringify({ action: 'consume' })
-    }).catch(() => null);
-    if (!consumeRes || !consumeRes.ok) break; // لا نقاط متبقية — توقف
-
-    // تحديث حالة الدراسة في DB
-    const dbId = String(study.id).replace('db_', '');
-    await fetch('/api/studies', {
-      method : 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': String(user.id) },
-      body   : JSON.stringify({ id: dbId, status: 'completed' })
-    }).catch(() => {});
-
-    study.status = 'completed'; // تحديث فوري في المصفوفة المحلية
-    unlocked++;
-  }
-
-  if (unlocked > 0) {
-    showToast('✅ تم فتح ' + unlocked + ' دراسة وخصم ' + unlocked + ' نقطة');
-    // تحديث رصيد النقاط
-    try {
-      const pr = await fetch('/api/points', { headers: { 'x-user-id': String(user.id) } });
-      if (pr.ok) {
-        const pd = await pr.json();
-        window._hasPoints = pd.remaining >= 1;
-        const kpiPts = document.getElementById('kpi-points');
-        if (kpiPts) kpiPts.textContent = pd.remaining;
-      }
-    } catch(_) {}
-  }
-}
+// _autoUnlockDraftStudies: محذوفة — المنطق الجديد يعتمد على status عند الحفظ فقط
 
 async function loadDashboardStudies() {
   const tbody = document.getElementById('user-studies-tbody');
@@ -7064,8 +7036,8 @@ async function loadDashboardStudies() {
     return;
   }
 
-  // ── إخفاء الدراسات المسودة (لا تُعرض في الداشبورد) ──
-  studies = studies.filter(s => s.status !== 'draft');
+  // ── إخفاء المسودات فقط (draft) — نعرض completed و unpaid ──
+  studies = studies.filter(s => s.status !== 'draft' && s.status !== 'pending');
 
   if (studies.length === 0) {
     if (noRow) noRow.style.display = '';
@@ -7077,7 +7049,7 @@ async function loadDashboardStudies() {
   if (noRow) noRow.style.display = 'none';
 
   // ── فتح الدراسات المحجوبة تلقائياً إذا كان المستخدم لديه نقاط ──
-  await _autoUnlockDraftStudies(user, studies);
+  // (تم إزالة _autoUnlockDraftStudies — الحالة تُحدَّد عند الحفظ)
 
   studies.forEach(s => {
     const tr      = document.createElement('tr');
@@ -7096,7 +7068,8 @@ async function loadDashboardStudies() {
               : rawCap)
       : '—';
     const irr     = meta.irr || inp.irr || '—';
-    const isPaid = window._hasPoints || s.status === 'completed';
+    // isPaid يعتمد على حالة الدراسة المحفوظة فقط (لا يتغير بتغيّر نقاط المستخدم)
+    const isPaid = s.status === 'completed';
     tr.innerHTML = `
       <td>
         <span style="cursor:pointer;color:var(--gold);font-weight:700;" onclick="openSavedStudy(${idParam})">${s.title}</span>
@@ -7131,7 +7104,7 @@ async function loadDashboardStudies() {
     `;
     tbody.appendChild(tr);
   });
-  const paidCount = studies.filter(s => window._hasPoints || s.status === 'completed').length;
+  const paidCount = studies.filter(s => s.status === 'completed').length;
   document.getElementById('kpi-total').textContent = studies.length;
   document.getElementById('kpi-done').textContent  = paidCount;
 
@@ -7184,21 +7157,20 @@ async function openSavedStudy(id) {
   window._fullStudyText   = study.content;
 
   window._isReadyStudy = false; // دراسة مستخدم → تشترط الاشتراك
+
+  // ── تحديد حالة الدراسة: مدفوعة أم غير مدفوعة ──
+  const studyStatus = study.status || (study.metadata && study.metadata.status) || 'unpaid';
+  const isPaid = studyStatus === 'completed';
+
+  // أزرار التحميل: مرئية فقط للدراسات المدفوعة
   const pdfBtn  = document.getElementById('viewer-pdf-btn');
-  if (pdfBtn) pdfBtn.style.display = '';
+  if (pdfBtn) pdfBtn.style.display = isPaid ? '' : 'none';
   const xlsxBtn2 = document.getElementById('viewer-xlsx-btn');
-  if (xlsxBtn2) xlsxBtn2.style.display = '';
+  if (xlsxBtn2) xlsxBtn2.style.display = isPaid ? '' : 'none';
   // حفظ input_data للـ Excel
   window._currentStudyMeta = study.input_data || {};
   const newStudyBtn = document.getElementById('viewer-new-study-btn');
   if (newStudyBtn) newStudyBtn.style.display = 'none';
-
-  // ── تحديد حالة الدراسة: مدفوعة أم بانتظار الدفع ──
-  const studyStatus = study.status
-    || (study.metadata && study.metadata.status)
-    || 'draft';
-  // إذا كان المستخدم لديه نقاط نعامله كمدفوع حتى لو كان status=draft
-  const isPaid = (studyStatus === 'completed') || (window._hasPoints === true);
 
   // ── تحويل المحتوى وتقسيمه لأقسام بنفس منطق showResult ──
   const html = typeof mdToHtml === 'function' ? mdToHtml(study.content) : study.content.replace(/\n/g,'<br>');
@@ -7247,16 +7219,14 @@ async function openSavedStudy(id) {
     // ── مدفوعة: عرض كامل بدون حجب ──
     sections.forEach((sec, idx) => { sec.setAttribute('data-section-idx', idx); body.appendChild(sec); });
   } else {
-    // ── بانتظار الدفع: 7 أقسام مرئية + حجب الباقي ──
+    // ── غير مدفوعة: أول 3 أقسام مرئية + حجب الباقي (4 → 10) ──
     sections.forEach((sec, idx) => {
       sec.setAttribute('data-section-idx', idx);
       if (idx < _freeSections) body.appendChild(sec);
     });
 
     if (sections.length > _freeSections) {
-      const payAction = _loggedUser
-        ? `onclick="closeStudyViewer();startPaymentForStudy()"`
-        : `onclick="closeStudyViewer();openAuthModal('login')"`;
+      const payAction = `onclick="closeStudyViewer();showPage('pricing')"`;
 
       const blurredContent = document.createElement('div');
       blurredContent.className = 'paywall-blur-content';
@@ -7268,12 +7238,13 @@ async function openSavedStudy(id) {
         <div class="paywall-overlay-inner">
           <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
           <p class="paywall-overlay-msg">
-            عزيزي المستخدم يجب عليكم
-            <button class="paywall-overlay-link" ${payAction}>الاشتراك</button>
-            بمبلغ <strong style="color:#34D399;font-size:1.1rem;">49.99 ر.س</strong>
-            لنتمكن من إزالة الحجب عن المحتوى
+            اشترك لفتح الدراسة الكاملة
+            <strong style="color:#34D399;font-size:1.1rem;"> — فقط 49.99 ر.س</strong>
           </p>
-          <button class="paywall-overlay-btn" ${payAction}>💳 اشترك الآن — 49.99 ر.س</button>
+          <button class="paywall-overlay-btn" ${payAction}
+            style="text-align:center;display:block;margin:12px auto 0;">
+            💳 اشترك الآن — 49.99 ر.س
+          </button>
         </div>`;
 
       const paywallWrapper = document.createElement('div');
@@ -8480,6 +8451,11 @@ async function doLogin() {
     closeAuthModal();
     showToast('مرحباً بعودتك ' + (data.user.name || '') + ' 👋');
     migrateLocalStudiesToDB(data.user);
+    // ── استئناف توليد معلّق (طلب المستخدم التوليد قبل الدخول) ──
+    if (window._pendingGenerate) {
+      window._pendingGenerate = false;
+      setTimeout(generateStudy, 500);
+    }
   } catch(e) {
     showAuthError(e.message);
     authBtnLoading('login-btn', false, 'right-to-bracket', 'دخول');
@@ -8541,6 +8517,11 @@ async function doRegister() {
       showToast('🎉 مرحباً ' + data.user.name + '! حصلت على دراسة جدوى مجانية كاملة ✨');
     } else {
       showToast('تم إنشاء حسابك بنجاح! مرحباً ' + data.user.name + ' ✨');
+    }
+    // ── استئناف توليد معلّق (طلب المستخدم التوليد قبل التسجيل) ──
+    if (window._pendingGenerate) {
+      window._pendingGenerate = false;
+      setTimeout(generateStudy, 600);
     }
   } catch(e) {
     showAuthError(e.message);
