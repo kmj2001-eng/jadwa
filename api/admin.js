@@ -110,6 +110,62 @@ export default async function handler(req, res) {
       return res.json({ users: rows });
     }
 
+    // ── كل المستخدمين ──────────────────────────────────────────
+    if (action === 'all-users') {
+      const q = req.query.q ? `%${req.query.q}%` : null;
+      const rows = q
+        ? await sql`
+            SELECT u.id, u.name, u.email, u.created_at,
+                   COALESCE(SUM(up.total_points), 0)       AS total_points,
+                   COALESCE(SUM(up.used_points), 0)        AS used_points,
+                   COALESCE(SUM(up.total_points - up.used_points), 0) AS remaining_points,
+                   COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders
+            FROM users u
+            LEFT JOIN user_points up ON up.user_id = u.id
+            LEFT JOIN orders o ON o.user_id = u.id
+            WHERE u.email ILIKE ${q} OR u.name ILIKE ${q}
+            GROUP BY u.id, u.name, u.email, u.created_at
+            ORDER BY u.created_at DESC
+            LIMIT 100`
+        : await sql`
+            SELECT u.id, u.name, u.email, u.created_at,
+                   COALESCE(SUM(up.total_points), 0)       AS total_points,
+                   COALESCE(SUM(up.used_points), 0)        AS used_points,
+                   COALESCE(SUM(up.total_points - up.used_points), 0) AS remaining_points,
+                   COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'paid') AS paid_orders
+            FROM users u
+            LEFT JOIN user_points up ON up.user_id = u.id
+            LEFT JOIN orders o ON o.user_id = u.id
+            GROUP BY u.id, u.name, u.email, u.created_at
+            ORDER BY u.created_at DESC
+            LIMIT 200`;
+      return res.json({ users: rows });
+    }
+
+    // ── حذف مستخدم ─────────────────────────────────────────────
+    if (action === 'delete-user' && req.method === 'POST') {
+      const { userId } = req.body || {};
+      if (!userId) return res.status(400).json({ error: 'userId مطلوب' });
+      await sql`DELETE FROM user_points WHERE user_id = ${userId}`;
+      await sql`DELETE FROM orders WHERE user_id = ${userId}`;
+      await sql`DELETE FROM feasibility_studies WHERE user_id = ${userId}`;
+      await sql`DELETE FROM users WHERE id = ${userId}`;
+      return res.json({ ok: true });
+    }
+
+    // ── فواتير ──────────────────────────────────────────────────
+    if (action === 'invoices') {
+      const rows = await sql`
+        SELECT o.id, o.amount, o.currency, o.status, o.created_at,
+               u.id AS user_id, u.name AS user_name, u.email AS user_email
+        FROM orders o
+        LEFT JOIN users u ON u.id = o.user_id
+        ORDER BY o.created_at DESC
+        LIMIT 200
+      `;
+      return res.json({ invoices: rows });
+    }
+
     // ── منح نقاط ───────────────────────────────────────────────
     if (action === 'grant-points' && req.method === 'POST') {
       const { userId, points } = req.body || {};

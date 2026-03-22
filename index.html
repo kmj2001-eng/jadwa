@@ -443,6 +443,14 @@ nav.scrolled {
 .nd-item.danger { color:var(--rose); }
 .nd-item.danger:hover { background:rgba(248,113,113,0.08); }
 
+/* ─── ADMIN GRANT-POINTS MODAL ─── */
+#admin-grant-modal .mbox { max-width:380px; }
+#admin-grant-modal .mgp-field { display:flex;flex-direction:column;gap:6px;margin-bottom:14px; }
+#admin-grant-modal .mgp-label { font-size:0.8rem;color:var(--text3); }
+#admin-grant-modal .mgp-input { background:var(--ink2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;width:100%;box-sizing:border-box;direction:rtl; }
+#admin-grant-modal .mgp-input:focus { outline:none;border-color:var(--gold); }
+#admin-grant-modal .mgp-btns { display:flex;gap:10px;margin-top:18px; }
+
 /* ─── AUTH MODAL ─── */
 #auth-modal .mbox { max-width:440px; }
 
@@ -4433,6 +4441,7 @@ footer {
         <div class="dmenu-item" onclick="adminScrollTo('admin-stats')" style="color:#f59e0b;"><span class="dicon">📈</span> الإحصائيات</div>
         <div class="dmenu-item" onclick="adminScrollTo('admin-users')" style="color:#f59e0b;"><span class="dicon">👥</span> المستخدمون</div>
         <div class="dmenu-item" onclick="adminScrollTo('admin-orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
+        <div class="dmenu-item" onclick="adminScrollTo('admin-invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
         <div class="dmenu-item" onclick="adminScrollTo('admin-points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
         <div class="dmenu-item" onclick="adminScrollTo('admin-email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
       </div>
@@ -4519,24 +4528,26 @@ footer {
           </div>
         </div>
 
-        <!-- آخر 5 مستخدمين -->
+        <!-- كل المستخدمين -->
         <div id="admin-users" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">👥 آخر 5 مستخدمين</h3></div>
-          <!-- بحث -->
+          <div class="panel-header">
+            <h3 style="color:#f59e0b;">👥 المستخدمون</h3>
+            <span id="admin-users-count" style="font-size:0.78rem;color:var(--text3);"></span>
+          </div>
           <div style="display:flex;gap:8px;padding:0 0 12px;flex-wrap:wrap;">
             <input id="admin-search-input" type="text" placeholder="بحث بالاسم أو الإيميل..." class="minput" style="flex:1;min-width:180px;direction:rtl;" oninput="adminSearch(this.value)">
           </div>
           <div style="overflow-x:auto;">
-            <table class="data-table" style="min-width:500px;">
-              <thead><tr><th>الاسم</th><th>الإيميل</th><th>النقاط</th><th>الطلبات</th><th>التاريخ</th><th>إجراء</th></tr></thead>
-              <tbody id="admin-users-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+            <table class="data-table" style="min-width:600px;">
+              <thead><tr><th>الاسم</th><th>الإيميل</th><th>النقاط المتبقية</th><th>المستخدمة</th><th>الطلبات</th><th>التاريخ</th><th>إجراءات</th></tr></thead>
+              <tbody id="admin-users-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
             </table>
           </div>
         </div>
 
-        <!-- آخر 5 طلبات -->
+        <!-- آخر 10 طلبات -->
         <div id="admin-orders" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">💳 آخر 5 طلبات</h3></div>
+          <div class="panel-header"><h3 style="color:#f59e0b;">💳 آخر الطلبات</h3></div>
           <div style="overflow-x:auto;">
             <table class="data-table" style="min-width:480px;">
               <thead><tr><th>#</th><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
@@ -4545,9 +4556,23 @@ footer {
           </div>
         </div>
 
+        <!-- الفواتير -->
+        <div id="admin-invoices" class="studies-panel" style="margin-bottom:20px;">
+          <div class="panel-header">
+            <h3 style="color:#f59e0b;">🧾 الفواتير</h3>
+            <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;" onclick="adminLoadInvoices()">🔄</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table" style="min-width:560px;">
+              <thead><tr><th>#</th><th>المستخدم</th><th>الإيميل</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+              <tbody id="admin-invoices-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);">جاري التحميل...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- آخر 5 نقاط -->
         <div id="admin-points" class="studies-panel" style="margin-bottom:20px;">
-          <div class="panel-header"><h3 style="color:#f59e0b;">⭐ آخر 5 نقاط ممنوحة</h3>
+          <div class="panel-header"><h3 style="color:#f59e0b;">⭐ آخر النقاط الممنوحة</h3>
             <button class="btn-next" style="padding:7px 14px;font-size:0.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="adminGrantPoints()">+ منح نقاط</button>
           </div>
           <div style="overflow-x:auto;">
@@ -8996,23 +9021,31 @@ async function adminLoadStats() {
 
 async function adminLoadUsers(q) {
   const tbody = document.getElementById('admin-users-tbody');
+  const countEl = document.getElementById('admin-users-count');
   if (!tbody) return;
   try {
-    const url = q ? `/api/admin?action=search&q=${encodeURIComponent(q)}` : '/api/admin?action=users';
+    const url = q
+      ? `/api/admin?action=all-users&q=${encodeURIComponent(q)}`
+      : '/api/admin?action=all-users';
     const res  = await fetch(url, { headers: _adminHeaders() });
     const data = await res.json();
     const users = data.users || [];
-    if (!users.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3);">لا توجد نتائج</td></tr>`; return; }
+    if (countEl) countEl.textContent = users.length ? `(${users.length})` : '';
+    if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);">لا توجد نتائج</td></tr>`; return; }
     tbody.innerHTML = users.map(u => `
       <tr>
         <td style="font-size:0.82rem;">${u.name || '—'}</td>
-        <td style="font-size:0.78rem;color:var(--text3);">${u.email}</td>
-        <td style="color:var(--gold);font-weight:700;">${u.remaining_points ?? 0}</td>
+        <td style="font-size:0.76rem;direction:ltr;text-align:right;color:var(--text2);">${u.email}</td>
+        <td style="color:#34D399;font-weight:700;">${u.remaining_points ?? 0}</td>
+        <td style="color:var(--text3);">${u.used_points ?? 0}</td>
         <td>${u.paid_orders ?? 0}</td>
         <td style="font-size:0.75rem;color:var(--text3);">${new Date(u.created_at).toLocaleDateString('ar-SA')}</td>
-        <td><button onclick="adminEmailUser('${u.email}')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;color:#3B82F6;cursor:pointer;font-size:0.74rem;padding:4px 8px;font-family:'Cairo',sans-serif;">📧</button></td>
+        <td style="white-space:nowrap;">
+          <button onclick="adminEmailUser('${u.email}')" title="إيميل" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;color:#3B82F6;cursor:pointer;font-size:0.74rem;padding:4px 8px;font-family:'Cairo',sans-serif;margin-left:4px;">📧</button>
+          <button onclick="adminDeleteUser(${u.id},'${(u.name||u.email).replace(/'/g,"\\'")}','${u.email}')" title="حذف" style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);border-radius:6px;color:#F87171;cursor:pointer;font-size:0.74rem;padding:4px 8px;font-family:'Cairo',sans-serif;">🗑</button>
+        </td>
       </tr>`).join('');
-  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="7" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
 }
 
 async function adminLoadOrders() {
@@ -9053,10 +9086,44 @@ async function adminLoadPoints() {
   } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
 }
 
+async function adminLoadInvoices() {
+  const tbody = document.getElementById('admin-invoices-tbody');
+  if (!tbody) return;
+  try {
+    const res  = await fetch('/api/admin?action=invoices', { headers: _adminHeaders() });
+    const data = await res.json();
+    const rows = data.invoices || [];
+    if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3);">لا توجد فواتير</td></tr>`; return; }
+    tbody.innerHTML = rows.map(o => `
+      <tr>
+        <td style="font-size:0.78rem;color:var(--text3);">#${o.id}</td>
+        <td style="font-size:0.82rem;">${o.user_name || '—'}</td>
+        <td style="font-size:0.76rem;direction:ltr;text-align:right;color:var(--text2);">${o.user_email || '—'}</td>
+        <td style="color:#f59e0b;font-weight:700;">${(o.amount/100).toFixed(2)} ر.س</td>
+        <td>${o.status === 'paid' ? '<span class="sbadge sbadge-done">مدفوعة</span>' : '<span class="sbadge sbadge-locked">معلقة</span>'}</td>
+        <td style="font-size:0.75rem;color:var(--text3);">${new Date(o.created_at).toLocaleDateString('ar-SA')}</td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" style="color:#F87171;text-align:center;">خطأ في التحميل</td></tr>`; }
+}
+
+async function adminDeleteUser(userId, userName, userEmail) {
+  if (!confirm(`⚠️ حذف المستخدم "${userName}" (${userEmail})؟\nسيتم حذف نقاطه وطلباته ودراساته نهائياً.`)) return;
+  try {
+    const res  = await fetch('/api/admin?action=delete-user', {
+      method: 'POST', headers: _adminHeaders(),
+      body: JSON.stringify({ userId }),
+    });
+    const data = await res.json();
+    if (data.ok) { showToast(`✅ تم حذف ${userName}`); adminLoadUsers(); adminLoadStats(); }
+    else showToast('❌ ' + (data.error || 'خطأ'));
+  } catch(e) { showToast('❌ خطأ في الاتصال'); }
+}
+
 function adminLoadAll() {
   adminLoadStats();
   adminLoadUsers();
   adminLoadOrders();
+  adminLoadInvoices();
   adminLoadPoints();
 }
 
@@ -9093,21 +9160,76 @@ async function adminSendEmail() {
   } catch(e) { showToast('❌ خطأ في الإرسال'); }
 }
 
-async function adminGrantPoints() {
-  const email = prompt('أدخل إيميل المستخدم:');
-  if (!email) return;
-  const pts = prompt('عدد النقاط:');
-  if (!pts || isNaN(parseInt(pts))) return;
-  const users = await fetch(`/api/admin?action=search&q=${encodeURIComponent(email)}`, { headers: _adminHeaders() }).then(r => r.json());
-  const user  = users.users?.[0];
-  if (!user) return showToast('❌ المستخدم غير موجود');
-  const res  = await fetch('/api/admin?action=grant-points', {
-    method: 'POST', headers: _adminHeaders(),
-    body: JSON.stringify({ userId: user.id, points: parseInt(pts) }),
-  });
-  const data = await res.json();
-  if (data.ok) { showToast(`✅ تم منح ${pts} نقاط لـ ${user.name || email}`); adminLoadPoints(); }
-  else showToast('❌ ' + (data.error || 'خطأ'));
+// ── Grant Points Modal ───────────────────────────────────────
+let _mgpSelectedUser = null;
+let _mgpSearchTimer;
+
+function adminGrantPoints() {
+  _mgpSelectedUser = null;
+  document.getElementById('mgp-search').value = '';
+  document.getElementById('mgp-points').value = '';
+  document.getElementById('mgp-results').style.display = 'none';
+  document.getElementById('mgp-results').innerHTML = '';
+  document.getElementById('mgp-selected-user').style.display = 'none';
+  document.getElementById('mgp-error').style.display = 'none';
+  document.getElementById('admin-grant-modal').classList.add('open');
+}
+
+function closeGrantModal() {
+  document.getElementById('admin-grant-modal').classList.remove('open');
+}
+
+function mgpSearch(val) {
+  clearTimeout(_mgpSearchTimer);
+  const res = document.getElementById('mgp-results');
+  if (!val.trim()) { res.style.display = 'none'; return; }
+  _mgpSearchTimer = setTimeout(async () => {
+    try {
+      const data = await fetch(`/api/admin?action=all-users&q=${encodeURIComponent(val)}`, { headers: _adminHeaders() }).then(r => r.json());
+      const users = data.users || [];
+      if (!users.length) { res.innerHTML = `<div style="padding:10px 14px;font-size:0.82rem;color:var(--text3);">لا نتائج</div>`; res.style.display = ''; return; }
+      res.innerHTML = users.slice(0, 6).map(u => `
+        <div onclick="mgpSelectUser(${u.id},'${(u.name||u.email).replace(/'/g,"\\'")}','${u.email}')"
+          style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.84rem;transition:background .15s;"
+          onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+          <span style="color:var(--text);font-weight:600;">${u.name || '—'}</span>
+          <span style="color:var(--text3);font-size:0.76rem;margin-right:8px;direction:ltr;">${u.email}</span>
+          <span style="color:#34D399;font-size:0.74rem;float:left;">⭐ ${u.remaining_points}</span>
+        </div>`).join('');
+      res.style.display = '';
+    } catch(e) {}
+  }, 350);
+}
+
+function mgpSelectUser(id, name, email) {
+  _mgpSelectedUser = { id, name, email };
+  document.getElementById('mgp-search').value = name + ' — ' + email;
+  document.getElementById('mgp-results').style.display = 'none';
+  document.getElementById('mgp-selected-name').textContent = name;
+  document.getElementById('mgp-selected-email').textContent = email;
+  document.getElementById('mgp-selected-user').style.display = '';
+  document.getElementById('mgp-points').focus();
+}
+
+async function adminGrantPointsSubmit() {
+  const errEl = document.getElementById('mgp-error');
+  errEl.style.display = 'none';
+  if (!_mgpSelectedUser) { errEl.textContent = '⚠️ اختر مستخدماً أولاً'; errEl.style.display = ''; return; }
+  const pts = parseInt(document.getElementById('mgp-points').value);
+  if (!pts || pts < 1) { errEl.textContent = '⚠️ أدخل عدد نقاط صحيح'; errEl.style.display = ''; return; }
+  try {
+    const res  = await fetch('/api/admin?action=grant-points', {
+      method: 'POST', headers: _adminHeaders(),
+      body: JSON.stringify({ userId: _mgpSelectedUser.id, points: pts }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast(`✅ تم منح ${pts} نقاط لـ ${_mgpSelectedUser.name || _mgpSelectedUser.email}`);
+      closeGrantModal();
+      adminLoadPoints();
+      adminLoadUsers();
+    } else { errEl.textContent = '❌ ' + (data.error || 'خطأ'); errEl.style.display = ''; }
+  } catch(e) { errEl.textContent = '❌ خطأ في الاتصال'; errEl.style.display = ''; }
 }
 
 // ── تفعيل الآدمن بعد تسجيل الدخول ──
@@ -9551,6 +9673,39 @@ function _checkAdminAccess() {
     <div style="display:flex;gap:12px;justify-content:center;">
       <button onclick="_cancelDelete()" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-family:'Cairo',sans-serif;font-size:0.95rem;cursor:pointer;">إلغاء</button>
       <button onclick="_confirmDelete()" style="flex:1;padding:10px 0;border-radius:10px;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-family:'Cairo',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;">حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     ADMIN GRANT POINTS MODAL
+════════════════════════════════════ -->
+<div class="moverlay" id="admin-grant-modal">
+  <div class="mbox">
+    <div class="mbox-head">
+      <div class="mbox-title">⭐ منح نقاط لمستخدم</div>
+      <button class="mbox-close" onclick="closeGrantModal()">✕</button>
+    </div>
+    <div class="mbox-body">
+      <div class="mgp-field">
+        <label class="mgp-label">بحث بالاسم أو الإيميل</label>
+        <input id="mgp-search" class="mgp-input" type="text" placeholder="ابدأ الكتابة..." oninput="mgpSearch(this.value)" autocomplete="off">
+        <div id="mgp-results" style="margin-top:6px;display:none;background:var(--ink3);border:1px solid var(--border2);border-radius:8px;overflow:hidden;"></div>
+      </div>
+      <div id="mgp-selected-user" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.85rem;">
+        <span style="color:#f59e0b;">✓ المستخدم المختار:</span>
+        <span id="mgp-selected-name" style="color:var(--text);margin-right:6px;"></span>
+        <span id="mgp-selected-email" style="color:var(--text3);font-size:0.78rem;"></span>
+      </div>
+      <div class="mgp-field">
+        <label class="mgp-label">عدد النقاط</label>
+        <input id="mgp-points" class="mgp-input" type="number" min="1" max="100" placeholder="مثال: 5">
+      </div>
+      <div id="mgp-error" style="color:var(--rose);font-size:0.82rem;margin-bottom:8px;display:none;"></div>
+      <div class="mgp-btns">
+        <button class="btn-next" style="flex:1;padding:11px;" onclick="adminGrantPointsSubmit()">✅ منح النقاط</button>
+        <button onclick="closeGrantModal()" style="flex:1;padding:11px;background:var(--ink2);border:1px solid var(--border2);border-radius:10px;color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.88rem;">إلغاء</button>
+      </div>
     </div>
   </div>
 </div>
