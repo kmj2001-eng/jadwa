@@ -2625,6 +2625,94 @@ footer {
   .output-body h3{font-size:0.95rem;}
 }
 
+/* ════════════ DASHBOARD — MOBILE SIDEBAR (≤ 640px) ════════════ */
+@media(max-width:640px){
+
+  /* ── layout: عمود واحد ── */
+  .dash-layout { display:flex; flex-direction:column; padding-top:68px; }
+
+  /* ── sidebar → شريط تبويب أفقي لاصق ── */
+  .dash-sidebar {
+    position:sticky; top:68px; z-index:50;
+    height:auto; max-height:none; overflow:visible;
+    border-left:none; border-bottom:2px solid var(--border2);
+    padding:0; background:#0B1220;
+  }
+
+  /* بروفايل مضغوط */
+  .dash-profile {
+    display:flex; align-items:center; gap:8px; flex-wrap:nowrap;
+    padding:8px 14px; margin-bottom:0;
+    border-bottom:1px solid var(--border2);
+    overflow:hidden;
+  }
+  .dash-profile > div:first-child { display:none; }  /* "مرحباً," */
+  .dash-profile-name { font-size:0.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+  .dash-profile-sub  { display:none; }
+  .dash-plan-pill    { font-size:0.58rem; padding:2px 8px; margin-top:0; flex-shrink:0; }
+
+  /* nav items → أفقية scrollable */
+  .dmenu-nav {
+    display:flex; flex-direction:row; overflow-x:auto; flex-wrap:nowrap;
+    padding:6px 10px; gap:5px;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  .dmenu-nav::-webkit-scrollbar { display:none; }
+
+  .dmenu-item {
+    white-space:nowrap; flex-shrink:0;
+    padding:6px 12px; border-radius:20px;
+    margin-bottom:0; font-size:0.73rem;
+  }
+  .dmenu-item .dicon { font-size:0.82rem; }
+
+  /* آدمن section */
+  #admin-sidebar-section {
+    border-top:1px solid rgba(255,165,0,0.25);
+    margin-top:0; padding-top:0;
+  }
+  .admin-dmenu-label { display:none; }
+  .admin-dmenu-nav   { padding:6px 10px 8px; border-top:none; }
+
+  /* ── dash-main ── */
+  .dash-main { padding:16px 12px; min-width:0; }
+
+  .dash-greeting { font-size:1.15rem; margin-bottom:2px; }
+  .dash-sub      { font-size:0.75rem; margin-bottom:16px; }
+
+  /* ── KPI cards: 2 × 2 ── */
+  .dash-kpis    { grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .kpi-card     { padding:14px 12px; }
+  .kpi-card-val { font-size:1.4rem; }
+  .kpi-card-label { font-size:0.65rem; }
+
+  /* ── panel header ── */
+  .panel-header { flex-wrap:wrap; gap:8px; padding:12px 14px; }
+  .panel-header h3 { font-size:0.85rem; }
+
+  /* ── data-table: تمرير أفقي لكل الجداول ── */
+  .studies-panel { overflow:hidden; }
+  .studies-panel > div[style*="overflow-x"] { -webkit-overflow-scrolling:touch; }
+  .data-table th  { padding:10px 12px; font-size:0.62rem; }
+  .data-table td  { padding:11px 12px; font-size:0.76rem; }
+
+  /* ── بانر الاشتراك ── */
+  #dash-subscribe-banner { flex-direction:column!important; padding:14px!important; gap:10px!important; }
+  #dash-subscribe-banner button { width:100%!important; }
+
+  /* ── admin panel header ── */
+  #admin-panel > div:first-child { flex-direction:column; align-items:flex-start; gap:8px; }
+
+  /* ── admin home cards ── */
+  #admin-stats-grid { grid-template-columns:1fr 1fr; gap:10px; }
+}
+
+/* ════════════ VERY SMALL (≤ 360px) ════════════ */
+@media(max-width:360px){
+  .dash-kpis    { grid-template-columns:1fr; }
+  #admin-stats-grid { grid-template-columns:1fr; }
+  .kpi-card-val { font-size:1.2rem; }
+}
 
 /* ============================================================
    INNER PAGE SHARED STYLES — About / Privacy / Terms
@@ -4429,21 +4517,25 @@ footer {
         <div class="dash-profile-sub">عضو منذ يناير 2025</div>
         <div class="dash-plan-pill">✦ نقاط الجدوى</div>
       </div>
-      <div class="dmenu-item active"><span class="dicon">📊</span> نظرة عامة</div>
-      <div class="dmenu-item" onclick="showPage('tool')"><span class="dicon">✨</span> دراسة جديدة</div>
-      <div class="dmenu-item" onclick="document.querySelector('.studies-panel')?.scrollIntoView({behavior:'smooth'})"><span class="dicon">📂</span> دراساتي</div>
-      <div class="dmenu-item" onclick="showPage('ready')"><span class="dicon">📁</span> دراسات جاهزة</div>
-      <div class="dmenu-item" onclick="showPage('pricing')"><span class="dicon">🛒</span> شراء باقة</div>
-      <div class="dmenu-item" onclick="openDeleteAccountModal()" style="color:#F87171;"><span class="dicon">🗑</span> حذف حسابي</div>
+      <div class="dmenu-nav">
+        <div class="dmenu-item active"><span class="dicon">📊</span> نظرة عامة</div>
+        <div class="dmenu-item" onclick="showPage('tool')"><span class="dicon">✨</span> دراسة جديدة</div>
+        <div class="dmenu-item" onclick="document.querySelector('.studies-panel')?.scrollIntoView({behavior:'smooth'})"><span class="dicon">📂</span> دراساتي</div>
+        <div class="dmenu-item" onclick="showPage('ready')"><span class="dicon">📁</span> دراسات جاهزة</div>
+        <div class="dmenu-item" onclick="showPage('pricing')"><span class="dicon">🛒</span> شراء باقة</div>
+        <div class="dmenu-item" onclick="openDeleteAccountModal()" style="color:#F87171;"><span class="dicon">🗑</span> حذف حسابي</div>
+      </div>
       <!-- آدمن فقط -->
       <div id="admin-sidebar-section" style="display:none;margin-top:12px;border-top:1px solid rgba(255,165,0,0.3);padding-top:12px;">
-        <div style="font-size:0.65rem;color:#f59e0b;font-weight:700;padding:4px 12px;letter-spacing:1px;">⚙️ لوحة الإدارة</div>
-        <div class="dmenu-item" onclick="adminShowPage('home')" style="color:#f59e0b;"><span class="dicon">📈</span> الإحصائيات</div>
-        <div class="dmenu-item" onclick="adminShowPage('users')" style="color:#f59e0b;"><span class="dicon">👥</span> المستخدمون</div>
-        <div class="dmenu-item" onclick="adminShowPage('orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
-        <div class="dmenu-item" onclick="adminShowPage('invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
-        <div class="dmenu-item" onclick="adminShowPage('points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
-        <div class="dmenu-item" onclick="adminShowPage('email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
+        <div class="admin-dmenu-label" style="font-size:0.65rem;color:#f59e0b;font-weight:700;padding:4px 12px;letter-spacing:1px;">⚙️ لوحة الإدارة</div>
+        <div class="dmenu-nav admin-dmenu-nav">
+          <div class="dmenu-item" onclick="adminShowPage('home')" style="color:#f59e0b;"><span class="dicon">📈</span> الإحصائيات</div>
+          <div class="dmenu-item" onclick="adminShowPage('users')" style="color:#f59e0b;"><span class="dicon">👥</span> المستخدمون</div>
+          <div class="dmenu-item" onclick="adminShowPage('orders')" style="color:#f59e0b;"><span class="dicon">💳</span> الطلبات</div>
+          <div class="dmenu-item" onclick="adminShowPage('invoices')" style="color:#f59e0b;"><span class="dicon">🧾</span> الفواتير</div>
+          <div class="dmenu-item" onclick="adminShowPage('points')" style="color:#f59e0b;"><span class="dicon">⭐</span> النقاط</div>
+          <div class="dmenu-item" onclick="adminShowPage('email')" style="color:#f59e0b;"><span class="dicon">📧</span> إرسال إيميل</div>
+        </div>
       </div>
     </div>
     <div class="dash-main">
